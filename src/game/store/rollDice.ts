@@ -4,7 +4,7 @@ import { resolveDiceMove, resolveDiceTurn } from "../rules";
 import { createMysteryOffer } from "../mystery";
 import { drawTriviaQuestion } from "../trivia";
 import { pushPlayerCoinBursts } from "../playerCoinBurst";
-import { getWalkDurationMs } from "../movementTiming";
+import { getWalkDurationMsBetweenRooms } from "../movementTiming";
 import { portalAcknowledgement } from "./portalAck";
 import type { GameState, GameStoreSet } from "./types";
 import {
@@ -175,8 +175,7 @@ export async function executeRollDice(deps: {
 
   await sleep(DICE_POST_REVEAL_MS);
 
-  const stepCount = Math.max(0, landingIndex - startingIndex);
-  if (stepCount > 0) {
+  if (landingIndex !== startingIndex) {
     set((state) => ({
       players: state.players.map((player) =>
         player.id === currentPlayer.id
@@ -184,7 +183,9 @@ export async function executeRollDice(deps: {
           : player,
       ),
     }));
-    await sleep(getWalkDurationMs(stepCount));
+    await sleep(
+      getWalkDurationMsBetweenRooms(startingIndex + 1, landingIndex + 1),
+    );
   }
 
   const resolvedLandingIndex = turnResult.positionId - 1;

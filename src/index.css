@@ -3856,7 +3856,7 @@ button:disabled {
   .app-shell-gameplay .status-card-room,
   .app-shell-gameplay .player-roster,
   .app-shell-gameplay .gameplay-bottom-dock,
-  .app-shell-gameplay .minimap-panel {
+  .app-shell-gameplay .game-panel .minimap-panel {
     position: absolute;
     left: calc(env(safe-area-inset-left) + 12px);
     right: calc(env(safe-area-inset-right) + 12px);
@@ -3878,7 +3878,7 @@ button:disabled {
   .app-shell-gameplay .roster-player,
   .app-shell-gameplay .message-box,
   .app-shell-gameplay .game-over-panel,
-  .app-shell-gameplay .minimap-panel,
+  .app-shell-gameplay .game-panel .minimap-panel,
   .app-shell-gameplay .primary-button,
   .app-shell-gameplay .secondary-button {
     background: rgba(24, 24, 25, 0.78);
@@ -4238,7 +4238,14 @@ button:disabled {
 
   .app-shell-gameplay .minimap-overlay {
     position: fixed;
+    inset: 0;
     z-index: 300;
+  }
+
+  .app-shell-gameplay .minimap-modal-shell .minimap-panel-modal {
+    position: static;
+    left: auto;
+    right: auto;
   }
 
   .app-shell-gameplay .map-fab {

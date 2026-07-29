@@ -7,6 +7,10 @@ import {
   getTravelRouteBetweenRooms,
   type Vector3Tuple,
 } from "../game/board";
+import {
+  WALK_POINT_EPSILON,
+} from "../game/movementConstants";
+import { getWalkDurationSecondsFromPathLength } from "../game/movementTiming";
 import { avatarModelUrls, avatarOptionById } from "../game/avatars";
 import type { AvatarId, GamePortalTransition } from "../game/store";
 import { AvatarCoinBursts } from "./AvatarCoinBursts";
@@ -40,9 +44,6 @@ type PortalAnimation = {
 };
 
 const AVATAR_LIFT = 0.55;
-const WALK_MIN_DURATION = 0.68;
-const WALK_MAX_DURATION = 1.46;
-const WALK_UNITS_PER_SECOND = 9.5;
 const PORTAL_DURATION = 1.86;
 
 function easeInOut(value: number) {
@@ -65,7 +66,7 @@ function compactVectors(points: THREE.Vector3[]) {
   return points.filter((point, index) => {
     const previousPoint = points[index - 1];
 
-    return !previousPoint || previousPoint.distanceTo(point) > 0.05;
+    return !previousPoint || previousPoint.distanceTo(point) > WALK_POINT_EPSILON;
   });
 }
 
@@ -81,16 +82,12 @@ function createWalkAnimation(points: THREE.Vector3[]): WalkAnimation | null {
   );
   const totalLength = lengths.reduce((total, length) => total + length, 0);
 
-  if (totalLength < 0.05) {
+  if (totalLength < WALK_POINT_EPSILON) {
     return null;
   }
 
   return {
-    duration: THREE.MathUtils.clamp(
-      totalLength / WALK_UNITS_PER_SECOND,
-      WALK_MIN_DURATION,
-      WALK_MAX_DURATION,
-    ),
+    duration: getWalkDurationSecondsFromPathLength(totalLength),
     elapsed: 0,
     lengths,
     points: compactedPoints,
