@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { createDebouncedStorage } from "./persist/debounceStorage";
+import { canAiAutoEndTurn } from "./aiInventory";
 import { resolveTriviaAnswer } from "./rules";
 import { getMysteryCardById } from "./mystery";
 import {
@@ -35,6 +36,7 @@ import {
   removeInventoryItem,
   TRIVIA_MODAL_RESULT_MS,
   TRIVIA_TOAST_MS,
+  waitForPortalTransitionBeforeTrivia,
 } from "./store/helpers";
 import type {
   GamePlayer,
@@ -261,7 +263,7 @@ export const useGameStore = create<GameState>()(
 
       endTurn: () => {
         set((state) => {
-          if (!canPlayerEndTurn(state)) {
+          if (!canPlayerEndTurn(state) && !canAiAutoEndTurn(state)) {
             if (state.phase === "finished") {
               return clearFinishedInteractiveState();
             }
@@ -687,6 +689,11 @@ export const useGameStore = create<GameState>()(
 
             if (deferredState) {
               const pendingDeferredState = deferredState;
+              const triviaPlayerId = pendingDeferredState.pendingTrivia?.playerId;
+
+              if (triviaPlayerId) {
+                await waitForPortalTransitionBeforeTrivia(get, triviaPlayerId);
+              }
 
               set((state) => {
                 if (state.phase !== "playing") {

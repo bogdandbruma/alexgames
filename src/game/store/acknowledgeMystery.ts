@@ -12,6 +12,7 @@ import {
   getPlayerName,
   MYSTERY_COIN_TOAST_MS,
   shouldPauseForRoomAction,
+  waitForPortalTransitionBeforeTrivia,
 } from "./helpers";
 import { syncFocusedPlayerWalkIfMoved } from "./playerWalk";
 import type { GameState, GameStoreSet } from "./types";
@@ -97,10 +98,7 @@ export async function executeAcknowledgeMystery(deps: {
             `${getPlayerName(player)} a dezvaluit ${card.title} si a castigat!`,
           )
         : {
-            pendingMystery: {
-              ...pendingMystery,
-              revealedCardId: cardId,
-            },
+            pendingMystery: null,
             message: `${getPlayerName(player)} a dezvaluit ${card.title}.`,
           }),
     };
@@ -117,17 +115,21 @@ export async function executeAcknowledgeMystery(deps: {
   if (pendingResultAfterReveal && pendingResultPlayerId) {
     const result = pendingResultAfterReveal;
     const playerId = pendingResultPlayerId;
-    const cardId = revealedCardId;
+
+    if (result.action === "trivia") {
+      await waitForPortalTransitionBeforeTrivia(get, playerId);
+    }
 
     set((state) => {
-      if (
-        !state.pendingMystery ||
-        state.pendingMystery.revealedCardId !== cardId
-      ) {
+      if (state.phase !== "playing") {
         return {};
       }
 
       const player = state.players.find(({ id }) => id === playerId);
+
+      if (!player) {
+        return {};
+      }
 
       return createPendingRoomActionState(
         state,
@@ -150,14 +152,15 @@ export async function executeAcknowledgeMystery(deps: {
 
   if (coinsDelta !== 0 && playerId) {
     set((state) => {
-      if (
-        !state.pendingMystery ||
-        state.pendingMystery.revealedCardId !== cardId
-      ) {
+      if (state.phase !== "playing") {
         return {};
       }
 
       const player = state.players.find(({ id }) => id === playerId);
+
+      if (!player) {
+        return {};
+      }
       const card = getMysteryCardById(cardId);
       const coinMessage =
         coinsDelta > 0
@@ -200,16 +203,15 @@ export async function executeAcknowledgeMystery(deps: {
   }
 
   set((state) => {
-    if (
-      !state.pendingMystery ||
-      state.pendingMystery.revealedCardId !== cardId
-    ) {
+    if (state.phase !== "playing") {
       return {};
     }
 
-    const player = state.players.find(
-      ({ id }) => id === state.pendingMystery?.playerId,
-    );
+    const player = state.players.find(({ id }) => id === playerId);
+
+    if (!player) {
+      return {};
+    }
 
     return createEndTurnState(
       state,

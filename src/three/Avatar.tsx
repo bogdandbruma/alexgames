@@ -8,6 +8,7 @@ import {
   type Vector3Tuple,
 } from "../game/board";
 import {
+  PORTAL_DURATION_S,
   WALK_POINT_EPSILON,
 } from "../game/movementConstants";
 import { getWalkDurationSecondsFromPathLength } from "../game/movementTiming";
@@ -44,7 +45,7 @@ type PortalAnimation = {
 };
 
 const AVATAR_LIFT = 0.55;
-const PORTAL_DURATION = 1.86;
+const PORTAL_DURATION = PORTAL_DURATION_S;
 
 function easeInOut(value: number) {
   const clampedValue = THREE.MathUtils.clamp(value, 0, 1);

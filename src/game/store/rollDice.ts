@@ -24,6 +24,7 @@ import {
   resolvePlayerRoomEntry,
   shouldDeferTurnEndForActionItems,
   sleep,
+  waitForPortalTransitionBeforeTrivia,
 } from "./helpers";
 import {
   createActivePlayerWalk,
@@ -332,6 +333,8 @@ export async function executeRollDice(deps: {
       return;
     }
 
+    await waitForPortalTransitionBeforeTrivia(get, currentPlayer.id);
+
     set({
       rolling: false,
       pendingTrivia: {
@@ -433,6 +436,15 @@ export async function executeRollDice(deps: {
       state.pendingMystery !== null ||
       state.pendingTrivia !== null ||
       state.pendingPortal !== null
+    ) {
+      return { rolling: false };
+    }
+
+    const activePlayer = state.players[state.currentPlayerIndex];
+
+    if (
+      state.diceValue === null ||
+      activePlayer?.id !== currentPlayer.id
     ) {
       return { rolling: false };
     }

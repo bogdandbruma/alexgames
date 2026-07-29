@@ -1,4 +1,5 @@
 import { rooms } from "../board";
+import { PORTAL_TRANSITION_MS } from "../movementConstants";
 import {
   resolvePositionChange,
   type DiceTurnResult,
@@ -65,6 +66,17 @@ export const sleep = (milliseconds: number) =>
     window.setTimeout(resolve, milliseconds);
   });
 
+export async function waitForPortalTransitionBeforeTrivia(
+  get: () => GameState,
+  playerId: string,
+): Promise<void> {
+  const { portalTransition } = get();
+
+  if (portalTransition?.playerId === playerId) {
+    await sleep(PORTAL_TRANSITION_MS);
+  }
+}
+
 export const DICE_ROLL_MIN_MS = 1_000;
 export const DICE_ROLL_MAX_MS = 2_000;
 export const DICE_RESULT_HOLD_MS = 2_000;
@@ -121,7 +133,7 @@ export const playerHasUsableActionItem = (player: GamePlayer | undefined) =>
 export const shouldDeferTurnEndForActionItems = (state: GameState) => {
   const player = state.players[state.currentPlayerIndex];
 
-  if (!player || player.controller !== "player" || player.trapped) {
+  if (!player || player.trapped) {
     return false;
   }
 
