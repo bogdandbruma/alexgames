@@ -9,18 +9,18 @@ import {
   rooms,
   type Vector3Tuple,
 } from "../game/board";
-import { useGameStore } from "../game/store";
+import { useGameStore, type GamePlayer } from "../game/store";
 import { Avatar } from "./Avatar";
-import { Dice } from "./Dice";
 import { Hallway } from "./Hallway";
 import { SpaceRoom } from "./SpaceRoom";
+import { VictoryFireworksShow } from "./VictoryFireworks";
 
 const turnPullbackOffset = new THREE.Vector3(13, 31, 33);
 const turnCloseOffset = new THREE.Vector3(9, 24, 27);
 const movementOverviewOffset = new THREE.Vector3(5, 41, 24);
 const turnFocusDuration = 4.4;
-const sceneCenter: Vector3Tuple = [24, 0, 18];
-const moonHalfExtent = 76;
+const sceneCenter: Vector3Tuple = [42, 0, 37];
+const moonHalfExtent = 116;
 
 const craterDetails = [
   { position: [-14, -0.18, 7], radius: 4.8, rotation: 0.28, scale: [1.35, 0.72, 1] },
@@ -121,8 +121,8 @@ function MoonSky() {
 
 function MoonSurface() {
   const moonSize = moonHalfExtent * 2;
-  const innerSquare = 60;
-  const frameSquare = 73;
+  const innerSquare = 92;
+  const frameSquare = 108;
 
   return (
     <group>
@@ -306,16 +306,134 @@ function SceneControls({
   );
 }
 
+function VictoryCinematic({
+  anchorPosition,
+  winner,
+}: {
+  anchorPosition: Vector3Tuple;
+  winner: GamePlayer;
+}) {
+  const rocketRef = useRef<THREE.Group>(null);
+  const flameRef = useRef<THREE.MeshBasicMaterial>(null);
+  const startedAtRef = useRef(performance.now() / 1_000);
+  const launchPosition = useMemo(() => new THREE.Vector3(...anchorPosition), [
+    anchorPosition,
+  ]);
+
+  useFrame(() => {
+    const elapsed = performance.now() / 1_000 - startedAtRef.current;
+    const cycle = elapsed % 8.2;
+    const launchProgress = easeInOut(Math.min(cycle / 3.4, 1));
+    const cruiseProgress = easeInOut(
+      THREE.MathUtils.clamp((cycle - 3.1) / 3.4, 0, 1),
+    );
+    const bob = Math.sin(elapsed * 3.2) * 0.22;
+
+    if (rocketRef.current) {
+      rocketRef.current.position.set(
+        launchPosition.x + cruiseProgress * 25,
+        launchPosition.y + 1.85 + launchProgress * 18 + bob,
+        launchPosition.z - cruiseProgress * 22,
+      );
+      rocketRef.current.rotation.z = THREE.MathUtils.lerp(
+        0,
+        -0.48,
+        cruiseProgress,
+      );
+      rocketRef.current.rotation.x = Math.sin(elapsed * 1.1) * 0.035;
+    }
+
+    if (flameRef.current) {
+      flameRef.current.opacity = 0.54 + Math.sin(elapsed * 16) * 0.22;
+    }
+  });
+
+  return (
+    <group>
+      <mesh
+        position={[anchorPosition[0], 0.025, anchorPosition[2]]}
+        rotation={[-Math.PI / 2, 0, 0]}
+      >
+        <ringGeometry args={[2.2, 3.05, 72]} />
+        <meshBasicMaterial color="#f3c969" transparent opacity={0.72} />
+      </mesh>
+      <mesh position={[anchorPosition[0], 0.16, anchorPosition[2]]}>
+        <cylinderGeometry args={[2.25, 2.25, 0.28, 48]} />
+        <meshStandardMaterial color="#4f565f" metalness={0.18} roughness={0.64} />
+      </mesh>
+
+      <group ref={rocketRef} scale={1.45}>
+        <pointLight
+          position={[0, -1.1, 0]}
+          intensity={16}
+          distance={12}
+          color="#f3c969"
+        />
+        <mesh position={[0, 0, 0]}>
+          <cylinderGeometry args={[0.46, 0.58, 2.8, 32]} />
+          <meshStandardMaterial color="#f8fbf7" metalness={0.2} roughness={0.4} />
+        </mesh>
+        <mesh position={[0, 1.65, 0]}>
+          <coneGeometry args={[0.5, 0.92, 32]} />
+          <meshStandardMaterial color="#ff7867" roughness={0.48} />
+        </mesh>
+        <mesh position={[0, 0.45, -0.48]}>
+          <sphereGeometry args={[0.24, 24, 12]} />
+          <meshBasicMaterial color="#8fb1ff" transparent opacity={0.86} />
+        </mesh>
+        <mesh position={[-0.55, -0.82, 0]} rotation={[0, 0, 0.58]}>
+          <boxGeometry args={[0.2, 0.86, 0.5]} />
+          <meshStandardMaterial color="#67d5c8" roughness={0.52} />
+        </mesh>
+        <mesh position={[0.55, -0.82, 0]} rotation={[0, 0, -0.58]}>
+          <boxGeometry args={[0.2, 0.86, 0.5]} />
+          <meshStandardMaterial color="#67d5c8" roughness={0.52} />
+        </mesh>
+        <mesh position={[0, -1.68, 0]} rotation={[Math.PI, 0, 0]}>
+          <coneGeometry args={[0.36, 1.2, 28]} />
+          <meshBasicMaterial
+            ref={flameRef}
+            color="#f3c969"
+            transparent
+            opacity={0.72}
+            depthWrite={false}
+          />
+        </mesh>
+
+        <Avatar
+          active
+          avatarId={winner.avatarId}
+          label={winner.name}
+          markerColor="#f3c969"
+          playerId={winner.id}
+          roomId={winner.positionIndex + 1}
+          targetPosition={[0, 2.05, 0]}
+        />
+      </group>
+
+      <VictoryFireworksShow
+        anchorPosition={anchorPosition}
+        playerName={winner.name}
+      />
+    </group>
+  );
+}
+
 export function GameScene() {
   const players = useGameStore((state) => state.players);
   const currentPlayerIndex = useGameStore((state) => state.currentPlayerIndex);
-  const diceValue = useGameStore((state) => state.diceValue);
-  const diceAnimating = useGameStore((state) => state.diceAnimating);
   const phase = useGameStore((state) => state.phase);
+  const portalTransition = useGameStore((state) => state.portalTransition);
+  const winnerId = useGameStore((state) => state.winnerId);
   const rolling = useGameStore((state) => state.rolling);
-  const focusedPlayer = players[currentPlayerIndex] ?? players[0];
+  const winner =
+    players.find(({ id }) => id === winnerId) ??
+    players.find(({ positionIndex }) => positionIndex === rooms.length - 1);
+  const focusedPlayer =
+    phase === "finished"
+      ? winner ?? players[0]
+      : players[currentPlayerIndex] ?? players[0];
   const currentRoom = rooms[focusedPlayer?.positionIndex ?? 0];
-
   const getPlayerPosition = (
     roomPosition: Vector3Tuple,
     playerIndex: number,
@@ -337,6 +455,10 @@ export function GameScene() {
   const focusedPlayerPosition = focusedPlayer
     ? getPlayerPosition(currentRoom.position, currentPlayerIndex)
     : currentRoom.position;
+  const cinematicTargetPosition: Vector3Tuple =
+    phase === "finished"
+      ? [rooms[rooms.length - 1].position[0] + 10, 9, rooms[rooms.length - 1].position[2] - 10]
+      : focusedPlayerPosition;
 
   return (
     <Canvas
@@ -349,6 +471,9 @@ export function GameScene() {
       }}
       dpr={[1, 1.75]}
       gl={{ antialias: true }}
+      onCreated={({ gl }) => {
+        gl.shadowMap.type = THREE.PCFShadowMap;
+      }}
     >
       <color attach="background" args={["#07101f"]} />
       <fog attach="fog" args={["#07101f", 58, 155]} />
@@ -386,6 +511,8 @@ export function GameScene() {
           <Hallway
             key={`${connection.from.join(":")}-${connection.to.join(":")}`}
             from={connection.from}
+            kind={connection.kind}
+            points={connection.points}
             to={connection.to}
             width={connection.width}
           />
@@ -400,40 +527,47 @@ export function GameScene() {
           />
         ))}
 
-        {players.map((player, index) => (
-          <Avatar
-            key={player.id}
-            active={index === currentPlayerIndex}
-            avatarId={player.avatarId}
-            label={player.name}
-            markerColor={index === currentPlayerIndex ? "#f3c969" : "#67d5c8"}
-            targetPosition={getPlayerPosition(
-              rooms[player.positionIndex].position,
-              index,
-            )}
-          />
-        ))}
+        {players.map((player, index) =>
+          phase === "finished" && player.id === winner?.id ? null : (
+            <Avatar
+              key={player.id}
+              active={index === currentPlayerIndex}
+              avatarId={player.avatarId}
+              label={player.name}
+              markerColor={index === currentPlayerIndex ? "#f3c969" : "#67d5c8"}
+              playerId={player.id}
+              portalTransition={portalTransition}
+              roomId={player.positionIndex + 1}
+              targetPosition={getPlayerPosition(
+                rooms[player.positionIndex].position,
+                index,
+              )}
+            />
+          ),
+        )}
 
-        <Dice
-          rolling={diceAnimating}
-          value={diceValue}
-          anchorPosition={currentRoom.position}
-        />
+        {phase === "finished" && winner ? (
+          <VictoryCinematic
+            anchorPosition={rooms[rooms.length - 1].position}
+            winner={winner}
+          />
+        ) : null}
+
       </Suspense>
 
       <mesh
         rotation={[-Math.PI / 2, 0, 0]}
-        position={[24, -0.14, 18]}
+        position={[41, -0.14, 33]}
         receiveShadow
       >
-        <planeGeometry args={[70, 62]} />
+        <planeGeometry args={[104, 88]} />
         <shadowMaterial opacity={0.25} />
       </mesh>
 
       <SceneControls
-        focusKey={`${phase}-${focusedPlayer?.id ?? "setup"}`}
-        moving={rolling}
-        targetPosition={focusedPlayerPosition}
+        focusKey={`${phase}-${winnerId ?? focusedPlayer?.id ?? "setup"}`}
+        moving={rolling || phase === "finished"}
+        targetPosition={cinematicTargetPosition}
       />
     </Canvas>
   );

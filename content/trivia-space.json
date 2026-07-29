@@ -1,0 +1,1202 @@
+[
+  {
+    "id": 1,
+    "question": "Care planetă este cea mai apropiată de Soare?",
+    "correct": "Mercur",
+    "wrong": "Venus"
+  },
+  {
+    "id": 2,
+    "question": "Cum se numește satelitul natural al Pământului?",
+    "correct": "Luna",
+    "wrong": "Titan"
+  },
+  {
+    "id": 3,
+    "question": "Soarele este o...",
+    "correct": "stea",
+    "wrong": "gigant gazos"
+  },
+  {
+    "id": 4,
+    "question": "Pe ce planetă trăim noi?",
+    "correct": "Pământ",
+    "wrong": "Marte"
+  },
+  {
+    "id": 5,
+    "question": "Care planetă este numită „planeta roșie”?",
+    "correct": "Marte",
+    "wrong": "Venus"
+  },
+  {
+    "id": 6,
+    "question": "Câte planete are Sistemul Solar (fără Pluto ca planetă principală)?",
+    "correct": "8",
+    "wrong": "7"
+  },
+  {
+    "id": 7,
+    "question": "Care este cea mai mare planetă din Sistemul Solar?",
+    "correct": "Jupiter",
+    "wrong": "Saturn"
+  },
+  {
+    "id": 8,
+    "question": "Inelele spectaculoase le are...",
+    "correct": "Saturn",
+    "wrong": "Jupiter"
+  },
+  {
+    "id": 9,
+    "question": "Luna strălucește pentru că...",
+    "correct": "reflectă lumina Soarelui",
+    "wrong": "absoarbe și reemite propria lumină"
+  },
+  {
+    "id": 10,
+    "question": "Astronauții care merg în spațiu poartă...",
+    "correct": "costum spațial",
+    "wrong": "costum de scafandru pentru apă"
+  },
+  {
+    "id": 11,
+    "question": "Stația Spațială Internațională orbitează în jurul...",
+    "correct": "Pământului",
+    "wrong": "Lunii"
+  },
+  {
+    "id": 12,
+    "question": "În spațiu, obiectele par să...",
+    "correct": "plutească",
+    "wrong": "că cad la fel ca pe Pământ"
+  },
+  {
+    "id": 13,
+    "question": "O rachetă este folosită pentru a...",
+    "correct": "lansa vehicule în spațiu",
+    "wrong": "transporta pasageri doar în stratosferă"
+  },
+  {
+    "id": 14,
+    "question": "Primul om pe Lună a fost...",
+    "correct": "Neil Armstrong",
+    "wrong": "Buzz Aldrin"
+  },
+  {
+    "id": 15,
+    "question": "Anul primei aterizări pe Lună a fost...",
+    "correct": "1969",
+    "wrong": "1972"
+  },
+  {
+    "id": 16,
+    "question": "Galaxia noastră se numește...",
+    "correct": "Calea Lactee",
+    "wrong": "Andromeda"
+  },
+  {
+    "id": 17,
+    "question": "Soarele este la mijlocul...",
+    "correct": "Sistemului Solar",
+    "wrong": "Căii Lactee"
+  },
+  {
+    "id": 18,
+    "question": "O cometă are adesea o...",
+    "correct": "coadă luminoasă",
+    "wrong": "comă de praf și gaze în față"
+  },
+  {
+    "id": 19,
+    "question": "Meteoriții care cad pe Pământ vin adesea din...",
+    "correct": "spațiu",
+    "wrong": "atmosfera superioară a Pământului"
+  },
+  {
+    "id": 20,
+    "question": "Venus este adesea numită „sora” planetei...",
+    "correct": "Pământ",
+    "wrong": "Venus"
+  },
+  {
+    "id": 21,
+    "question": "Planeta cea mai îndepărtată de Soare din cele 8 este...",
+    "correct": "Neptun",
+    "wrong": "Uranus"
+  },
+  {
+    "id": 22,
+    "question": "Uranus este de culoare...",
+    "correct": "albăstru-verzuie",
+    "wrong": "albastru intens ca Neptunul"
+  },
+  {
+    "id": 23,
+    "question": "Jupiter are o pată mare numită...",
+    "correct": "Marea Pată Roșie",
+    "wrong": "Marea Caldă"
+  },
+  {
+    "id": 24,
+    "question": "Timpul necesar Pământului să facă o rotație completă este aproximativ...",
+    "correct": "24 de ore",
+    "wrong": "12 ore"
+  },
+  {
+    "id": 25,
+    "question": "Un an pe Pământ durează aproximativ...",
+    "correct": "365 de zile",
+    "wrong": "360 de zile"
+  },
+  {
+    "id": 26,
+    "question": "Luna are faze pentru că...",
+    "correct": "vedem părți diferite illuminate",
+    "wrong": "Luna își schimbă dimensiunea"
+  },
+  {
+    "id": 27,
+    "question": "Eclipsa de Soare apare când...",
+    "correct": "Luna acoperă Soarele",
+    "wrong": "Pământul trece între Soare și Lună"
+  },
+  {
+    "id": 28,
+    "question": "Steaua Polară ajută la...",
+    "correct": "găsirea nordului",
+    "wrong": "orientarea după Soare la amiază"
+  },
+  {
+    "id": 29,
+    "question": "Telescopul ne ajută să vedem...",
+    "correct": "obiecte îndepărtate în cer",
+    "wrong": "obiecte din apropierea Lunii"
+  },
+  {
+    "id": 30,
+    "question": "Hubble este un telescop care...",
+    "correct": "orbitează Pământul",
+    "wrong": "orbita fixă a Soarelui"
+  },
+  {
+    "id": 31,
+    "question": "Mercur este cea mai...",
+    "correct": "mică planetă",
+    "wrong": "planetă îndepărtată de Soare"
+  },
+  {
+    "id": 32,
+    "question": "Pe Marte există un munte foarte înalt numit...",
+    "correct": "Olympus Mons",
+    "wrong": "Muntele Everest"
+  },
+  {
+    "id": 33,
+    "question": "Atmosfera Pământului ne protejează de...",
+    "correct": "radiații dăunătoare",
+    "wrong": "pietrele care cad din spațiu"
+  },
+  {
+    "id": 34,
+    "question": "Fără costum spațial, în spațiu nu ai...",
+    "correct": "oxigen de respirat",
+    "wrong": "gravitație ca pe Pământ"
+  },
+  {
+    "id": 35,
+    "question": "Gravitația pe Lună este...",
+    "correct": "mai slabă decât pe Pământ",
+    "wrong": "aproape aceeași ca pe Pământ"
+  },
+  {
+    "id": 36,
+    "question": "Sateliții artificiali sunt făcuți de...",
+    "correct": "oameni",
+    "wrong": "procese naturale din cosmos"
+  },
+  {
+    "id": 37,
+    "question": "Viteza luminii este...",
+    "correct": "foarte mare",
+    "wrong": "egală cu viteza sunetului"
+  },
+  {
+    "id": 38,
+    "question": "O galaxie este o colecție uriașă de...",
+    "correct": "stele",
+    "wrong": "doar planete și luni"
+  },
+  {
+    "id": 39,
+    "question": "Soarele ne oferă...",
+    "correct": "căldură și lumină",
+    "wrong": "doar lumină, fără căldură"
+  },
+  {
+    "id": 40,
+    "question": "Noaptea vedem multe stele pentru că...",
+    "correct": "cerul este întunecat",
+    "wrong": "Soarele stinge stelele ziua"
+  },
+  {
+    "id": 41,
+    "question": "Planeta cu cei mai puternici vânturi din Sistemul Solar este adesea...",
+    "correct": "Neptun",
+    "wrong": "Jupiter"
+  },
+  {
+    "id": 42,
+    "question": "Craterele de pe Lună sunt făcute adesea de...",
+    "correct": "impact cu asteroizi",
+    "wrong": "erupții vulcanice vechi"
+  },
+  {
+    "id": 43,
+    "question": "Un asteroid este un...",
+    "correct": "corp mic stâncos în spațiu",
+    "wrong": "cometă mică de gheață"
+  },
+  {
+    "id": 44,
+    "question": "Pluto este acum clasificat ca...",
+    "correct": "planetă pitică",
+    "wrong": "a noua planetă clasică"
+  },
+  {
+    "id": 45,
+    "question": "Călătoria spre Lună cu racheta durează...",
+    "correct": "câteva zile",
+    "wrong": "aproximativ o săptămână"
+  },
+  {
+    "id": 46,
+    "question": "Pe Lună nu există...",
+    "correct": "atmosferă respirabilă",
+    "wrong": "câmp magnetic puternic"
+  },
+  {
+    "id": 47,
+    "question": "Jupiter are mulți...",
+    "correct": "sateliți naturali",
+    "wrong": "inele vizibile ca la Saturn"
+  },
+  {
+    "id": 48,
+    "question": "Saturn este a doua cea mai...",
+    "correct": "mare planetă",
+    "wrong": "cea mai densă dintre gigant"
+  },
+  {
+    "id": 49,
+    "question": "Venus este foarte...",
+    "correct": "caldă",
+    "wrong": "rece, dar mai caldă decât Jupiter"
+  },
+  {
+    "id": 50,
+    "question": "Pământul are formă aproximativ...",
+    "correct": "sferică",
+    "wrong": "plată, ca o dischetă"
+  },
+  {
+    "id": 51,
+    "question": "Echinocțiul înseamnă că ziua și noaptea sunt aproape...",
+    "correct": "egale",
+    "wrong": "maxime la solstițiu"
+  },
+  {
+    "id": 52,
+    "question": "O constelație este un grup de...",
+    "correct": "stele văzute aproape",
+    "wrong": "galaxii foarte îndepărtate"
+  },
+  {
+    "id": 53,
+    "question": "Ursa Mare ajută la găsirea...",
+    "correct": "Steaua Polare",
+    "wrong": "Sirius"
+  },
+  {
+    "id": 54,
+    "question": "Lunile lui Jupiter includ pe...",
+    "correct": "Europa",
+    "wrong": "Io"
+  },
+  {
+    "id": 55,
+    "question": "Titan este o lună mare a lui...",
+    "correct": "Saturn",
+    "wrong": "Jupiter"
+  },
+  {
+    "id": 56,
+    "question": "O nebuloasă este un nor de...",
+    "correct": "gaz și praf în spațiu",
+    "wrong": "praf stelar înghețat solid"
+  },
+  {
+    "id": 57,
+    "question": "O supernovă este explozia unei...",
+    "correct": "stele mari",
+    "wrong": "planetă care se sparge"
+  },
+  {
+    "id": 58,
+    "question": "Gaura neagră are gravitație...",
+    "correct": "foarte puternică",
+    "wrong": "aceeași ca pe Pământ"
+  },
+  {
+    "id": 59,
+    "question": "Astronomii studiază...",
+    "correct": "cerul și corpurile cerești",
+    "wrong": "doar corpurile din Sistemul Solar"
+  },
+  {
+    "id": 60,
+    "question": "Planeta cea mai caldă din Sistemul Solar este adesea...",
+    "correct": "Venus",
+    "wrong": "Mercur"
+  },
+  {
+    "id": 61,
+    "question": "Pe Marte culoarea roșie vine de la...",
+    "correct": "rugina (oxid de fier)",
+    "wrong": "minereu de cupru verde"
+  },
+  {
+    "id": 62,
+    "question": "Roverele sunt roboți care explorează...",
+    "correct": "alte planete",
+    "wrong": "suprafața Lunii"
+  },
+  {
+    "id": 63,
+    "question": "Perseverance este un rover pe...",
+    "correct": "Marte",
+    "wrong": "Luna"
+  },
+  {
+    "id": 64,
+    "question": "Apa pe Pământ există în trei stări; în ocean este...",
+    "correct": "lichidă",
+    "wrong": "gazificată"
+  },
+  {
+    "id": 65,
+    "question": "Stratul de ozon ne ajută să blocăm unele...",
+    "correct": "raze UV",
+    "wrong": "radiații infraroșii de la Soare"
+  },
+  {
+    "id": 66,
+    "question": "Aurora boreală apare în...",
+    "correct": "cerul de noapte la poli",
+    "wrong": "ecuatorul, tot anul"
+  },
+  {
+    "id": 67,
+    "question": "Aurora este cauzată de particule de la...",
+    "correct": "Soare",
+    "wrong": "câmpul magnetic al Pământului"
+  },
+  {
+    "id": 68,
+    "question": "Un satelit geostaționar orbitează la aceeași viteză cu...",
+    "correct": "rotația Pământului",
+    "wrong": "revoluția Pământului în jurul Soarelui"
+  },
+  {
+    "id": 69,
+    "question": "GPS folosește...",
+    "correct": "sateliți",
+    "wrong": "rețea de antene terestre"
+  },
+  {
+    "id": 70,
+    "question": "Prima femeie în spațiu a fost...",
+    "correct": "Valentina Tereshkova",
+    "wrong": "Sally Ride"
+  },
+  {
+    "id": 71,
+    "question": "Costumul spațial are...",
+    "correct": "sistem de oxigen",
+    "wrong": "doar protecție la temperaturi extreme"
+  },
+  {
+    "id": 72,
+    "question": "În gravitație zero, lichidul din sticlă...",
+    "correct": "formează bile plutitoare",
+    "wrong": "curge în jos și se adună la fund"
+  },
+  {
+    "id": 73,
+    "question": "Soarele este făcut în mare parte din...",
+    "correct": "hidrogen",
+    "wrong": "heliu"
+  },
+  {
+    "id": 74,
+    "question": "Când Soarele își va termina combustibilul, va deveni mai târziu un...",
+    "correct": "pitic alb",
+    "wrong": "gigant roșu imediat"
+  },
+  {
+    "id": 75,
+    "question": "Distanța Pământ–Soare este de aproximativ...",
+    "correct": "150 de milioane km",
+    "wrong": "15 milioane km"
+  },
+  {
+    "id": 76,
+    "question": "Luna se îndepărtează foarte încet de...",
+    "correct": "Pământ",
+    "wrong": "Soare"
+  },
+  {
+    "id": 77,
+    "question": "Eclipsa de Lună apare când...",
+    "correct": "Pământul umbrește Luna",
+    "wrong": "Luna trece exact în fața Soarelui"
+  },
+  {
+    "id": 78,
+    "question": "Ziua pe Mercur durează mult timp pentru că...",
+    "correct": "rotația e lentă",
+    "wrong": "este cea mai apropiată de Soare"
+  },
+  {
+    "id": 79,
+    "question": "Centura de asteroizi se află între...",
+    "correct": "Marte și Jupiter",
+    "wrong": "Jupiter și Saturn"
+  },
+  {
+    "id": 80,
+    "question": "Cometa Halley revine aproximativ la fiecare...",
+    "correct": "76 de ani",
+    "wrong": "aproximativ 100 de ani"
+  },
+  {
+    "id": 81,
+    "question": "Steaua cea mai apropiată de Soare pentru noi este...",
+    "correct": "Proxima Centauri (sistem Alpha Centauri)",
+    "wrong": "Sirius"
+  },
+  {
+    "id": 82,
+    "question": "Lumină de la Soare ajunge la Pământ în aproximativ...",
+    "correct": "8 minute",
+    "wrong": "8 secunde"
+  },
+  {
+    "id": 83,
+    "question": "Pe Lună urmele astronauților rămân mult pentru că...",
+    "correct": "nu bate vânt",
+    "wrong": "solul lunar e mai tare decât pe Pământ"
+  },
+  {
+    "id": 84,
+    "question": "Un an pe Marte durează aproape...",
+    "correct": "687 de zile terestre",
+    "wrong": "365 de zile terestre"
+  },
+  {
+    "id": 85,
+    "question": "Voyager este o sondă care a ieșit din...",
+    "correct": "Sistemul Solar",
+    "wrong": "galaxia Andromeda"
+  },
+  {
+    "id": 86,
+    "question": "James Webb este un telescop care observă în principal...",
+    "correct": "infraroșu",
+    "wrong": "lumina vizibilă și ultravioletă"
+  },
+  {
+    "id": 87,
+    "question": "Exoplanetă înseamnă planetă în afara...",
+    "correct": "Sistemului Solar",
+    "wrong": "galaxiei Calea Lactee"
+  },
+  {
+    "id": 88,
+    "question": "Luna Enceladus (Saturn) are...",
+    "correct": "gheizeri de apă",
+    "wrong": "atmosferă groasă de metan"
+  },
+  {
+    "id": 89,
+    "question": "Cel mai mare satelit natural din Sistemul Solar este...",
+    "correct": "Ganymede (Jupiter)",
+    "wrong": "Titan"
+  },
+  {
+    "id": 90,
+    "question": "Saturn este mai puțin dens decât...",
+    "correct": "apa (ar pluti teoretic)",
+    "wrong": "rocile dense de pe Pământ"
+  },
+  {
+    "id": 91,
+    "question": "Mercur nu are aproape deloc...",
+    "correct": "atmosferă",
+    "wrong": "suprafață netedă fără cratere"
+  },
+  {
+    "id": 92,
+    "question": "Soarele produce energie prin...",
+    "correct": "fuziune nucleară",
+    "wrong": "fisiune nucleară"
+  },
+  {
+    "id": 93,
+    "question": "Un astronaut pe ISS vede aproximativ...",
+    "correct": "16 răsărituri pe zi",
+    "wrong": "12 răsărituri pe zi"
+  },
+  {
+    "id": 94,
+    "question": "Planeta cu cea mai lungă zi (rotație) este adesea...",
+    "correct": "Venus",
+    "wrong": "Mercur"
+  },
+  {
+    "id": 95,
+    "question": "Luna este la aproximativ...",
+    "correct": "384 000 km de Pământ",
+    "wrong": "38 400 km"
+  },
+  {
+    "id": 96,
+    "question": "Steaua de pe steagul Braziliei reprezintă...",
+    "correct": "o constelație (Crucea Sudului)",
+    "wrong": "steaua Sirius"
+  },
+  {
+    "id": 97,
+    "question": "În română, „cosmos” înseamnă...",
+    "correct": "Universul",
+    "wrong": "tot ce e deasupra norilor"
+  },
+  {
+    "id": 98,
+    "question": "Telescopul spațial observă mai bine pentru că este...",
+    "correct": "deasupra atmosferei",
+    "wrong": "pe cel mai înalt vârf montan"
+  },
+  {
+    "id": 99,
+    "question": "Cel mai apropiat obiect cosmic de noi (în afară de atmosferă) este...",
+    "correct": "Luna",
+    "wrong": "Soarele"
+  },
+  {
+    "id": 100,
+    "question": "Scopul explorării spațiale include...",
+    "correct": "știință și înțelegerea Universului",
+    "wrong": "exploatarea resurselor pe Lună"
+  },
+  {
+    "id": 101,
+    "question": "Sputnik a fost primul...",
+    "correct": "satelit artificial al Pământului",
+    "wrong": "navă cu echipaj uman pe Lună"
+  },
+  {
+    "id": 102,
+    "question": "Programul Apollo a avut ca țintă...",
+    "correct": "Luna",
+    "wrong": "Marte"
+  },
+  {
+    "id": 103,
+    "question": "Artemis este un program modern de explorare a...",
+    "correct": "Lunii",
+    "wrong": "Marte"
+  },
+  {
+    "id": 104,
+    "question": "Primul român în spațiu a fost...",
+    "correct": "Dumitru Prunariu",
+    "wrong": "Nadia Comăneci"
+  },
+  {
+    "id": 105,
+    "question": "Pe ISS, astronauții fac...",
+    "correct": "experimente științifice",
+    "wrong": "doar filmări și interviuri"
+  },
+  {
+    "id": 106,
+    "question": "Mâncarea în spațiu este adesea...",
+    "correct": "ambalată special",
+    "wrong": "la fel ca acasă, gătită proaspăt"
+  },
+  {
+    "id": 107,
+    "question": "În spațiu, corpul uman poate...",
+    "correct": "pierde masă musculară fără exerciții",
+    "wrong": "crește în înălțime permanent"
+  },
+  {
+    "id": 108,
+    "question": "Astronauții se antrenează în...",
+    "correct": "piscine și simulatoare",
+    "wrong": "zboruri comerciale lungi"
+  },
+  {
+    "id": 109,
+    "question": "Casca costumului spațial protejează...",
+    "correct": "capul și fața",
+    "wrong": "doar ochii de la razele UV"
+  },
+  {
+    "id": 110,
+    "question": "Fazele Lunii durează aproximativ...",
+    "correct": "o lună calendaristică",
+    "wrong": "aproximativ 7 zile"
+  },
+  {
+    "id": 111,
+    "question": "Luna plină apare când vedem...",
+    "correct": "fața complet luminată",
+    "wrong": "doar o fâșie luminată"
+  },
+  {
+    "id": 112,
+    "question": "Luna nouă înseamnă că Luna este...",
+    "correct": "aproape invizibilă de pe Pământ",
+    "wrong": "complet neagră și invizibilă mereu"
+  },
+  {
+    "id": 113,
+    "question": "Marea atracție a Lunii provoacă...",
+    "correct": "maree pe Pământ",
+    "wrong": "cutremure la fiecare lună plină"
+  },
+  {
+    "id": 114,
+    "question": "Anotimpurile pe Pământ sunt cauzate de...",
+    "correct": "înclinarea axei Pământului",
+    "wrong": "distanța variabilă Pământ–Soare"
+  },
+  {
+    "id": 115,
+    "question": "Vara în emisfera nordică, zilele sunt...",
+    "correct": "mai lungi",
+    "wrong": "la fel de lungi ca iarna"
+  },
+  {
+    "id": 116,
+    "question": "Orion este o...",
+    "correct": "constelație",
+    "wrong": "stea din apropierea Soarelui"
+  },
+  {
+    "id": 117,
+    "question": "Crucea Sudului este vizibilă mai ales din...",
+    "correct": "emisfera sudică",
+    "wrong": "emisfera nordică"
+  },
+  {
+    "id": 118,
+    "question": "O stea căzătoare este de fapt un...",
+    "correct": "meteor strălucitor",
+    "wrong": "stea care cade din cer"
+  },
+  {
+    "id": 119,
+    "question": "Ploaia de meteori Perseide apare în...",
+    "correct": "vară",
+    "wrong": "toamna"
+  },
+  {
+    "id": 120,
+    "question": "Un meteorit este un meteor care...",
+    "correct": "ajunge pe sol",
+    "wrong": "arde complet în atmosferă"
+  },
+  {
+    "id": 121,
+    "question": "Centura lui Kuiper conține multe...",
+    "correct": "corpuri înghețate mici",
+    "wrong": "comete de dimensiune planetară"
+  },
+  {
+    "id": 122,
+    "question": "Pluto se află în regiunea...",
+    "correct": "Kuiper",
+    "wrong": "centura de asteroizi"
+  },
+  {
+    "id": 123,
+    "question": "Ceres este o...",
+    "correct": "planetă pitică",
+    "wrong": "asteroid mare din centură"
+  },
+  {
+    "id": 124,
+    "question": "Phobos și Deimos sunt...",
+    "correct": "lunile lui Marte",
+    "wrong": "lunile lui Jupiter"
+  },
+  {
+    "id": 125,
+    "question": "Io, una dintre lunile lui Jupiter, are...",
+    "correct": "vulcani activi",
+    "wrong": "ocean lichid la suprafață"
+  },
+  {
+    "id": 126,
+    "question": "Europa (luna lui Jupiter) are subsol posibil de...",
+    "correct": "apă lichidă sub gheață",
+    "wrong": "magma fierbinte la suprafață"
+  },
+  {
+    "id": 127,
+    "question": "Ganymede este mai mare decât...",
+    "correct": "Mercur",
+    "wrong": "Luna Pământului"
+  },
+  {
+    "id": 128,
+    "question": "Triton este o lună mare a lui...",
+    "correct": "Neptun",
+    "wrong": "Uranus"
+  },
+  {
+    "id": 129,
+    "question": "Inelele lui Uranus sunt...",
+    "correct": "mai slabe vizual decât ale lui Saturn",
+    "wrong": "la fel de late ca ale lui Saturn"
+  },
+  {
+    "id": 130,
+    "question": "Neptun a fost descoperit prin...",
+    "correct": "calcule matematice",
+    "wrong": "observare directă fără calcule"
+  },
+  {
+    "id": 131,
+    "question": "Uranus a fost descoperit în...",
+    "correct": "secolul al XVIII-lea",
+    "wrong": "secolul al XIX-lea"
+  },
+  {
+    "id": 132,
+    "question": "Galileo Galilei a observat...",
+    "correct": "lunile lui Jupiter",
+    "wrong": "inelele lui Saturn"
+  },
+  {
+    "id": 133,
+    "question": "Telescopul lui Galileo era...",
+    "correct": "mult mai simplu decât Hubble",
+    "wrong": "la fel de performant ca Hubble"
+  },
+  {
+    "id": 134,
+    "question": "Anul lumină măsoară...",
+    "correct": "distanța pe care lumina o parcurge într-un an",
+    "wrong": "timpul în care sunetul parcurge o distanță"
+  },
+  {
+    "id": 135,
+    "question": "Cea mai apropiată galaxie mare de noi este...",
+    "correct": "Andromeda",
+    "wrong": "Calea Lactee"
+  },
+  {
+    "id": 136,
+    "question": "Calea Lactee și Andromeda se vor...",
+    "correct": "aproba în viitor îndepărtat",
+    "wrong": "rămân separate la infinit"
+  },
+  {
+    "id": 137,
+    "question": "Soarele este o stea de tip...",
+    "correct": "pitic galben",
+    "wrong": "pitic alb (deja acum)"
+  },
+  {
+    "id": 138,
+    "question": "O eclipsă totală de Soare poate fi văzută doar de pe o...",
+    "correct": "zonă îngustă pe Pământ",
+    "wrong": "orice loc de pe Pământ în același timp"
+  },
+  {
+    "id": 139,
+    "question": "Lună roșie apare adesea la...",
+    "correct": "eclipsă totală de Lună",
+    "wrong": "orice lună plină obișnuită"
+  },
+  {
+    "id": 140,
+    "question": "Pământul are un singur...",
+    "correct": "satelit natural mare",
+    "wrong": "inel subțire de praf"
+  },
+  {
+    "id": 141,
+    "question": "Atmosfera lui Marte este foarte...",
+    "correct": "subțire",
+    "wrong": "bogată în oxigen"
+  },
+  {
+    "id": 142,
+    "question": "Pe Venus presiunea la suprafață este...",
+    "correct": "foarte mare",
+    "wrong": "similară cu cea de pe Pământ"
+  },
+  {
+    "id": 143,
+    "question": "Mercur are temperaturi extreme pentru că...",
+    "correct": "nu are atmosferă care să rețină căldura",
+    "wrong": "are cea mai lungă zi din sistem"
+  },
+  {
+    "id": 144,
+    "question": "Jupiter este un gigant...",
+    "correct": "gazos",
+    "wrong": "de gheață și rocă"
+  },
+  {
+    "id": 145,
+    "question": "Saturn este compus în mare parte din...",
+    "correct": "hidrogen și heliu",
+    "wrong": "rocă și metale ca Pământul"
+  },
+  {
+    "id": 146,
+    "question": "Racheta are...",
+    "correct": "stadii care se separă",
+    "wrong": "un singur corp fără separări"
+  },
+  {
+    "id": 147,
+    "question": "Propulsia unei rachete funcționează prin...",
+    "correct": "acțiune și reacțiune",
+    "wrong": "elice care împinge aerul"
+  },
+  {
+    "id": 148,
+    "question": "Gravitația pe Marte este aproximativ...",
+    "correct": "o treime din cea pe Pământ",
+    "wrong": "două treimi din cea pe Pământ"
+  },
+  {
+    "id": 149,
+    "question": "Un pas pe Lună înseamnă că poți sări...",
+    "correct": "mai sus decât pe Pământ",
+    "wrong": "la fel ca pe Pământ"
+  },
+  {
+    "id": 150,
+    "question": "Stația spațială este construită din...",
+    "correct": "module asamblate în orbită",
+    "wrong": "asamblată complet pe Pământ și lansată gata"
+  },
+  {
+    "id": 151,
+    "question": "Astronauții dorm în...",
+    "correct": "saci fixați",
+    "wrong": "paturi cu saltele obișnuite"
+  },
+  {
+    "id": 152,
+    "question": "Apa în spațiu trebuie...",
+    "correct": "reciclată",
+    "wrong": "livrată lunar de pe Pământ"
+  },
+  {
+    "id": 153,
+    "question": "Plantele au fost cultivate și în...",
+    "correct": "spațiu",
+    "wrong": "stații antarctice sub gheață"
+  },
+  {
+    "id": 154,
+    "question": "Soarele are pete întunecate care sunt...",
+    "correct": "zone mai reci",
+    "wrong": "găuri care ard mai rece"
+  },
+  {
+    "id": 155,
+    "question": "O erupție solară poate afecta...",
+    "correct": "comunicațiile pe Pământ",
+    "wrong": "gravitația Lunii"
+  },
+  {
+    "id": 156,
+    "question": "Vântul solar este un flux de...",
+    "correct": "particule de la Soare",
+    "wrong": "particule din centrul galaxiei"
+  },
+  {
+    "id": 157,
+    "question": "Magnetosfera Pământului ne protejează de...",
+    "correct": "parte din vântul solar",
+    "wrong": "lumina stelelor îndepărtate"
+  },
+  {
+    "id": 158,
+    "question": "Polii magnetici nu sunt exact la...",
+    "correct": "polii geografici",
+    "wrong": "ecuatorul geografic"
+  },
+  {
+    "id": 159,
+    "question": "Harta stelelor se schimbă lent pentru că...",
+    "correct": "stelele se mișcă în galaxie",
+    "wrong": "Pământul orbitează Soarele"
+  },
+  {
+    "id": 160,
+    "question": "Planeta care se rotește cel mai rapid în jurul axei este...",
+    "correct": "Jupiter",
+    "wrong": "Terra"
+  },
+  {
+    "id": 161,
+    "question": "O zi pe Jupiter durează aproximativ...",
+    "correct": "10 ore",
+    "wrong": "aproximativ 24 de ore"
+  },
+  {
+    "id": 162,
+    "question": "Saturn poate avea peste...",
+    "correct": "80 de luni cunoscute",
+    "wrong": "aproximativ 30"
+  },
+  {
+    "id": 163,
+    "question": "Luna Pământului se formează probabil din...",
+    "correct": "ciocnirea timpurie a Pământului",
+    "wrong": "fragment din centura de asteroizi"
+  },
+  {
+    "id": 164,
+    "question": "Craterele de pe Mercur arată că...",
+    "correct": "suprafața e veche și bombardată",
+    "wrong": "suprafață tânără, fără cratere"
+  },
+  {
+    "id": 165,
+    "question": "Telescopul James Webb orbitează în jurul unui punct numit...",
+    "correct": "L2",
+    "wrong": "orbita joasă a Pământului"
+  },
+  {
+    "id": 166,
+    "question": "Cassini a studiat în special...",
+    "correct": "Saturn",
+    "wrong": "Jupiter"
+  },
+  {
+    "id": 167,
+    "question": "New Horizons a trecut pe lângă...",
+    "correct": "Pluto",
+    "wrong": "Marte"
+  },
+  {
+    "id": 168,
+    "question": "Curiosity este un rover pe...",
+    "correct": "Marte",
+    "wrong": "Venus"
+  },
+  {
+    "id": 169,
+    "question": "Lună albastră înseamnă...",
+    "correct": "a doua lună plină într-o lună calendaristică",
+    "wrong": "Luna pare albastră în cer"
+  },
+  {
+    "id": 170,
+    "question": "Superlună apare când Luna este...",
+    "correct": "mai aproape și plină",
+    "wrong": "mai mică și în faza nouă"
+  },
+  {
+    "id": 171,
+    "question": "Zgomotul nu se propagă în spațiu pentru că...",
+    "correct": "nu există aer",
+    "wrong": "gravitația anulează undele"
+  },
+  {
+    "id": 172,
+    "question": "În vid, flacăra unei lumânări...",
+    "correct": "nu arde normal",
+    "wrong": "arde normal, ca în cameră"
+  },
+  {
+    "id": 173,
+    "question": "Astronauții văd Soarele din spațiu ca fiind...",
+    "correct": "foarte strălucitor",
+    "wrong": "palidă, ca luna de pe Pământ"
+  },
+  {
+    "id": 174,
+    "question": "Cerul de pe Lună în timpul zilei pare...",
+    "correct": "negru",
+    "wrong": "albastru deschis ca pe Terra"
+  },
+  {
+    "id": 175,
+    "question": "Pe Marte, apusul poate părea...",
+    "correct": "albăstrui",
+    "wrong": "roșu aprins ca pe Pământ"
+  },
+  {
+    "id": 176,
+    "question": "Dioxidul de carbon e abundent în atmosfera lui...",
+    "correct": "Marte",
+    "wrong": "Venus"
+  },
+  {
+    "id": 177,
+    "question": "Oxigenul pe care îl respirăm vine în mare parte de la...",
+    "correct": "plante și alge",
+    "wrong": "oceanele care eliberează gaze"
+  },
+  {
+    "id": 178,
+    "question": "Căutarea vieții pe alte planete include...",
+    "correct": "căutarea apei lichide",
+    "wrong": "căutarea exclusiv a oxigenului"
+  },
+  {
+    "id": 179,
+    "question": "SETI caută...",
+    "correct": "semnale posibile de la civilizații",
+    "wrong": "explozii de supernovă"
+  },
+  {
+    "id": 180,
+    "question": "Un satelit de comunicații ajută la...",
+    "correct": "TV, internet și telefon",
+    "wrong": "irigații agricole"
+  },
+  {
+    "id": 181,
+    "question": "Telescopul pe Pământ vede stelele tremurând din cauza...",
+    "correct": "atmosferei",
+    "wrong": "distanța lor față de Pământ"
+  },
+  {
+    "id": 182,
+    "question": "Observatorul spațial evită...",
+    "correct": "turbulența atmosferică",
+    "wrong": "doar poluarea luminoasă"
+  },
+  {
+    "id": 183,
+    "question": "O cometă vine adesea din...",
+    "correct": "marginile Sistemului Solar",
+    "wrong": "centura de asteroizi"
+  },
+  {
+    "id": 184,
+    "question": "Coada cometei pointează de obicei...",
+    "correct": "departe de Soare",
+    "wrong": "spre Soare, în urma nucleului"
+  },
+  {
+    "id": 185,
+    "question": "Asteroidul care a dus la dispariția dinozaurilor a lovit...",
+    "correct": "Pământul",
+    "wrong": "Jupiter"
+  },
+  {
+    "id": 186,
+    "question": "NASA este o agenție spațială din...",
+    "correct": "Statele Unite",
+    "wrong": "Rusia"
+  },
+  {
+    "id": 187,
+    "question": "ESA este agenția spațială...",
+    "correct": "europeană",
+    "wrong": "a Statelor Unite"
+  },
+  {
+    "id": 188,
+    "question": "Rachetele moderne pot fi...",
+    "correct": "parțial reutilizabile",
+    "wrong": "întotdeauna de unică folosință"
+  },
+  {
+    "id": 189,
+    "question": "Gravitația ține planetele pe...",
+    "correct": "orbită în jurul Soarelui",
+    "wrong": "traiectorie dreaptă spre exterior"
+  },
+  {
+    "id": 190,
+    "question": "Luna nu are vreme cu ploaie pentru că...",
+    "correct": "nu are atmosferă",
+    "wrong": "există nori rari de apă"
+  },
+  {
+    "id": 191,
+    "question": "Temperatura în spațiul cosmic depinde de...",
+    "correct": "dacă ești la soare sau la umbră",
+    "wrong": "constantă, foarte rece peste tot"
+  },
+  {
+    "id": 192,
+    "question": "Un astronaut care plutește în ISS este în...",
+    "correct": "cădere liberă continuă",
+    "wrong": "loc fără nicio gravitație"
+  },
+  {
+    "id": 193,
+    "question": "Cel mai înalt munte din Sistemul Solar este pe...",
+    "correct": "Marte",
+    "wrong": "Pământ (Muntele Everest)"
+  },
+  {
+    "id": 194,
+    "question": "Venus se rotește...",
+    "correct": "invers față de majoritatea planetelor",
+    "wrong": "în același sens ca Pământul"
+  },
+  {
+    "id": 195,
+    "question": "Steaua Sirius este...",
+    "correct": "foarte strălucitoare pe cer",
+    "wrong": "planeta Venus la strălucire maximă"
+  },
+  {
+    "id": 196,
+    "question": "Planeta Uranus a fost numită după...",
+    "correct": "zeul cerului în mitologie",
+    "wrong": "zeul mărilor (Poseidon)"
+  },
+  {
+    "id": 197,
+    "question": "Neptun a fost numit după...",
+    "correct": "zeul mărilor",
+    "wrong": "zeul cerului (Zeus)"
+  },
+  {
+    "id": 198,
+    "question": "Înainte de telescop, oamenii credeau că Pământul este...",
+    "correct": "centrul pentru unii, plat pentru alții",
+    "wrong": "întotdeauna o sferă perfectă"
+  },
+  {
+    "id": 199,
+    "question": "Copernic a propus că...",
+    "correct": "Pământul orbitează Soarele",
+    "wrong": "Soarele orbitează Pământul"
+  },
+  {
+    "id": 200,
+    "question": "Explorarea spațiului ne ajută să înțelegem...",
+    "correct": "originea și viitorul Pământului",
+    "wrong": "doar tehnologia de comunicații"
+  }
+]

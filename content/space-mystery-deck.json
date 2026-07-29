@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "ui": {
+    "cardCountMin": 3,
+    "cardCountMax": 5,
+    "pickCount": 1,
+    "instantOnReveal": true
+  },
+  "effects": [
+    {
+      "id": "car",
+      "icon": "🚗",
+      "title": "Mașina cosmică",
+      "description": "Mergi 2 casute înainte imediat.",
+      "effectKey": "car",
+      "steps": 2
+    },
+    {
+      "id": "phone",
+      "icon": "📱",
+      "title": "Apel intergalactic",
+      "description": "Pierzi 2 coins.",
+      "effectKey": "phone",
+      "coinsDelta": -2
+    },
+    {
+      "id": "card",
+      "icon": "💳",
+      "title": "Card de aur",
+      "description": "Primești 5 coins.",
+      "effectKey": "card",
+      "coinsDelta": 5
+    },
+    {
+      "id": "rocket",
+      "icon": "🚀",
+      "title": "Rachetă sprint",
+      "description": "Sari lângă jucătorul din față cel mai apropiat (detalii mișcare: de definit în cod).",
+      "effectKey": "rocket"
+    },
+    {
+      "id": "wand",
+      "icon": "🪄",
+      "title": "Bagheta haos",
+      "description": "Jucătorii se amestecă la întâmplare între poziții (inclusiv tu).",
+      "effectKey": "wand"
+    },
+    {
+      "id": "magnet",
+      "icon": "🧲",
+      "title": "Magnet spațial",
+      "description": "Ești tras înapoi lângă jucătorul de după tine. Dacă ești ultimul, stai pe loc.",
+      "effectKey": "magnet"
+    }
+  ],
+  "defaultWeights": {
+    "car": 1,
+    "phone": 1,
+    "card": 1,
+    "rocket": 1,
+    "wand": 1,
+    "magnet": 1
+  }
+}

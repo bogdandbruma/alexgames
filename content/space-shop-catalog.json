@@ -1,0 +1,107 @@
+{
+  "version": 1,
+  "currencyLabel": "coins",
+  "maxPerVisit": 1,
+  "globalStockPerItem": 1,
+  "items": [
+    {
+      "id": "pistol",
+      "name": "Pistol",
+      "cost": 1,
+      "icon": "🔫",
+      "description": "Împinge un jucător ales cu 1 casută înainte.",
+      "effectKey": "pistol",
+      "instantOnBuy": false,
+      "inventory": true,
+      "usesPerTurn": 1
+    },
+    {
+      "id": "dice-x2",
+      "name": "x2 zar",
+      "cost": 5,
+      "icon": "🎲",
+      "description": "Următorul zar pe care îl arunci este dublat.",
+      "effectKey": "dice-x2",
+      "instantOnBuy": false,
+      "inventory": true,
+      "armBuff": "nextRoll"
+    },
+    {
+      "id": "coins-x3",
+      "name": "x3 coins",
+      "cost": 5,
+      "icon": "🪙",
+      "description": "La următoarea cameră cu coins la intrare, primești de 3 ori suma.",
+      "effectKey": "coins-x3",
+      "instantOnBuy": false,
+      "inventory": true,
+      "armBuff": "nextCoinsOnEnter"
+    },
+    {
+      "id": "trivia-cancel",
+      "name": "Anulare trivia",
+      "cost": 3,
+      "icon": "🚫",
+      "description": "Sari peste întrebarea trivia — fără câștig sau pierdere de coins.",
+      "effectKey": "trivia-cancel",
+      "instantOnBuy": false,
+      "inventory": true,
+      "separateFromActionItemLimit": true
+    },
+    {
+      "id": "claw",
+      "name": "Gheara",
+      "cost": 9,
+      "icon": "🦾",
+      "description": "Trage un jucător ales cu 3 casute înapoi.",
+      "effectKey": "claw",
+      "instantOnBuy": false,
+      "inventory": true,
+      "usesPerTurn": 1
+    },
+    {
+      "id": "bomb",
+      "name": "Bomba",
+      "cost": 6,
+      "icon": "💣",
+      "description": "Toți ceilalți jucători merg 6 casute înapoi. Tu rămâi pe loc.",
+      "effectKey": "bomb",
+      "instantOnBuy": false,
+      "inventory": true,
+      "usesPerTurn": 1
+    },
+    {
+      "id": "star",
+      "name": "Steluta",
+      "cost": 7,
+      "icon": "⭐",
+      "description": "Avansezi tu cu 8 casute înainte.",
+      "effectKey": "star",
+      "instantOnBuy": false,
+      "inventory": true,
+      "usesPerTurn": 1
+    },
+    {
+      "id": "cosmic-key",
+      "name": "Cheie cosmică",
+      "cost": 6,
+      "icon": "🔑",
+      "description": "Scapi din capcană când ești blocat — consumă cheia și joci turul normal.",
+      "effectKey": "cosmic-key",
+      "instantOnBuy": false,
+      "inventory": true,
+      "trapEscape": true
+    },
+    {
+      "id": "swap-arrow",
+      "name": "Sageata de schimb",
+      "cost": 14,
+      "icon": "🏹",
+      "description": "Schimbi locul cu un jucător ales.",
+      "effectKey": "swap-arrow",
+      "instantOnBuy": false,
+      "inventory": true,
+      "usesPerTurn": 1
+    }
+  ]
+}

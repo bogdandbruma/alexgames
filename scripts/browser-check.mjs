@@ -23,13 +23,13 @@ await page.addInitScript(() => {
     sessionStorage.setItem("space-board-demo-test-started", "true");
   }
 
-  Math.random = () => 0.4;
+  Math.random = () => 0.2;
 });
 
 await page.goto(appUrl, { waitUntil: "load" });
-await page.getByRole("heading", { name: "Jocurile noastre" }).waitFor();
-await page.getByRole("button", { name: /play/i }).click();
-await page.getByRole("heading", { name: "Space Board" }).waitFor();
+await page.getByRole("heading", { name: "Jocurile Brumix" }).waitFor();
+await page.getByRole("button", { name: /Joac/i }).click();
+await page.getByRole("heading", { name: /Cursa spa.ial/i }).waitFor();
 await page.locator("canvas").waitFor();
 await page.waitForTimeout(2500);
 
@@ -65,40 +65,37 @@ if (!canvasPainted) {
   failures.push("The WebGL canvas did not appear to paint scene pixels.");
 }
 
-await page.getByRole("button", { name: "Add player" }).click();
-
 const setupPlayers = page.locator(".setup-player");
-if ((await setupPlayers.count()) !== 3) {
-  failures.push("Adding a third player did not update the setup list.");
+if ((await setupPlayers.count()) !== 2) {
+  failures.push("The default setup list did not show two players.");
 }
 
-await setupPlayers.nth(0).getByLabel("Name").fill("Mara");
-await setupPlayers.nth(0).getByRole("button", { name: "Bunny" }).click();
-await setupPlayers.nth(1).getByLabel("Name").fill("CPU");
-await setupPlayers.nth(2).getByLabel("Name").fill("Alex");
-await setupPlayers.nth(2).getByRole("button", { name: "Player" }).click();
-await setupPlayers.nth(2).getByRole("button", { name: "Cat" }).click();
+await setupPlayers.nth(0).getByLabel("Nume").fill("Mara");
+await setupPlayers.nth(0).getByRole("button", { name: /^Schimbă$/i }).click();
+await page.getByRole("dialog", { name: /Alege personajul/i }).getByRole("button", { name: /Iepure/i }).click();
+await setupPlayers.nth(1).getByLabel("Nume").fill("Alex");
+await setupPlayers.nth(1).getByRole("button", { name: /Juc.tor/i }).click();
+await setupPlayers.nth(1).getByRole("button", { name: /^Schimbă$/i }).click();
+await page.getByRole("dialog", { name: /Alege personajul/i }).getByRole("button", { name: /Pisic/i }).click();
 
-await page.getByRole("button", { name: /start game/i }).click();
+await page.getByRole("button", { name: /ncepe jocul/i }).click();
 await page.locator(".player-roster").getByText("Mara", { exact: true }).waitFor();
-await page.locator(".player-roster").getByText("CPU", { exact: true }).waitFor();
 await page.locator(".player-roster").getByText("Alex", { exact: true }).waitFor();
 
 await page.evaluate(() => {
   window.__roomSamples = [];
   window.__roomSampleTimer = window.setInterval(() => {
     const roomText =
-      document.querySelector('[aria-label="Current room"] strong')
+      document.querySelector('[aria-label^="Camera"] strong')
         ?.textContent ?? "";
     window.__roomSamples.push(roomText.trim());
   }, 40);
 });
 
-await page.getByRole("button", { name: /roll dice/i }).click();
-await page.getByText("The teleporter sends you forward to room 6.").waitFor({
+await page.getByRole("button", { name: /^D. cu zarul$/i }).click();
+await page.getByText(/R.ndul lui Alex/i).waitFor({
   timeout: 15000,
 });
-await page.getByText(/Turn: CPU/i).waitFor({ timeout: 9000 });
 
 const roomSamples = await page.evaluate(() => {
   window.clearInterval(window.__roomSampleTimer);
@@ -106,8 +103,8 @@ const roomSamples = await page.evaluate(() => {
 });
 
 if (
-  !roomSamples.includes("2. Storage") ||
-  !roomSamples.includes("3. Observation Room")
+  !roomSamples.some((room) => room.startsWith("2.")) ||
+  !roomSamples.some((room) => room.startsWith("3."))
 ) {
   failures.push(
     `Intermediate rooms were not sampled during movement: ${roomSamples.join(
@@ -116,11 +113,8 @@ if (
   );
 }
 
-await page.getByText(/CPU rolls the dice/i).waitFor({ timeout: 3000 });
-await page.getByText(/Turn: Alex/i).waitFor({ timeout: 16000 });
-
 const diceValue = Number(
-  await page.locator(".status-card-small strong").textContent(),
+  await page.locator(".dice-readout strong").textContent(),
 );
 if (!Number.isInteger(diceValue) || diceValue < 1 || diceValue > 6) {
   failures.push(`Dice result was not between 1 and 6: ${diceValue}`);
@@ -133,17 +127,64 @@ if (visiblePips !== diceValue) {
   );
 }
 
-const rollButton = page.getByRole("button", { name: /roll dice/i });
+const rollButton = page.getByRole("button", { name: /^D. cu zarul$/i });
 if (!(await rollButton.isEnabled())) {
-  failures.push("The next human player could not roll after the AI turn.");
+  failures.push("The next human player could not roll after the first turn.");
 }
 
 await page.reload({ waitUntil: "load" });
 await page.locator(".player-roster").getByText("Alex", { exact: true }).waitFor();
-await page.getByText(/Turn: Alex/i).waitFor();
+await page.getByText(/R.ndul lui Alex/i).waitFor();
 
-await page.getByRole("button", { name: /restart/i }).click();
-await page.getByRole("button", { name: /start game/i }).waitFor();
+await page.evaluate(() => {
+  const rawState = localStorage.getItem("space-board-demo");
+
+  if (!rawState) {
+    throw new Error("Missing persisted Space Board state.");
+  }
+
+  const persisted = JSON.parse(rawState);
+  const players = persisted.state.players.map((player, index) => ({
+    ...player,
+    armedCoinsX3: false,
+    armedDiceX2: false,
+    coins: 0,
+    inventory: [],
+    lastDice: null,
+    positionIndex: index === 0 ? 64 : 0,
+    trapped: false,
+  }));
+
+  persisted.state = {
+    ...persisted.state,
+    currentPlayerIndex: 0,
+    diceValue: null,
+    message: `Rândul lui ${players[0].name}.`,
+    phase: "playing",
+    players,
+    winnerId: null,
+  };
+
+  localStorage.setItem("space-board-demo", JSON.stringify(persisted));
+});
+
+await page.reload({ waitUntil: "load" });
+await page.locator(".player-roster").getByText("Mara", { exact: true }).waitFor();
+await page
+  .locator('[aria-label^="Camera"] strong')
+  .filter({ hasText: /^65\./ })
+  .waitFor();
+await page.getByRole("button", { name: /^D. cu zarul$/i }).click();
+await page.locator(".victory-overlay").waitFor({
+  timeout: 16000,
+});
+await page.getByText(/Mara a ajuns pe Luna/i).waitFor();
+await page.getByRole("button", { name: "Revansa" }).first().click();
+await page.locator(".player-roster").getByText("Mara", { exact: true }).waitFor();
+await page
+  .locator('[aria-label^="Camera"] strong')
+  .filter({ hasText: /^1\./ })
+  .waitFor();
 
 await page.setViewportSize({ width: 390, height: 760 });
 await page.waitForTimeout(700);

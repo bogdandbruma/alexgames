@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Space Board — analiza jocului (actualizat)</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --card: #151d35;
+      --text: #eef3ff;
+      --muted: #9eb0d9;
+      --accent: #6ee7ff;
+      --gold: #ffd166;
+      --good: #7bed9f;
+      --warn: #ff9f43;
+      --bad: #ff6b81;
+      --shop: #a29bfe;
+      --trivia: #54a0ff;
+      --mystery: #f368e0;
+      --trap: #ee5253;
+      --portal: #48dbfb;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: radial-gradient(ellipse at top, #1a2744 0%, var(--bg) 55%);
+      color: var(--text);
+      line-height: 1.55;
+      font-size: 18px;
+    }
+    header {
+      text-align: center;
+      padding: 2rem 1rem 1rem;
+      border-bottom: 2px dashed rgba(110, 231, 255, 0.35);
+    }
+    header h1 {
+      margin: 0 0 0.5rem;
+      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      color: var(--accent);
+    }
+    header p { margin: 0; color: var(--muted); max-width: 42rem; margin-inline: auto; }
+    main { max-width: 960px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+    h2 {
+      margin-top: 2.5rem;
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    h3 { margin-top: 1.5rem; color: var(--gold); font-size: 1.2rem; }
+    .card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 1.25rem 1.35rem;
+      margin: 1rem 0;
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    }
+    .big-number {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: var(--gold);
+      line-height: 1.1;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1rem;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.75rem;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.25rem 0.65rem;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin: 0.15rem;
+    }
+    .pill-coins { background: rgba(255, 209, 102, 0.2); color: var(--gold); }
+    .pill-shop { background: rgba(162, 155, 254, 0.25); color: var(--shop); }
+    .pill-trivia { background: rgba(84, 160, 255, 0.25); color: var(--trivia); }
+    .pill-mystery { background: rgba(243, 104, 224, 0.2); color: var(--mystery); }
+    .pill-trap { background: rgba(238, 82, 83, 0.25); color: var(--trap); }
+    .pill-portal { background: rgba(72, 219, 251, 0.2); color: var(--portal); }
+    .pill-finish { background: rgba(123, 237, 159, 0.2); color: var(--good); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.5rem 0.6rem;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    th { color: var(--muted); font-weight: 600; }
+    .bar-chart { margin: 0.75rem 0; }
+    .bar-row { margin-bottom: 0.65rem; }
+    .bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.88rem;
+      color: var(--muted);
+      margin-bottom: 0.2rem;
+    }
+    .bar-track {
+      height: 22px;
+      background: rgba(0,0,0,0.35);
+      border-radius: 8px;
+      overflow: hidden;
+      position: relative;
+    }
+    .bar-before, .bar-after {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      border-radius: 8px;
+      transition: width 0.4s ease;
+    }
+    .bar-before { background: linear-gradient(90deg, #5a6a8a, #4a5568); opacity: 0.85; }
+    .bar-after {
+      background: linear-gradient(90deg, #00d2d3, var(--good));
+      box-shadow: 0 0 12px rgba(123, 237, 159, 0.4);
+    }
+    .legend-inline { font-size: 0.8rem; color: var(--muted); margin-top: 0.5rem; }
+    .legend-inline span { margin-right: 1rem; }
+    .legend-inline .swatch-before,
+    .legend-inline .swatch-after {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      vertical-align: middle;
+      margin-right: 0.25rem;
+    }
+    .swatch-before { background: #5a6a8a; }
+    .swatch-after { background: var(--good); }
+    .scenario {
+      border-left: 5px solid var(--accent);
+      scroll-margin-top: 1rem;
+    }
+    .scenario h2 { margin-top: 0; }
+    ul.kid { padding-left: 1.2rem; }
+    ul.kid li { margin-bottom: 0.4rem; }
+    .compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-top: 0.75rem;
+    }
+    @media (max-width: 560px) {
+      .compare { grid-template-columns: 1fr; }
+    }
+    .compare-box {
+      background: rgba(0,0,0,0.2);
+      border-radius: 12px;
+      padding: 0.75rem 1rem;
+    }
+    .compare-box strong { display: block; margin-bottom: 0.35rem; font-size: 0.85rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    nav.toc {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      justify-content: center;
+      margin: 1rem 0 2rem;
+    }
+    nav.toc a {
+      color: var(--accent);
+      text-decoration: none;
+      padding: 0.4rem 0.75rem;
+      border: 1px solid rgba(110, 231, 255, 0.35);
+      border-radius: 999px;
+      font-size: 0.9rem;
+    }
+    nav.toc a:hover { background: rgba(110, 231, 255, 0.12); }
+    .zone-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+    .zone {
+      flex: 1 1 140px;
+      padding: 0.6rem;
+      border-radius: 10px;
+      text-align: center;
+      font-size: 0.85rem;
+      background: rgba(255,255,255,0.04);
+    }
+    .zone b { display: block; font-size: 1.3rem; color: var(--gold); }
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+      padding: 2rem 1rem;
+    }
+    .mascot { font-size: 3rem; line-height: 1; }
+    .status {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 0.2rem 0.55rem;
+      border-radius: 6px;
+      margin-left: 0.5rem;
+      vertical-align: middle;
+    }
+    .status-done { background: rgba(123, 237, 159, 0.25); color: var(--good); }
+    .status-partial { background: rgba(255, 159, 67, 0.25); color: var(--warn); }
+    .status-todo { background: rgba(255, 107, 129, 0.2); color: var(--bad); }
+    .scenario-done { border-left-color: var(--good); opacity: 0.95; }
+    .scenario-partial { border-left-color: var(--warn); }
+    .scenario-todo { border-left-color: var(--bad); }
+    .progress-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 0.6rem;
+      margin-top: 0.75rem;
+    }
+    .progress-item {
+      text-align: center;
+      padding: 0.65rem;
+      border-radius: 10px;
+      background: rgba(0,0,0,0.25);
+      font-size: 0.9rem;
+    }
+    .progress-item.done { outline: 2px solid rgba(123, 237, 159, 0.5); }
+    .progress-item.partial { outline: 2px solid rgba(255, 159, 67, 0.5); }
+    .progress-item.todo { outline: 2px solid rgba(255, 107, 129, 0.35); }
+    .note-done {
+      background: rgba(123, 237, 159, 0.12);
+      border-radius: 10px;
+      padding: 0.65rem 0.85rem;
+      margin: 0.75rem 0 0;
+      font-size: 0.95rem;
+      color: #c8f7dc;
+    }
+    .note-partial {
+      background: rgba(255, 159, 67, 0.12);
+      border-radius: 10px;
+      padding: 0.65rem 0.85rem;
+      margin: 0.75rem 0 0;
+      font-size: 0.95rem;
+      color: #ffe0b2;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="mascot">🚀🪐🎲</div>
+    <h1>Space Board — analiza jocului</h1>
+    <p>
+      Pagină pentru copii (și părinți): cum e <strong>jocul acum</strong> după ultimele schimbări
+      și cum stau cele <strong>5 idei</strong> de îmbunătățire — ce e făcut ✅ și ce mai putem face.
+    </p>
+  </header>
+
+  <main>
+    <nav class="toc">
+      <a href="#progres">Progres</a>
+      <a href="#acum">Jocul acum</a>
+      <a href="#monede">Monede</a>
+      <a href="#magazin">Magazin</a>
+      <a href="#s1">Ideea 1</a>
+      <a href="#s2">Ideea 2</a>
+      <a href="#s3">Ideea 3</a>
+      <a href="#s4">Ideea 4</a>
+      <a href="#s5">Ideea 5</a>
+      <a href="#ramane">Ce mai rămâne</a>
+    </nav>
+
+    <section class="card" id="progres">
+      <h2 style="margin-top:0">📋 Progres pe idei</h2>
+      <p style="margin-top:0;color:var(--muted)">3 idei sunt gata în joc, 1 e pe jumătate, 1 încă nu.</p>
+      <div class="progress-grid">
+        <div class="progress-item done">🪙 Ideea 1<br><strong>Gata</strong></div>
+        <div class="progress-item done">🧭 Ideea 2<br><strong>Gata</strong></div>
+        <div class="progress-item done">🃏 Ideea 3<br><strong>Gata+</strong></div>
+        <div class="progress-item todo">🪤 Ideea 4<br><strong>De făcut</strong></div>
+        <div class="progress-item partial">🛒 Ideea 5<br><strong>Parțial</strong></div>
+      </div>
+    </section>
+
+    <section id="acum">
+      <h2>🗺️ Jocul acum — pe scurt</h2>
+      <div class="grid-2">
+        <div class="card">
+          <div class="big-number">67</div>
+          <p><strong>camere (nivele)</strong> pe tabla de joc. Ultima este <strong>camera 67</strong> — linia de sosire 🏁.</p>
+        </div>
+        <div class="card">
+          <p>Te miști cu <strong>zarul</strong> (1–6). Intri într-o cameră și se întâmplă ceva: monede, magazin, întrebare, surpriză, capcană sau portal.</p>
+        </div>
+      </div>
+
+      <h3>Tipuri de camere — câte sunt?</h3>
+      <div class="card">
+        <p style="margin-top:0">Fiecare tip are o culoare în joc. Iată câte camere de fiecare există:</p>
+        <div>
+          <span class="pill pill-coins">🪙 Monede — 34</span>
+          <span class="pill pill-trivia">❓ Trivia — 12</span>
+          <span class="pill pill-trap">🪤 Capcană — 5</span>
+          <span class="pill pill-mystery">🃏 Mister — 7</span>
+          <span class="pill pill-shop">🛒 Magazin — 4</span>
+          <span class="pill pill-portal">🌀 Portal — 4</span>
+          <span class="pill pill-finish">🏁 Finish — 1</span>
+        </div>
+
+        <h3 style="margin-top:1.25rem">Unde sunt pe hartă? (numere de cameră)</h3>
+        <table>
+          <thead>
+            <tr><th>Tip</th><th>Camere (ID)</th><th>Ce se întâmplă</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>🛒 Magazin</td>
+              <td><strong>13</strong>, <strong>28</strong>, <strong>48</strong>, <strong>53</strong></td>
+              <td>Cumperi obiecte cu monede (max 1 obiect per vizită). Magazin nou în zona quiz la <strong>48</strong>.</td>
+            </tr>
+            <tr>
+              <td>🃏 Mister</td>
+              <td><strong>17</strong>, <strong>24</strong>, <strong>29</strong>, <strong>39</strong>, <strong>41</strong>, <strong>54</strong>, <strong>56</strong></td>
+              <td>Alegi o carte: mașină, telefon, card cu monede (+5), rachetă, baghetă, magnet…</td>
+            </tr>
+            <tr>
+              <td>❓ Trivia</td>
+              <td><strong>32</strong>, <strong>33</strong>, <strong>36–38</strong>, <strong>40</strong>, <strong>42</strong>, <strong>44</strong>, <strong>46–47</strong>, <strong>49–50</strong> (12 camere)</td>
+              <td>Răspuns corect: <strong>+1</strong> monedă. Greșit: <strong>−1</strong> (nu sub 0).</td>
+            </tr>
+            <tr>
+              <td>🪙 Monede în zona quiz</td>
+              <td><strong>34</strong>, <strong>43</strong> (câte 1 monedă)</td>
+              <td>Pauze cu monede între întrebări.</td>
+            </tr>
+            <tr>
+              <td>🪤 Capcană</td>
+              <td><strong>52</strong>, <strong>55</strong>, <strong>58</strong>, <strong>65</strong>, <strong>66</strong></td>
+              <td>Rămâi blocat un tur — plătești <strong>10</strong> monede sau folosești cheia cosmică.</td>
+            </tr>
+            <tr>
+              <td>🌀 Portal</td>
+              <td><strong>22→28</strong>, <strong>35→42</strong>, <strong>45→38</strong>, <strong>60→50</strong></td>
+              <td>Teleport dacă aterizezi <em>exact</em> pe portal.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Zonele galaxiei</h3>
+        <div class="zone-strip">
+          <div class="zone"><b>22</b>Start (1–22)</div>
+          <div class="zone"><b>5</b>Ramură (23–27)</div>
+          <div class="zone"><b>4</b>Mijloc (28–31)</div>
+          <div class="zone"><b>19</b>Zona quiz (32–50)</div>
+          <div class="zone"><b>17</b>Lună (51–67)</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="monede">
+      <h2>🪙 Monede în joc</h2>
+      <div class="card">
+        <p><strong>Monede fixe pe camere:</strong> dacă intri o dată în fiecare cameră cu 🪙, primești în total <strong>71</strong> monede (înainte erau 65).</p>
+        <p>Camerele <strong>2–12</strong> dau câte <strong>2</strong> monede → <strong>22</strong> monede înainte de primul magazin.</p>
+        <div class="grid-3" style="margin-top:1rem">
+          <div><span class="pill pill-coins">Start</span> 36 monede</div>
+          <div><span class="pill pill-coins">Ramură</span> 12 monede</div>
+          <div><span class="pill pill-coins">Mijloc</span> 12 monede</div>
+          <div><span class="pill pill-coins">Zona quiz</span> 2 monede (34, 43)</div>
+          <div><span class="pill pill-coins">Lună</span> 9 monede</div>
+          <div><span class="pill pill-trivia">Trivia</span> 0 la intrare (+/− la răspuns)</div>
+        </div>
+        <p style="margin-bottom:0;color:var(--muted);font-size:0.95rem">
+          Ramura 23–27 e opțională — monede în plus.
+          Cardul de aur din mister dă <strong>+5</strong> monede (înainte +4).
+        </p>
+      </div>
+    </section>
+
+    <section id="magazin">
+      <h2>🛒 Magazin — prețuri</h2>
+      <div class="card">
+        <p style="margin-top:0">Poți avea maximum <strong>3 obiecte</strong> în rucsac. Fiecare obiect apare o singură dată în magazin pe partidă.</p>
+        <table>
+          <thead>
+            <tr><th>Obiect</th><th>Preț</th><th>La ce e bun (pe scurt)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>🔫 Pistol</td><td><strong>1</strong></td><td>Împinge un jucător 1 casetă înainte.</td></tr>
+            <tr><td>🚫 Anulare trivia</td><td><strong>3</strong></td><td>Sari peste o întrebare trivia.</td></tr>
+            <tr><td>🎲 x2 zar</td><td><strong>5</strong></td><td>Următorul zar e dublat.</td></tr>
+            <tr><td>🪙 x3 monede</td><td><strong>5</strong></td><td>Următoarea cameră cu monede ×3.</td></tr>
+            <tr><td>💣 Bombă</td><td><strong>6</strong></td><td>Ceilalți merg 6 înapoi.</td></tr>
+            <tr><td>🔑 Cheie cosmică</td><td><strong>6</strong></td><td>Scapi din capcană fără să plătești 10 monede.</td></tr>
+            <tr><td>⭐ Stea</td><td><strong>7</strong></td><td>Tu mergi 8 casete înainte.</td></tr>
+            <tr><td>🦾 Gheară</td><td><strong>9</strong></td><td>Tragi un jucător 3 casete înapoi.</td></tr>
+            <tr><td>🏹 Săgeată schimb</td><td><strong>14</strong></td><td>Schimbi locul cu alt jucător.</td></tr>
+          </tbody>
+        </table>
+        <p style="color:var(--warn)">🪤 Evadare din capcană cu bani: <strong>10 monede</strong> (mai scump decât cheia de 6!).</p>
+      </div>
+    </section>
+
+    <h2 style="margin-top:3rem;text-align:center;color:var(--gold)">✨ Cele 5 idei — plan vs. joc</h2>
+    <p style="text-align:center;color:var(--muted);max-width:40rem;margin:0 auto 1.5rem">
+      Barele arată <span class="swatch-before"></span> cum era la început →
+      <span class="swatch-after"></span> ținta ideii. Unde e ✅, jocul deja arată ca ținta (sau mai bine).
+    </p>
+
+    <!-- SCENARIO 1 -->
+    <article class="card scenario scenario-done" id="s1">
+      <h2>🪙 Ideea 1: Mai multe monede la început <span class="status status-done">Făcut</span></h2>
+      <p><strong>Schimbarea:</strong> Camerele 2–12 dau <strong>2 monede</strong> în loc de 1.</p>
+      <p class="note-done">✅ <strong>În joc acum:</strong> camerele 2–12 au câte 2 monede. Până la magazinul 13 ai ~22 monede.</p>
+      <div class="bar-chart" data-bars='[{"label":"Monede camere 2–12","before":11,"after":22,"max":25},{"label":"Monede până la magazin 13","before":11,"after":22,"max":25},{"label":"Total monede fix pe hartă","before":65,"after":71,"max":80}]'></div>
+    </article>
+
+    <!-- SCENARIO 2 -->
+    <article class="card scenario scenario-done" id="s2">
+      <h2>🧭 Ideea 2: Mai puțină trivia, mai multă explorare <span class="status status-done">Făcut</span></h2>
+      <p><strong>Plan:</strong> 4 camere trivia devin altceva — mai puține întrebări la rând.</p>
+      <table>
+        <tr><td>34</td><td>trivia → 🪙 monede (1)</td><td>✅</td></tr>
+        <tr><td>39</td><td>trivia → 🃏 mister</td><td>✅</td></tr>
+        <tr><td>43</td><td>trivia → 🪙 monede (1)</td><td>✅</td></tr>
+        <tr><td>48</td><td>în plan: monede — <strong>în joc: 🛒 magazin</strong></td><td>✅ altfel</td></tr>
+      </table>
+      <p class="note-done">✅ <strong>În joc acum:</strong> 12 camere trivia (nu 16). Camera 48 e magazin (ideea 5) — și mai util!</p>
+      <div class="bar-chart" data-bars='[{"label":"Camere trivia","before":16,"after":12,"max":20},{"label":"Camere mister (total)","before":4,"after":7,"max":8},{"label":"Camere cu monede în zona quiz","before":0,"after":2,"max":6}]'></div>
+    </article>
+
+    <!-- SCENARIO 3 -->
+    <article class="card scenario scenario-done" id="s3">
+      <h2>🃏 Ideea 3: Mai multe camere mister <span class="status status-done">Făcut+</span></h2>
+      <p><strong>Plan:</strong> 29 și 54 → mister; card de aur +5 monede.</p>
+      <p class="note-done">✅ <strong>În joc acum:</strong> 7 camere mister (17, 24, 29, 39, 41, 54, 56) — una în plus față de plan, pentru că 39 a venit din ideea 2. Cardul de aur dă <strong>5</strong> monede.</p>
+      <div class="bar-chart" data-bars='[{"label":"Camere mister","before":4,"after":7,"max":8},{"label":"Monede card de aur","before":4,"after":5,"max":8},{"label":"Mister în zona mijloc","before":0,"after":1,"max":3},{"label":"Mister pe Lună","before":1,"after":2,"max":4}]'></div>
+    </article>
+
+    <!-- SCENARIO 4 -->
+    <article class="card scenario scenario-todo" id="s4">
+      <h2>🪤 Ideea 4: Capcane mai corecte <span class="status status-todo">De făcut</span></h2>
+      <p><strong>Plan:</strong> Evadare din capcană cu bani: <strong>7</strong> monede în loc de 10.</p>
+      <p class="note-partial" style="background:rgba(255,107,129,0.12);color:#ffc9d0">⏳ <strong>În joc acum:</strong> încă plătești <strong>10</strong> monede (<code>trapEscapeCoinCost</code>). Cheia cosmică costă 6 — diferența e mare.</p>
+      <div class="bar-chart" data-bars='[{"label":"Cost evadare (țintă vs acum)","before":10,"after":7,"max":10},{"label":"Premium față de cheie (6)","before":4,"after":1,"max":5}]'></div>
+      <p class="legend-inline" style="color:var(--good)">Verde = unde vrem să ajungem (7 monede)</p>
+    </article>
+
+    <!-- SCENARIO 5 -->
+    <article class="card scenario scenario-partial" id="s5">
+      <h2>🛒 Ideea 5: Magazine mai utile <span class="status status-partial">Parțial</span></h2>
+      <p><strong>Plan:</strong> al 4-lea magazin la 31, Stea 6, Gheară 8, monede extra la 19–21 și 29–30.</p>
+      <table>
+        <tr><th>Ce</th><th>Plan</th><th>În joc</th></tr>
+        <tr><td>Al 4-lea magazin</td><td>camera 31</td><td>✅ camera <strong>48</strong> (în zona quiz)</td></tr>
+        <tr><td>Preț Stea</td><td>6</td><td>❌ încă <strong>7</strong></td></tr>
+        <tr><td>Preț Gheară</td><td>8</td><td>❌ încă <strong>9</strong></td></tr>
+        <tr><td>Monede 19–21</td><td>3 fiecare</td><td>❌ încă <strong>2</strong></td></tr>
+        <tr><td>Monede 29–30</td><td>8 fiecare</td><td>❌ 29 e mister; 30 are <strong>6</strong></td></tr>
+      </table>
+      <p class="note-partial">🟡 <strong>Deja bine:</strong> 4 magazine (13, 28, 48, 53) — poți cumpăra după o parte din trivia. <strong>Opțional:</strong> scade prețurile la Stea/Gheară sau pune monede în plus înainte de quiz.</p>
+      <div class="bar-chart" data-bars='[{"label":"Număr magazine","before":3,"after":4,"max":5},{"label":"Preț Stea (țintă)","before":7,"after":6,"max":14},{"label":"Preț Gheară (țintă)","before":9,"after":8,"max":14}]'></div>
+      <p class="legend-inline">Magazine: 4 = făcut. Prețuri: verde = încă de făcut dacă vrem planul complet.</p>
+    </article>
+
+    <section class="card" id="ramane" style="margin-top:2rem;border-color:rgba(255,209,102,0.3)">
+      <h2 style="margin-top:0">🔜 Ce mai putem face?</h2>
+      <ul class="kid">
+        <li><strong>Ideea 4 (rapid):</strong> schimbă evadarea din capcană de la 10 la <strong>7</strong> monede — un singur număr în fișierul camerelor.</li>
+        <li><strong>Ideea 5 (opțional):</strong> Stea <strong>6</strong> și Gheară <strong>8</strong> în catalog; sau +1 monedă la camerele 19–21.</li>
+        <li><strong>Test în joc:</strong> parcurge drumul până la magazinul 48 cu copiii — e destul de ușor să cumperi ceva util?</li>
+      </ul>
+      <p style="margin-bottom:0;color:var(--muted)">Restul ideilor sunt deja în joc. Spune dacă vrei să implementăm ideea 4 sau să finisăm ideea 5.</p>
+    </section>
+  </main>
+
+  <footer>
+    Actualizat din <code>content/space-board-rooms.json</code>, <code>space-shop-catalog.json</code>, <code>space-mystery-deck.json</code>.
+    Fișier: docs/prds/space-board/analiza-imbunatatiri-joc.html
+  </footer>
+
+  <script>
+    document.querySelectorAll(".bar-chart").forEach((container) => {
+      const bars = JSON.parse(container.getAttribute("data-bars"));
+      bars.forEach((b) => {
+        const row = document.createElement("div");
+        row.className = "bar-row";
+        const max = b.max || Math.max(b.before, b.after, 1);
+        const pct = (v) => Math.round((v / max) * 100);
+        row.innerHTML = `
+          <div class="bar-label">
+            <span>${b.label}</span>
+            <span>${b.before} → <strong style="color:var(--good)">${b.after}</strong></span>
+          </div>
+          <div class="bar-track" style="height:36px">
+            <div class="bar-before" style="width:${pct(b.before)}%;top:0;height:45%"></div>
+            <div class="bar-after" style="width:${pct(b.after)}%;top:50%;height:45%"></div>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+      const leg = document.createElement("p");
+      leg.className = "legend-inline";
+      leg.innerHTML = '<span><span class="swatch-before"></span> la început</span><span><span class="swatch-after"></span> țintă / în joc</span>';
+      container.appendChild(leg);
+    });
+  </script>
+</body>
+</html>

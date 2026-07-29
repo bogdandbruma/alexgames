@@ -1,7 +1,8 @@
 # Space Board — Product Requirements Document (PRD)
 
 **Versiune:** 0.1 (grilling 2026-07-29)  
-**Repo:** `demo` — există prototip (`src/game/board.ts`, `src/games/space-board/SpaceBoardGame.tsx`) cu 20 camere și zar 3D.
+**Repo:** `demo` — există prototip (`src/game/board.ts`, `src/games/space-board/SpaceBoardGame.tsx`) cu 20 camere și zar 3D.  
+**Issues (vertical slices):** [issues/](issues/)
 
 ---
 
@@ -20,23 +21,25 @@ Joc de tablă digital **2–4 jucători** pe o stație spațială cu **67 camere
 | Regulă | Detaliu |
 |--------|---------|
 | Jucători | 2–4 (uman + opțional AI, ca în prototip) |
-| Mișcare | Zar 1–6; poziția = index cameră pe **traseul principal** (vezi §4) |
+| Mișcare | Zar 1–6; poziția = index cameră pe **traseul principal** (vezi §4); camera 67 cere landing exact |
 | Ordine | Rând pe rând |
-| Victorie | Ajungere la **67** → `gameOver`, toți stop |
+| Victorie | Ajungere fix la **67** → `gameOver`, toți stop; mutările care ar depăși 67 nu se aplică |
 | Inventar | Max **3** iteme din magazin |
 | Item activ / tur | **1** item de tip acțiune: pistol, gheara, steluta, sageata, bomba (momentul: după mișcare, unde e cazul) |
 | Anulare trivia | La apariția întrebării; **nu** consumă slotul „1 item/tur” pentru cele 5 de mai sus (separat) |
-| x2 zar / x3 bani | „Armare” în inventar; se aplică la **următoarea ocazie** (următorul zar / următorul gain de banuti) |
+| x2 zar / x3 bani | „Armare” în inventar; x2 se aplică la **următorul zar**, x3 doar la următorul `coinsOnEnter` |
 | Balans banuti | Minim **0**; niciodată negativ |
 | Magazin | Nu poți cumpăra dacă nu ai suficienți banuti |
 | Magazin vizită | Max **1** obiect per intrare în cameră de magazin |
-| Stoc magazin | Fiecare item: **1 exemplar global**; primul cumpărător ia itemul, apoi dispare din acel magazin |
+| Stoc magazin | Fiecare item: **1 exemplar global**; primul cumpărător ia itemul, apoi dispare din toate magazinele |
 
 ---
 
 ## 3. Portale (landing exact)
 
 Teleportul se verifică după **orice** schimbare de poziție (zar, item, mystery, bomba, etc.): dacă `position === from`, aplică jump la `to` și acțiunea camerei de **destinație**.
+
+Camera-sursă de portal este **doar portal**: nu dă trivia, shop, mystery sau banuti. După teleport, se rezolvă camera de destinație normal (bani dacă are `coinsOnEnter`, sau acțiunea ei).
 
 | De la | La | Notă |
 |-------|-----|------|
@@ -72,7 +75,8 @@ Fiecare cameră configurabilă ușor:
 
 - `id` (1–67)  
 - `coinsOnEnter` (0–6)  
-- `actions[]`: `none | coins | shop | mystery | trivia | portal | trap | finish`  
+- `action`: `none | coins | shop | mystery | trivia | portal | trap | finish`  
+- o cameră are o singură acțiune; excepția este efectul de destinație al portalului, care rezolvă camera `to`  
 - metadata portal (from/to dacă e cazul)  
 - decor / accent (existent în `RoomDefinition`)
 
@@ -80,17 +84,21 @@ Fiecare cameră configurabilă ușor:
 
 ## 5. Tabel camere (economie și acțiuni)
 
+Regulă de configurare: camerele sunt **exclusive** ca acțiune. O cameră este doar `coins`, doar `shop`, doar `mystery`, doar `trivia`, doar `portal`, doar `trap` sau doar `finish`. Dacă o cameră este `mystery`, nu primește și banuti la intrare. În zona trivia nu există `coinsOnEnter`; banutii se câștigă/pierd doar din răspuns.
+
 ### 5.1 Start și magazin 1
 
 | Camere | Banuti la intrare | Acțiune |
 |--------|-------------------|---------|
-| 1–12 | 1 | coins |
+| 1 | 0 | coins |
+| 2–12 | 2 | coins |
 | 13 | 0 | **shop** |
 | 14–21 | 2 | coins |
 | 22 | 0 | **portal** → 28 |
 | 23–27 | 3 | coins |
 | 28 | 0 | **shop** |
-| 29–31 | 6 | coins |
+| 29 | 0 | **mystery** |
+| 30–31 | 6 | coins |
 
 ### 5.2 Mystery zones
 
@@ -98,7 +106,10 @@ Fiecare cameră configurabilă ușor:
 |--------|---------|
 | 17 | **mystery** |
 | 24 | **mystery** |
+| 29 | **mystery** |
+| 39 | **mystery** |
 | 41 | **mystery** |
+| 54 | **mystery** |
 | 56 | **mystery** |
 
 La intrare: UI cărți (shuffle + flip); efect **instant** pe loc + animație.
@@ -107,7 +118,10 @@ La intrare: UI cărți (shuffle + flip); efect **instant** pe loc + animație.
 
 | Camere | Banuti la intrare | Acțiune |
 |--------|-------------------|---------|
-| 32–50 | 0 | **trivia** (doar întrebare; ±1 la răspuns) |
+| 32–33, 36–38, 40, 42, 44, 46–47, 49–50 | 0 | **trivia** (doar întrebare; ±1 la răspuns) |
+| 34, 43 | 1 | **coins** |
+| 39 | 0 | **mystery** |
+| 48 | 0 | **shop** |
 
 Portale în zonă: **35→42**, **45→38**.
 
@@ -120,7 +134,7 @@ Economie mică (banii conteză înainte de / la shop 53):
 | 51 | 1 | coins |
 | 52 | 0 | **trap** |
 | 53 | 0 | **shop** |
-| 54 | 1 | coins |
+| 54 | 0 | **mystery** |
 | 55 | 0 | **trap** |
 | 56 | 0 | **mystery** |
 | 57 | 1 | coins |
@@ -162,11 +176,15 @@ Capcana **nu** se re-activează în fiecare tur; doar la nouă intrare pe camer�
 
 **Notă design:** capcanele la **65** și **66** creează tensiune înainte de 67 (exact landing).
 
+Mutările înapoi (bomba, gheara, magnet etc.) se opresc la **1**; poziția nu poate coborî sub start.
+
 ---
 
 ## 7. Magazin
 
-**Camere:** 13, 28, 53.
+**Camere:** 13, 28, 48, 53.
+
+Toate cele 9 iteme apar în toate magazinele cât timp nu au fost cumpărate. Stocul este global: un item cumpărat o dată nu mai poate fi cumpărat de nimeni, în niciun magazin.
 
 ### 7.1 UX
 
@@ -184,13 +202,15 @@ Capcana **nu** se re-activează în fiecare tur; doar la nouă intrare pe camer�
 | `star` | Steluta | 7 | **+8** pași înainte pe tine | Nu |
 | `swap-arrow` | Sageata de schimb | 14 | Schimbă poziție cu un jucător alecat | Nu |
 | `dice-x2` | x2 zar | 5 | Următorul zar ×2 | Nu (armare) |
-| `coins-x3` | x3 bani | 5 | Următorul gain de banuti ×3 | Nu (armare) |
+| `coins-x3` | x3 bani | 5 | Următorul `coinsOnEnter` ×3 | Nu (armare) |
 | `trivia-cancel` | Anulare trivia | 3 | Skip întrebare trivia (fără ±1) | Nu |
 | `bomb` | Bomba | 6 | Toți ceilalți **−6** pași (nu tu) | Nu |
 | `pistol` | Pistol | 1 | Un jucător alecat **+1** pas înainte | Nu |
 | `cosmic-key` | Cheie cosmică | 6 | Scăpare din capcană (tur blocat) | Nu |
 
 **Config:** `items.json` sau `shop-catalog.ts` — `id`, `name`, `cost`, `icon`, `effectKey`, `stock: 1`.
+
+**AI shop:** AI joacă magazinul ca un jucător normal, cu strategie random: dacă are cel puțin un item disponibil pe care și-l permite și are slot liber în inventar, cumpără direct un item random dintre opțiunile valide.
 
 ---
 
@@ -202,7 +222,7 @@ Capcana **nu** se re-activează în fiecare tur; doar la nouă intrare pe camer�
 |----|--------|
 | `car` | +2 casute înainte |
 | `phone` | −2 banuti (min 0) |
-| `card` | +4 banuti |
+| `card` | +5 banuti |
 | `rocket` | Avansezi lângă jucătorul din față cel mai apropiat |
 | `wand` | Mută jucătorii random între ei și cu tine |
 | `magnet` | Te trage înapoi lângă jucătorul de după (dacă ești ultimul, stai pe loc) |
@@ -216,14 +236,18 @@ Capcana **nu** se re-activează în fiecare tur; doar la nouă intrare pe camer�
 
 ## 9. Trivia (spațiu)
 
-- **100** întrebări, fiecare cu **2** variante (una corectă, una greșită).  
+- **200** întrebări, fiecare cu **2** variante (una corectă, una greșită).  
 - La intrare pe 32–50: întrebare **aleatoare**.  
 - **Corect:** +1 banut.  
 - **Greșit:** −1 banut (min 0).  
 - **Anulare trivia** (item): nu apare întrebarea, nu ±1.  
 - **Opțional (v2):** timer 15s pentru bonus mic — din lista de sugestii, neimplementat în v1.
 
-**Content:** `content/trivia-space.json` — `id`, `question`, `correct`, `wrong` (sau `options[]` + `correctIndex`).
+**Public țintă content:** copii **8–12 ani** — întrebări despre Sistemul Solar, Lună, astronauți, stele și fapte ușor de înțeles (limba română).
+
+**Lista completă (200 întrebări):** [content/trivia-space.json](../../../content/trivia-space.json)
+
+**Format fișier:** `id`, `question`, `correct`, `wrong` (sau `options[]` + `correctIndex` în implementare).
 
 ---
 
@@ -277,12 +301,13 @@ Capcana **nu** se re-activează în fiecare tur; doar la nouă intrare pe camer�
 
 ### Faza 0 — Documentație și content shell
 
-- [ ] `content/trivia-space.json` (100 întrebări — poate populare incrementală)  
+- [x] `content/trivia-space.json` (200 întrebări — [listă](../../../content/trivia-space.json))  
 - [ ] `shop-catalog.ts`, `mystery-deck.ts`, `rooms-gameplay.ts` (67 rânduri)
 
 ### Faza 1 — Core loop 67
 
 - [ ] Extindere store: coins, poziție, tur, game over la 67  
+- [ ] Landing exact la 67: zarul/itemul care depășește 67 nu mută jucătorul peste finish  
 - [ ] Tabel camere: coins on enter, fără shop/mystery încă  
 - [ ] Portale exact landing + ramura 23–27 → 28  
 - [ ] Zar + mișcare + AI simplu
@@ -335,6 +360,11 @@ Capcana **nu** se re-activează în fiecare tur; doar la nouă intrare pe camer�
 | 1 item acțiune / tur | Reduce combo haos |
 | Mystery fără scăpare capcană | Mai simplu decât A+B+cheie+mystery |
 | Stop global la 67 | Focus pe „cursa” către Lună |
+| Landing exact la 67 | Tensiune pe final, mai ales cu capcanele 65/66 |
+| O singură acțiune per cameră | Config clar: doar coins/shop/mystery/trivia/portal/trap/finish |
+| Stoc item global | Un item cumpărat dispare din toate magazinele |
+| x3 bani doar pe `coinsOnEnter` | Nu afectează trivia sau mystery, deci economia rămâne previzibilă |
+| AI random strategic | Cumpără direct un item random valid când poate |
 
 ---
 
@@ -342,7 +372,6 @@ Capcana **nu** se re-activează în fiecare tur; doar la nouă intrare pe camer�
 
 - Efecte exacte „rocket / wand / magnet” (ordine pași, coliziune pe aceeași cameră).  
 - Ponderare mystery deck.  
-- AI: folosire shop/mystery/trap escape.  
 - Localizare EN dacă e nevoie.  
 - Mystery zones: teme vizuale per cameră.
 
