@@ -39,6 +39,8 @@ import {
   type PlayerCoinBurst,
 } from "./playerCoinBurst";
 import { getWalkDurationMs } from "./movementTiming";
+import { portalAcknowledgement } from "./store/portalAck";
+import { nextPortalTransitionId } from "./store/portalTransitionId";
 
 export type { AvatarId } from "./avatars";
 
@@ -227,28 +229,6 @@ const getAffordableShopItems = (player: GamePlayer, shopStock: ShopStock) =>
   );
 
 let toastId = 0;
-let portalTransitionId = 0;
-let portalAcknowledgementId: number | null = null;
-let resolvePortalAcknowledgement: (() => void) | null = null;
-
-const waitForPortalAcknowledgement = (portalId: number) =>
-  new Promise<void>((resolve) => {
-    portalAcknowledgementId = portalId;
-    resolvePortalAcknowledgement = () => {
-      portalAcknowledgementId = null;
-      resolvePortalAcknowledgement = null;
-      resolve();
-    };
-  });
-
-const completePortalAcknowledgement = (portalId?: number) => {
-  if (
-    resolvePortalAcknowledgement &&
-    (portalId === undefined || portalAcknowledgementId === portalId)
-  ) {
-    resolvePortalAcknowledgement();
-  }
-};
 
 const createTurnToast = (player: GamePlayer | undefined): GameToast => ({
   id: (toastId += 1),
@@ -504,7 +484,7 @@ const createPortalTransition = (
 ): GamePortalTransition | null =>
   result.portal
     ? {
-        id: (portalTransitionId += 1),
+        id: nextPortalTransitionId(),
         playerId,
         fromRoomId: result.portal.from,
         toRoomId: result.portal.to,
@@ -733,7 +713,7 @@ export const useGameStore = create<GameState>()(
         set({
           pendingPortal: null,
         });
-        completePortalAcknowledgement(pendingPortal.id);
+        portalAcknowledgement.completeAcknowledgement(pendingPortal.id);
       },
 
       answerTrivia: (answer) => {
@@ -1496,7 +1476,7 @@ export const useGameStore = create<GameState>()(
           uiToast: createTurnToast(firstPlayer),
           playerCoinBursts: [],
         });
-        completePortalAcknowledgement();
+        portalAcknowledgement.completeAcknowledgement();
       },
 
       rollDice: async () => {
@@ -1707,7 +1687,7 @@ export const useGameStore = create<GameState>()(
             }, 1_150);
           }
 
-          await waitForPortalAcknowledgement(portalTransition.id);
+          await portalAcknowledgement.waitForAcknowledgement(portalTransition.id);
           await sleep(150);
         }
 
@@ -1905,7 +1885,7 @@ export const useGameStore = create<GameState>()(
           uiToast: null,
           playerCoinBursts: [],
         });
-        completePortalAcknowledgement();
+        portalAcknowledgement.completeAcknowledgement();
       },
     }),
     {
