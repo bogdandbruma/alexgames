@@ -9,6 +9,7 @@ import { ShopOverlay } from "./modals/ShopOverlay";
 import { TargetOverlay } from "./modals/TargetOverlay";
 import { TriviaOverlay } from "./modals/TriviaOverlay";
 import { useAiDiceRoll } from "./useAiDiceRoll";
+import { useAiTriviaAnswer } from "./useAiTriviaAnswer";
 
 type SpaceBoardGameProps = {
   onExit: () => void;
@@ -22,6 +23,7 @@ export function SpaceBoardGame({ onExit }: SpaceBoardGameProps) {
   const finished = phase === "finished";
 
   useAiDiceRoll();
+  useAiTriviaAnswer();
 
   useEffect(() => {
     if (finished) {

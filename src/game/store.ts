@@ -1,12 +1,8 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { createDebouncedStorage } from "./persist/debounceStorage";
-import { resolveTriviaAnswer, type DiceTurnResult } from "./rules";
-import {
-  applyMysteryEffect,
-  getMysteryCardById,
-  type MysteryCardId,
-} from "./mystery";
+import { resolveTriviaAnswer } from "./rules";
+import { getMysteryCardById } from "./mystery";
 import {
   createInitialShopStock,
   getShopItemById,
@@ -16,14 +12,15 @@ import { pushPlayerCoinBursts } from "./playerCoinBurst";
 import { portalAcknowledgement } from "./store/portalAck";
 import { migratePersistedState } from "./store/migrate";
 import { executeRollDice } from "./store/rollDice";
+import { executeAcknowledgeMystery } from "./store/acknowledgeMystery";
+import { syncFocusedPlayerWalkIfMoved } from "./store/playerWalk";
 import {
-  applyMysteryPlayersToStore,
   applyPositionResultToPlayer,
+  canPlayerEndTurn,
   clearFinishedInteractiveState,
   createCoinDeltaToast,
   createEndTurnState,
   createFinishedState,
-  createMysteryCoinToast,
   createPendingRoomActionState,
   createPortalTransition,
   createTriviaToast,
@@ -31,14 +28,11 @@ import {
   defaultPlayers,
   getPlayerInventory,
   getPlayerName,
-  canPlayerEndTurn,
   hasRolledThisTurn,
   initialPersistedState,
-  MYSTERY_COIN_TOAST_MS,
   normalizePlayerSetup,
   purchaseShopItem,
   removeInventoryItem,
-  shouldPauseForRoomAction,
   TRIVIA_MODAL_RESULT_MS,
   TRIVIA_TOAST_MS,
 } from "./store/helpers";
@@ -57,6 +51,7 @@ export const useGameStore = create<GameState>()(
     (set, get) => ({
       ...initialPersistedState,
       actionItemUsedThisTurn: false,
+      activePlayerWalk: null,
       diceAnimating: false,
       diceMultiplier: 1,
       pendingMystery: null,
@@ -322,194 +317,14 @@ export const useGameStore = create<GameState>()(
         return picked;
       },
 
-      acknowledgeMystery: () => {
-        let pendingResultAfterReveal: DiceTurnResult | null = null;
-        let pendingResultPlayerId: string | null = null;
-        let shouldEndTurn = false;
-        let revealedCardId: MysteryCardId | null = null;
-        let mysteryCoinsDelta = 0;
-        let mysteryPlayerId: string | null = null;
-
-        set((state) => {
-          const pendingMystery = state.pendingMystery;
-          const cardId = pendingMystery?.revealedCardId ?? null;
-
-          if (
-            !pendingMystery ||
-            cardId === null ||
-            state.phase !== "playing" ||
-            state.rolling
-          ) {
-            if (state.phase === "finished") {
-              return clearFinishedInteractiveState();
-            }
-
-            return {};
-          }
-
-          const playerBefore = state.players.find(
-            ({ id }) => id === pendingMystery.playerId,
-          );
-          const coinsBefore = playerBefore?.coins ?? 0;
-
-          const effect = applyMysteryEffect({
-            activePlayerId: pendingMystery.playerId,
-            cardId,
-            players: state.players.map((player) => ({
-              id: player.id,
-              positionId: player.positionIndex + 1,
-              coins: player.coins,
-            })),
-          });
-          const mysteryResult = applyMysteryPlayersToStore(
-            state,
-            effect.players,
-            effect.changedPositionPlayerIds,
-            pendingMystery.playerId,
-          );
-          const player = mysteryResult.players.find(
-            ({ id }) => id === pendingMystery.playerId,
-          );
-          const card = getMysteryCardById(cardId);
-          mysteryCoinsDelta = (player?.coins ?? coinsBefore) - coinsBefore;
-          mysteryPlayerId = pendingMystery.playerId;
-          const portalTransition =
-            player && mysteryResult.activeResult
-              ? createPortalTransition(player.id, mysteryResult.activeResult)
-              : null;
-
-          revealedCardId = cardId;
-          pendingResultAfterReveal =
-            mysteryResult.winnerId === null &&
-            shouldPauseForRoomAction(mysteryResult.activeResult)
-              ? mysteryResult.activeResult
-              : null;
-          pendingResultPlayerId =
-            pendingResultAfterReveal && player ? player.id : null;
-          shouldEndTurn =
-            mysteryResult.winnerId === null && pendingResultAfterReveal === null;
-
-          return {
-            players: mysteryResult.players,
-            ...(portalTransition ? { portalTransition } : {}),
-            ...(mysteryResult.winnerId
-              ? createFinishedState(
-                  mysteryResult.winnerId,
-                  `${getPlayerName(player)} a dezvaluit ${card.title} si a castigat!`,
-                )
-              : {
-                  pendingMystery: {
-                    ...pendingMystery,
-                    revealedCardId: cardId,
-                  },
-                  message: `${getPlayerName(player)} a dezvaluit ${card.title}.`,
-                }),
-          };
-        });
-
-        if (!revealedCardId) {
-          return;
-        }
-
-        if (pendingResultAfterReveal && pendingResultPlayerId) {
-          const result = pendingResultAfterReveal;
-          const playerId = pendingResultPlayerId;
-          const cardId = revealedCardId;
-
-          set((state) => {
-            if (
-              !state.pendingMystery ||
-              state.pendingMystery.revealedCardId !== cardId
-            ) {
-              return {};
-            }
-
-            const player = state.players.find(({ id }) => id === playerId);
-
-            return createPendingRoomActionState(
-              state,
-              playerId,
-              result,
-              `${getPlayerName(player)} a terminat misterul.`,
-            );
-          });
-        } else if (shouldEndTurn) {
-          const cardId = revealedCardId;
-          const coinsDelta = mysteryCoinsDelta;
-          const playerId = mysteryPlayerId;
-
-          if (coinsDelta !== 0 && playerId) {
-            set((state) => {
-              if (
-                !state.pendingMystery ||
-                state.pendingMystery.revealedCardId !== cardId
-              ) {
-                return {};
-              }
-
-              const player = state.players.find(({ id }) => id === playerId);
-              const card = getMysteryCardById(cardId);
-              const coinMessage =
-                coinsDelta > 0
-                  ? "primeste coins."
-                  : coinsDelta < 0
-                    ? "pierde coins."
-                    : "nu avea coins de pierdut.";
-
-              return {
-                pendingMystery: null,
-                message: `${getPlayerName(player)} a terminat misterul. ${getPlayerName(player)} ${coinMessage}`,
-                uiToast: createMysteryCoinToast(player, card, coinsDelta),
-                playerCoinBursts: pushPlayerCoinBursts(
-                  state.playerCoinBursts,
-                  playerId,
-                  coinsDelta,
-                ),
-              };
-            });
-
-            window.setTimeout(() => {
-              set((latestState) => {
-                if (latestState.phase !== "playing") {
-                  return {};
-                }
-
-                const player = latestState.players.find(
-                  ({ id }) => id === playerId,
-                );
-
-                return createEndTurnState(
-                  latestState,
-                  `${getPlayerName(player)} a terminat misterul.`,
-                );
-              });
-            }, MYSTERY_COIN_TOAST_MS);
-
-            return;
-          }
-
-          set((state) => {
-            if (
-              !state.pendingMystery ||
-              state.pendingMystery.revealedCardId !== cardId
-            ) {
-              return {};
-            }
-
-            const player = state.players.find(
-              ({ id }) => id === state.pendingMystery?.playerId,
-            );
-
-            return createEndTurnState(
-              state,
-              `${getPlayerName(player)} a terminat misterul.`,
-            );
-          });
-        }
-      },
+      acknowledgeMystery: () => executeAcknowledgeMystery({ get, set }),
 
       useInventoryItem: (itemId, targetPlayerId) => {
         let used = false;
+        let deferredState: Partial<GameState> | null = null;
+        const playersBefore = get().players;
+        const focusedPlayerId =
+          get().players[get().currentPlayerIndex]?.id ?? null;
 
         set((state) => {
           if (
@@ -612,6 +427,29 @@ export const useGameStore = create<GameState>()(
 
               used = true;
 
+              if (movement.finished) {
+                return {
+                  ...(portalTransition ? { portalTransition } : {}),
+                  players: state.players.map((player) =>
+                    player.id === currentPlayer.id
+                      ? removeInventoryItem(movement.player, itemId)
+                      : player,
+                  ),
+                  ...createFinishedState(
+                    currentPlayer.id,
+                    `${getPlayerName(currentPlayer)} a folosit steluta si a castigat!`,
+                  ),
+                  actionItemUsedThisTurn: true,
+                };
+              }
+
+              deferredState = createPendingRoomActionState(
+                state,
+                currentPlayer.id,
+                movement.result,
+                message,
+              );
+
               return {
                 actionItemUsedThisTurn: true,
                 ...(portalTransition ? { portalTransition } : {}),
@@ -620,19 +458,7 @@ export const useGameStore = create<GameState>()(
                     ? removeInventoryItem(movement.player, itemId)
                     : player,
                 ),
-                ...(movement.finished
-                  ? createFinishedState(
-                      currentPlayer.id,
-                      `${getPlayerName(currentPlayer)} a folosit steluta si a castigat!`,
-                    )
-                  : {
-                      ...createPendingRoomActionState(
-                        state,
-                        currentPlayer.id,
-                        movement.result,
-                        message,
-                      ),
-                    }),
+                message,
               };
             }
             case "pistol": {
@@ -740,6 +566,40 @@ export const useGameStore = create<GameState>()(
 
               used = true;
 
+              if (currentLanding.finished || targetLanding.finished) {
+                return {
+                  ...(currentPortalTransition || targetPortalTransition
+                    ? {
+                        portalTransition:
+                          currentPortalTransition ?? targetPortalTransition,
+                      }
+                    : {}),
+                  players: state.players.map((player) => {
+                    if (player.id === currentPlayer.id) {
+                      return removeInventoryItem(currentLanding.player, itemId);
+                    }
+
+                    return player.id === targetPlayer.id
+                      ? targetLanding.player
+                      : player;
+                  }),
+                  ...createFinishedState(
+                    currentLanding.finished ? currentPlayer.id : targetPlayer.id,
+                    `${getPlayerName(
+                      currentLanding.finished ? currentPlayer : targetPlayer,
+                    )} a ajuns pe Luna!`,
+                  ),
+                  actionItemUsedThisTurn: true,
+                };
+              }
+
+              deferredState = createPendingRoomActionState(
+                state,
+                currentPlayer.id,
+                currentLanding.result,
+                `${getPlayerName(currentPlayer)} a folosit sageata.`,
+              );
+
               return {
                 actionItemUsedThisTurn: true,
                 ...(currentPortalTransition || targetPortalTransition
@@ -757,21 +617,7 @@ export const useGameStore = create<GameState>()(
                     ? targetLanding.player
                     : player;
                 }),
-                ...(currentLanding.finished || targetLanding.finished
-                  ? createFinishedState(
-                      currentLanding.finished ? currentPlayer.id : targetPlayer.id,
-                      `${getPlayerName(
-                        currentLanding.finished ? currentPlayer : targetPlayer,
-                      )} a ajuns pe Luna!`,
-                    )
-                  : {
-                      ...createPendingRoomActionState(
-                        state,
-                        currentPlayer.id,
-                        currentLanding.result,
-                        `${getPlayerName(currentPlayer)} a folosit sageata.`,
-                      ),
-                    }),
+                message: `${getPlayerName(currentPlayer)} a folosit sageata.`,
               };
             }
             case "bomb": {
@@ -830,6 +676,29 @@ export const useGameStore = create<GameState>()(
           }
         });
 
+        if (used && focusedPlayerId) {
+          void (async () => {
+            await syncFocusedPlayerWalkIfMoved(
+              get,
+              set,
+              playersBefore,
+              focusedPlayerId,
+            );
+
+            if (deferredState) {
+              const pendingDeferredState = deferredState;
+
+              set((state) => {
+                if (state.phase !== "playing") {
+                  return {};
+                }
+
+                return pendingDeferredState;
+              });
+            }
+          })();
+        }
+
         return used;
       },
 
@@ -848,6 +717,7 @@ export const useGameStore = create<GameState>()(
           currentPlayerIndex: 0,
           diceValue: null,
           actionItemUsedThisTurn: false,
+          activePlayerWalk: null,
           diceAnimating: false,
           diceMultiplier: 1,
           pendingPortal: null,
@@ -871,6 +741,7 @@ export const useGameStore = create<GameState>()(
         set({
           ...initialPersistedState,
           actionItemUsedThisTurn: false,
+          activePlayerWalk: null,
           diceAnimating: false,
           diceMultiplier: 1,
           pendingPortal: null,

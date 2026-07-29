@@ -204,6 +204,7 @@ export function GameScene() {
   const portalTransition = useGameStore((state) => state.portalTransition);
   const winnerId = useGameStore((state) => state.winnerId);
   const rolling = useGameStore((state) => state.rolling);
+  const activePlayerWalk = useGameStore((state) => state.activePlayerWalk);
   const [cameraIdle, setCameraIdle] = useState(false);
   const onCameraIdleChange = useCallback((idle: boolean) => {
     setCameraIdle(idle);
@@ -234,7 +235,9 @@ export function GameScene() {
       : focusedPlayerPosition;
 
   const frameloop =
-    cameraIdle && !rolling && phase !== "finished" ? "demand" : "always";
+    cameraIdle && !rolling && !activePlayerWalk && phase !== "finished"
+      ? "demand"
+      : "always";
 
   return (
     <Canvas
@@ -319,7 +322,7 @@ export function GameScene() {
 
       <CameraRig
         focusKey={`${phase}-${winnerId ?? focusedPlayer?.id ?? "setup"}`}
-        moving={rolling || phase === "finished"}
+        moving={rolling || activePlayerWalk !== null || phase === "finished"}
         onCameraIdleChange={onCameraIdleChange}
         targetPosition={cinematicTargetPosition}
       />

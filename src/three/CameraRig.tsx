@@ -4,6 +4,8 @@ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import type { MapControls as MapControlsImpl } from "three-stdlib";
 import type { Vector3Tuple } from "../game/board";
+import { useGameStore } from "../game/store";
+import { getWalkProgress, getWalkSamplePosition } from "../game/walkPath";
 
 const turnPullbackOffset = new THREE.Vector3(13, 31, 33);
 const turnCloseOffset = new THREE.Vector3(9, 24, 27);
@@ -31,6 +33,9 @@ export function CameraRig({
 }: CameraRigProps) {
   const controlsRef = useRef<MapControlsImpl | null>(null);
   const camera = useThree((state) => state.camera);
+  const activePlayerWalk = useGameStore((state) => state.activePlayerWalk);
+  const currentPlayerIndex = useGameStore((state) => state.currentPlayerIndex);
+  const players = useGameStore((state) => state.players);
   const targetRef = useRef(new THREE.Vector3());
   const desiredTargetRef = useRef(new THREE.Vector3());
   const desiredCameraRef = useRef(new THREE.Vector3());
@@ -60,9 +65,34 @@ export function CameraRig({
   }, [focusKey]);
 
   useFrame((_, delta) => {
+    const focusedPlayer = players[currentPlayerIndex];
+    const followingWalk =
+      activePlayerWalk !== null &&
+      focusedPlayer !== undefined &&
+      activePlayerWalk.playerId === focusedPlayer.id;
+
+    if (followingWalk) {
+      const progress = getWalkProgress(
+        activePlayerWalk.startedAt,
+        activePlayerWalk.durationMs,
+      );
+      const [walkX, walkY, walkZ] = getWalkSamplePosition(
+        activePlayerWalk.fromRoomId,
+        activePlayerWalk.toRoomId,
+        progress,
+        activePlayerWalk.startPosition,
+        activePlayerWalk.endPosition,
+      );
+
+      desiredTargetRef.current.set(walkX, walkY, walkZ);
+      targetRef.current.copy(desiredTargetRef.current);
+      cameraMovingRef.current = true;
+    }
+
     const elapsedSinceFocus = performance.now() / 1_000 - focusStartedAtRef.current;
     const focusProgress = easeInOut(elapsedSinceFocus / turnFocusDuration);
-    const desiredOffset = moving
+    const cameraMoving = moving || followingWalk;
+    const desiredOffset = cameraMoving
       ? desiredOffsetRef.current.copy(movementOverviewOffset)
       : desiredOffsetRef.current
           .copy(turnPullbackOffset)
@@ -80,10 +110,12 @@ export function CameraRig({
     if (!cameraMovingRef.current) {
       controlsRef.current?.update();
     } else {
-      const targetInterpolation = 1 - Math.exp(-(moving ? 0.95 : 1.125) * delta);
-      const cameraInterpolation = 1 - Math.exp(-(moving ? 0.825 : 0.95) * delta);
+      const targetInterpolation = 1 - Math.exp(-(cameraMoving ? 0.95 : 1.125) * delta);
+      const cameraInterpolation = 1 - Math.exp(-(cameraMoving ? 0.825 : 0.95) * delta);
 
-      targetRef.current.lerp(desiredTargetRef.current, targetInterpolation);
+      if (!followingWalk) {
+        targetRef.current.lerp(desiredTargetRef.current, targetInterpolation);
+      }
       camera.position.lerp(desiredCameraRef.current, cameraInterpolation);
 
       if (controlsRef.current) {
@@ -105,11 +137,11 @@ export function CameraRig({
           controlsRef.current.update();
         }
 
-        cameraMovingRef.current = moving || focusProgress < 1;
+        cameraMovingRef.current = cameraMoving || focusProgress < 1;
       }
     }
 
-    const cameraIdle = !cameraMovingRef.current && !moving;
+    const cameraIdle = !cameraMovingRef.current && !cameraMoving;
 
     if (lastIdleRef.current !== cameraIdle) {
       lastIdleRef.current = cameraIdle;

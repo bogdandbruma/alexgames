@@ -408,7 +408,9 @@ describe("space board store", () => {
     });
     expect(useGameStore.getState().currentPlayerIndex).toBe(0);
 
-    useGameStore.getState().acknowledgeMystery();
+    const acknowledge = useGameStore.getState().acknowledgeMystery();
+
+    await Promise.resolve();
 
     expect(useGameStore.getState().players[0].coins).toBe(0);
 
@@ -423,6 +425,7 @@ describe("space board store", () => {
     expect(state.currentPlayerIndex).toBe(0);
 
     await vi.advanceTimersByTimeAsync(2_400);
+    await acknowledge;
 
     expect(useGameStore.getState().currentPlayerIndex).toBe(1);
     expect(useGameStore.getState().message).toContain("Randul lui Next");
@@ -480,7 +483,10 @@ describe("space board store", () => {
       },
     });
 
-    useGameStore.getState().acknowledgeMystery();
+    const acknowledge = useGameStore.getState().acknowledgeMystery();
+
+    await vi.advanceTimersByTimeAsync(15_000);
+    await acknowledge;
 
     expect(useGameStore.getState()).toMatchObject({
       portalTransition: {
@@ -787,6 +793,8 @@ describe("space board store", () => {
     });
 
     expect(useGameStore.getState().useInventoryItem("star")).toBe(true);
+
+    await vi.advanceTimersByTimeAsync(15_000);
 
     const state = useGameStore.getState();
 

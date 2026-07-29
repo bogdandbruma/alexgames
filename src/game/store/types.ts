@@ -1,3 +1,4 @@
+import type { Vector3Tuple } from "../board";
 import type { AvatarId } from "../avatars";
 import type { PlayerCoinBurst } from "../playerCoinBurst";
 import type { MysteryCard, MysteryCardId } from "../mystery";
@@ -71,6 +72,16 @@ export type GamePortalTransition = {
   toRoomId: number;
 };
 
+export type ActivePlayerWalk = {
+  durationMs: number;
+  endPosition: Vector3Tuple;
+  fromRoomId: number;
+  playerId: string;
+  startPosition: Vector3Tuple;
+  startedAt: number;
+  toRoomId: number;
+};
+
 export type PersistedState = {
   phase: GamePhase;
   players: GamePlayer[];
@@ -83,6 +94,7 @@ export type PersistedState = {
 
 export type GameState = PersistedState & {
   actionItemUsedThisTurn: boolean;
+  activePlayerWalk: ActivePlayerWalk | null;
   diceAnimating: boolean;
   diceMultiplier: number;
   rolling: boolean;
@@ -99,7 +111,7 @@ export type GameState = PersistedState & {
   buyShopItem: (itemId: ShopItemId) => boolean;
   closeShop: () => void;
   pickMysteryCard: (cardId: MysteryCardId) => boolean;
-  acknowledgeMystery: () => void;
+  acknowledgeMystery: () => Promise<void>;
   startGame: (players: PlayerSetup[]) => void;
   rollDice: () => Promise<void>;
   endTurn: () => void;

@@ -87,7 +87,7 @@ export function MysteryOverlay() {
               <button
                 type="button"
                 className="primary-button mystery-ok-button"
-                onClick={acknowledgeMystery}
+                onClick={() => void acknowledgeMystery()}
               >
                 <Sparkles aria-hidden="true" size={18} />
                 <span>Am înțeles</span>

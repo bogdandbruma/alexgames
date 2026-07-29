@@ -4,7 +4,6 @@ import { resolveDiceMove, resolveDiceTurn } from "../rules";
 import { createMysteryOffer } from "../mystery";
 import { drawTriviaQuestion } from "../trivia";
 import { pushPlayerCoinBursts } from "../playerCoinBurst";
-import { getWalkDurationMsBetweenRooms } from "../movementTiming";
 import { portalAcknowledgement } from "./portalAck";
 import type { GameState, GameStoreSet } from "./types";
 import {
@@ -26,6 +25,10 @@ import {
   shouldDeferTurnEndForActionItems,
   sleep,
 } from "./helpers";
+import {
+  createActivePlayerWalk,
+  runActivePlayerWalk,
+} from "./playerWalk";
 
 export async function executeRollDice(deps: {
   get: () => GameState;
@@ -177,16 +180,32 @@ export async function executeRollDice(deps: {
   await sleep(DICE_POST_REVEAL_MS);
 
   if (landingIndex !== startingIndex) {
-    set((state) => ({
-      players: state.players.map((player) =>
+    const fromRoomId = startingIndex + 1;
+    const toRoomId = landingIndex + 1;
+
+    set((state) => {
+      const players = state.players.map((player) =>
         player.id === currentPlayer.id
           ? { ...player, positionIndex: landingIndex }
           : player,
-      ),
-    }));
-    await sleep(
-      getWalkDurationMsBetweenRooms(startingIndex + 1, landingIndex + 1),
-    );
+      );
+
+      return {
+        activePlayerWalk: createActivePlayerWalk(
+          { ...state, players },
+          currentPlayer.id,
+          fromRoomId,
+          toRoomId,
+        ),
+        players,
+      };
+    });
+
+    const walk = get().activePlayerWalk;
+
+    if (walk) {
+      await runActivePlayerWalk(set, walk);
+    }
   }
 
   const resolvedLandingIndex = turnResult.positionId - 1;
@@ -353,7 +372,7 @@ export async function executeRollDice(deps: {
       if (selectedCard) {
         get().pickMysteryCard(selectedCard.id);
         await sleep(3_400);
-        get().acknowledgeMystery();
+        await get().acknowledgeMystery();
       }
     }
 
