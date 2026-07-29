@@ -39,6 +39,7 @@ describe("BoardViewport", () => {
           inventory: [],
           lastDice: null,
           armedDiceX2: false,
+          trapped: false,
         },
       ],
       currentPlayerIndex: 0,
