@@ -59,6 +59,13 @@ button:focus-visible {
   gap: 8px;
 }
 
+.panel-title-row {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
 .eyebrow {
   margin: 0;
   color: #67d5c8;
@@ -445,6 +452,19 @@ h2 {
   background: #202021;
 }
 
+.text-button {
+  min-width: 72px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid rgba(245, 247, 239, 0.16);
+  border-radius: 8px;
+  color: #e9ece2;
+  background: #202021;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
 .primary-button:hover:not(:disabled) {
   background: #ffd978;
 }
@@ -461,6 +481,170 @@ h2 {
 button:disabled {
   cursor: not-allowed;
   opacity: 0.55;
+}
+
+.dashboard-shell {
+  min-height: 100vh;
+  padding: 44px clamp(18px, 5vw, 72px);
+  display: grid;
+  align-content: start;
+  gap: 28px;
+  background:
+    linear-gradient(135deg, rgba(103, 213, 200, 0.1), transparent 36%),
+    #101113;
+}
+
+.dashboard-hero {
+  width: min(1120px, 100%);
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.dashboard-hero-copy {
+  max-width: 620px;
+  display: grid;
+  gap: 9px;
+}
+
+.library-summary {
+  min-width: 144px;
+  min-height: 96px;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  align-content: center;
+  align-items: center;
+  gap: 3px 10px;
+  border: 1px solid rgba(245, 247, 239, 0.14);
+  border-radius: 8px;
+  background: #181819;
+}
+
+.library-summary svg {
+  grid-row: span 2;
+  color: #67d5c8;
+}
+
+.library-summary strong {
+  color: #f3c969;
+  font-size: 1.7rem;
+  line-height: 1;
+}
+
+.library-summary span {
+  color: #b9b9ad;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.games-grid {
+  width: min(1120px, 100%);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.game-card {
+  min-height: 314px;
+  padding: 18px;
+  display: grid;
+  align-content: start;
+  gap: 18px;
+  border: 1px solid rgba(245, 247, 239, 0.14);
+  border-radius: 8px;
+  background: #181819;
+}
+
+.game-card-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.game-icon {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(103, 213, 200, 0.36);
+  border-radius: 8px;
+  color: #67d5c8;
+  background: #202724;
+}
+
+.game-status {
+  min-height: 30px;
+  padding: 0 9px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(243, 201, 105, 0.34);
+  border-radius: 999px;
+  color: #f3c969;
+  background: #2a261d;
+  font-size: 0.75rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.game-card-copy {
+  display: grid;
+  gap: 8px;
+}
+
+.game-card-copy h2 {
+  font-size: 1.35rem;
+}
+
+.game-card-copy p {
+  color: #b9b9ad;
+  line-height: 1.5;
+}
+
+.game-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.game-meta div {
+  min-height: 64px;
+  padding: 11px;
+  display: grid;
+  align-content: center;
+  gap: 3px;
+  border: 1px solid rgba(245, 247, 239, 0.12);
+  border-radius: 8px;
+  background: #202021;
+}
+
+.game-meta dt,
+.game-meta dd {
+  margin: 0;
+}
+
+.game-meta dt {
+  color: #989b91;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.game-meta dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: #eef2e9;
+  font-weight: 800;
+}
+
+.game-card-action {
+  width: 100%;
+  margin-top: auto;
 }
 
 .save-note {
@@ -616,46 +800,49 @@ button:disabled {
 
 .dice-pip {
   position: absolute;
+  top: var(--pip-y);
+  left: var(--pip-x);
   width: 10px;
   height: 10px;
   border-radius: 50%;
   background: #171410;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  transform: translate(-50%, -50%);
 }
 
 .dice-pip-top-left {
-  top: 13px;
-  left: 13px;
+  --pip-x: 30%;
+  --pip-y: 30%;
 }
 
 .dice-pip-top-right {
-  top: 13px;
-  right: 13px;
+  --pip-x: 70%;
+  --pip-y: 30%;
 }
 
 .dice-pip-middle-left {
-  top: 27px;
-  left: 13px;
+  --pip-x: 30%;
+  --pip-y: 50%;
 }
 
 .dice-pip-middle-right {
-  top: 27px;
-  right: 13px;
+  --pip-x: 70%;
+  --pip-y: 50%;
 }
 
 .dice-pip-center {
-  top: 27px;
-  left: 27px;
+  --pip-x: 50%;
+  --pip-y: 50%;
 }
 
 .dice-pip-bottom-left {
-  bottom: 13px;
-  left: 13px;
+  --pip-x: 30%;
+  --pip-y: 70%;
 }
 
 .dice-pip-bottom-right {
-  right: 13px;
-  bottom: 13px;
+  --pip-x: 70%;
+  --pip-y: 70%;
 }
 
 .dice-readout {
@@ -752,6 +939,20 @@ button:disabled {
     font-size: 2rem;
   }
 
+  .dashboard-shell {
+    padding: 24px 18px;
+  }
+
+  .dashboard-hero {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .library-summary {
+    width: 100%;
+    min-height: 78px;
+  }
+
   .scene-container {
     min-height: 64vh;
   }
@@ -777,5 +978,274 @@ button:disabled {
 
   .secondary-button {
     width: 100%;
+  }
+}
+
+@media (max-width: 1024px) and (orientation: portrait) {
+  .app-shell-gameplay {
+    position: relative;
+    height: 100svh;
+    min-height: 100svh;
+    grid-template-columns: 1fr;
+    overflow: hidden;
+  }
+
+  .app-shell-gameplay .scene-container {
+    grid-column: 1;
+    grid-row: 1;
+    height: 100svh;
+    min-height: 100svh;
+  }
+
+  .app-shell-gameplay .scene-container canvas {
+    width: 100%;
+    height: 100%;
+  }
+
+  .app-shell-gameplay .game-panel {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    height: 100svh;
+    min-height: 0;
+    padding: calc(env(safe-area-inset-top) + 10px)
+      calc(env(safe-area-inset-right) + 12px)
+      calc(env(safe-area-inset-bottom) + 10px)
+      calc(env(safe-area-inset-left) + 12px);
+    display: block;
+    overflow: hidden;
+    border: 0;
+    background: transparent;
+    pointer-events: none;
+  }
+
+  .app-shell-gameplay .game-panel > * {
+    pointer-events: auto;
+  }
+
+  .app-shell-gameplay .panel-header,
+  .app-shell-gameplay .status-grid,
+  .app-shell-gameplay .status-grid + .status-card,
+  .app-shell-gameplay .room-strip,
+  .app-shell-gameplay .player-roster,
+  .app-shell-gameplay .message-box,
+  .app-shell-gameplay .game-actions {
+    position: absolute;
+    left: calc(env(safe-area-inset-left) + 12px);
+    right: calc(env(safe-area-inset-right) + 12px);
+  }
+
+  .app-shell-gameplay .panel-header,
+  .app-shell-gameplay .status-card,
+  .app-shell-gameplay .roster-player,
+  .app-shell-gameplay .message-box,
+  .app-shell-gameplay .primary-button,
+  .app-shell-gameplay .secondary-button {
+    background: rgba(24, 24, 25, 0.78);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.24);
+    backdrop-filter: blur(12px);
+  }
+
+  .app-shell-gameplay .panel-header {
+    top: calc(env(safe-area-inset-top) + 10px);
+    min-height: 48px;
+    padding: 8px 10px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 6px 10px;
+    border: 1px solid rgba(245, 247, 239, 0.14);
+    border-radius: 8px;
+  }
+
+  .app-shell-gameplay .panel-title-row {
+    display: contents;
+  }
+
+  .app-shell-gameplay .eyebrow,
+  .app-shell-gameplay .subtitle,
+  .app-shell-gameplay .save-note {
+    display: none;
+  }
+
+  .app-shell-gameplay h1 {
+    min-width: 0;
+    overflow: hidden;
+    font-size: 1rem;
+    line-height: 1.1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .app-shell-gameplay .text-button {
+    min-width: 64px;
+    min-height: 34px;
+    padding: 0 10px;
+    background: rgba(32, 32, 33, 0.86);
+  }
+
+  .app-shell-gameplay .status-grid {
+    top: calc(env(safe-area-inset-top) + 68px);
+    grid-template-columns: minmax(0, 1fr) 76px;
+    gap: 8px;
+  }
+
+  .app-shell-gameplay .status-card {
+    min-height: 52px;
+    padding: 9px 11px;
+  }
+
+  .app-shell-gameplay .status-grid + .status-card {
+    top: calc(env(safe-area-inset-top) + 128px);
+  }
+
+  .app-shell-gameplay .status-label {
+    font-size: 0.66rem;
+  }
+
+  .app-shell-gameplay .room-strip {
+    top: calc(env(safe-area-inset-top) + 190px);
+    grid-template-columns: repeat(10, minmax(22px, 1fr));
+    gap: 4px;
+  }
+
+  .app-shell-gameplay .room-dot {
+    min-width: 0;
+    font-size: 0.68rem;
+  }
+
+  .app-shell-gameplay .player-roster {
+    bottom: calc(env(safe-area-inset-bottom) + 134px);
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 3px;
+    scrollbar-width: none;
+  }
+
+  .app-shell-gameplay .player-roster::-webkit-scrollbar {
+    display: none;
+  }
+
+  .app-shell-gameplay .roster-player {
+    min-width: 154px;
+    min-height: 46px;
+    padding: 8px;
+    grid-template-columns: 20px minmax(0, 1fr) 24px;
+  }
+
+  .app-shell-gameplay .roster-player span {
+    display: none;
+  }
+
+  .app-shell-gameplay .roster-player b {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+  }
+
+  .app-shell-gameplay .message-box {
+    bottom: calc(env(safe-area-inset-bottom) + 70px);
+    min-height: 54px;
+    max-height: 72px;
+    padding: 10px 12px;
+    grid-template-columns: 20px minmax(0, 1fr);
+    line-height: 1.3;
+  }
+
+  .app-shell-gameplay .message-box span {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .app-shell-gameplay .game-actions {
+    bottom: calc(env(safe-area-inset-bottom) + 10px);
+    grid-template-columns: minmax(0, 1fr) 56px;
+    gap: 8px;
+  }
+
+  .app-shell-gameplay .primary-button,
+  .app-shell-gameplay .secondary-button {
+    height: 52px;
+  }
+
+  .app-shell-gameplay .primary-button {
+    background: rgba(243, 201, 105, 0.94);
+  }
+
+  .app-shell-gameplay .secondary-button {
+    width: auto;
+  }
+
+  .app-shell-gameplay .secondary-button span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .app-shell-gameplay .dice-tray {
+    right: calc(env(safe-area-inset-right) + 12px);
+    bottom: calc(env(safe-area-inset-bottom) + 190px);
+    left: auto;
+    min-width: 136px;
+    padding: 10px;
+    grid-template-columns: 52px minmax(0, 1fr);
+    gap: 9px;
+    transform: scale(0.84);
+    transform-origin: right bottom;
+  }
+
+  .app-shell-gameplay .dice-face-large {
+    width: 52px;
+    height: 52px;
+    border-radius: 10px;
+  }
+
+  .app-shell-gameplay .dice-pip {
+    width: 8px;
+    height: 8px;
+  }
+
+  .app-shell-gameplay .dice-readout strong {
+    font-size: 1.16rem;
+  }
+
+  .app-shell-gameplay .scene-toast {
+    top: calc(env(safe-area-inset-top) + 234px);
+    width: min(380px, calc(100% - 24px));
+  }
+}
+
+@media (max-width: 520px) and (orientation: portrait) {
+  .app-shell-gameplay .room-strip {
+    top: calc(env(safe-area-inset-top) + 184px);
+  }
+
+  .app-shell-gameplay .player-roster {
+    display: none;
+  }
+
+  .app-shell-gameplay .dice-tray {
+    bottom: calc(env(safe-area-inset-bottom) + 150px);
+  }
+
+  .app-shell-gameplay .scene-toast {
+    top: calc(env(safe-area-inset-top) + 224px);
+  }
+}
+
+@media (max-width: 420px) and (orientation: portrait) {
+  .app-shell-gameplay .game-actions {
+    grid-template-columns: minmax(0, 1fr) 54px;
+  }
+
+  .app-shell-gameplay .primary-button span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }

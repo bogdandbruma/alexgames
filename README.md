@@ -2,6 +2,8 @@
 
 A local React + Three.js prototype with 10 modular space-station rooms, 3 selectable Cube Pets, animated dice, room-by-room movement, special forward/backward rooms, restart, and `localStorage` persistence.
 
+The app opens to a game dashboard. Each game should live in its own folder under `src/games` and be added to `src/games/registry.tsx` so games stay separated as the library grows.
+
 ## Run
 
 ```bash
