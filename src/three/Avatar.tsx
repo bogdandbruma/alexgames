@@ -9,7 +9,6 @@ import {
 } from "../game/board";
 import { avatarModelUrls, avatarOptionById } from "../game/avatars";
 import type { AvatarId, GamePortalTransition } from "../game/store";
-import { useGameStore } from "../game/store";
 import { AvatarCoinBursts } from "./AvatarCoinBursts";
 
 type AvatarProps = {
@@ -20,6 +19,7 @@ type AvatarProps = {
   playerId: string;
   portalTransition?: GamePortalTransition | null;
   roomId: number;
+  showNameLabel: boolean;
   targetPosition: Vector3Tuple;
 };
 
@@ -128,6 +128,7 @@ export function Avatar({
   playerId,
   portalTransition,
   roomId,
+  showNameLabel,
   targetPosition,
 }: AvatarProps) {
   const avatarConfig = avatarOptionById[avatarId];
@@ -145,8 +146,6 @@ export function Avatar({
   const walkAnimationRef = useRef<WalkAnimation | null>(null);
   const portalAnimationRef = useRef<PortalAnimation | null>(null);
   const facingYRef = useRef(Math.PI);
-  const phase = useGameStore((state) => state.phase);
-  const showNameLabel = phase === "playing" || phase === "finished";
   const [targetX, targetY, targetZ] = targetPosition;
 
   const destination = useMemo(
