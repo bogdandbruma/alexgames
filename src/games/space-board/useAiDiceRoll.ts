@@ -10,6 +10,7 @@ export function useAiDiceRoll() {
   const pendingPortal = useGameStore((state) => state.pendingPortal);
   const pendingShop = useGameStore((state) => state.pendingShop);
   const pendingTrivia = useGameStore((state) => state.pendingTrivia);
+  const diceValue = useGameStore((state) => state.diceValue);
   const rollDice = useGameStore((state) => state.rollDice);
 
   const currentPlayer = players[currentPlayerIndex];
@@ -17,6 +18,7 @@ export function useAiDiceRoll() {
     phase === "playing" &&
     currentPlayer?.controller === "ai" &&
     !rolling &&
+    diceValue === null &&
     pendingMystery === null &&
     pendingPortal === null &&
     pendingShop === null &&

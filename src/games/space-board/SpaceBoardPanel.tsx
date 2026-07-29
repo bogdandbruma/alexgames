@@ -27,6 +27,7 @@ import {
 import { isActionShopItem, shopItems, type ShopItemId } from "../../game/shop";
 import { AvatarPickerModal, AvatarSetupCompact } from "./AvatarSetupPicker";
 import { CoinAmount } from "./CoinAmount";
+import { ConfirmLeaveGameModal } from "./modals/ConfirmLeaveGameModal";
 
 const controllers: Array<{
   id: PlayerController;
@@ -115,6 +116,9 @@ export function SpaceBoardPanel({
   const [avatarModalPlayerIndex, setAvatarModalPlayerIndex] = useState<
     number | null
   >(null);
+  const [leaveConfirmAction, setLeaveConfirmAction] = useState<
+    "reset" | "exit" | null
+  >(null);
 
   const currentPlayer = players[currentPlayerIndex];
   const visibleDiceMultiplier =
@@ -138,9 +142,24 @@ export function SpaceBoardPanel({
     startGame(rematchPlayers.length > 0 ? rematchPlayers : setupPlayers);
   };
 
-  const returnToLobby = () => {
-    resetGame();
-    onExit();
+  const confirmLeaveGame = () => {
+    if (leaveConfirmAction === "reset") {
+      resetGame();
+    } else if (leaveConfirmAction === "exit") {
+      resetGame();
+      onExit();
+    }
+
+    setLeaveConfirmAction(null);
+  };
+
+  const requestExitToGames = () => {
+    if (isSetup) {
+      onExit();
+      return;
+    }
+
+    setLeaveConfirmAction("exit");
   };
 
   const updateSetupPlayer = (
@@ -193,7 +212,11 @@ export function SpaceBoardPanel({
         <p className="eyebrow">Aventură în stație</p>
         <div className="panel-title-row">
           <h1>Cursa spațială</h1>
-          <button type="button" className="text-button" onClick={onExit}>
+          <button
+            type="button"
+            className="text-button"
+            onClick={requestExitToGames}
+          >
             Jocuri
           </button>
         </div>
@@ -396,7 +419,7 @@ export function SpaceBoardPanel({
                   <button
                     type="button"
                     className="secondary-button"
-                    onClick={returnToLobby}
+                    onClick={() => setLeaveConfirmAction("exit")}
                   >
                     <Users aria-hidden="true" size={18} />
                     <span>Lobby</span>
@@ -492,7 +515,7 @@ export function SpaceBoardPanel({
                 type="button"
                 className="secondary-button"
                 disabled={rolling}
-                onClick={resetGame}
+                onClick={() => setLeaveConfirmAction("reset")}
               >
                 <RotateCcw aria-hidden="true" size={18} />
                 <span>Joc nou</span>
@@ -503,6 +526,13 @@ export function SpaceBoardPanel({
       )}
 
       <p className="save-note">Jocul se salvează automat în acest browser.</p>
+
+      {leaveConfirmAction ? (
+        <ConfirmLeaveGameModal
+          onCancel={() => setLeaveConfirmAction(null)}
+          onConfirm={confirmLeaveGame}
+        />
+      ) : null}
     </aside>
   );
 }

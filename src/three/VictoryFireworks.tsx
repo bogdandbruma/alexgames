@@ -10,11 +10,60 @@ import {
 } from "./victoryFireworkFont";
 
 const FIREWORK_COLORS = [
-  "#2f6bff",
-  "#ffd84a",
-  "#ff3f34",
-  "#34d058",
+  "#1a5cff",
+  "#ffb800",
+  "#e6003a",
+  "#00c96a",
+  "#ff5500",
+  "#c400e6",
+  "#00b8d4",
+  "#e6c200",
+  "#3dcc00",
+  "#ff1493",
 ] as const;
+
+function hexToRgb(hex: string): [number, number, number] {
+  const normalized = hex.replace("#", "");
+  const value = Number.parseInt(normalized, 16);
+
+  return [
+    ((value >> 16) & 255) / 255,
+    ((value >> 8) & 255) / 255,
+    (value & 255) / 255,
+  ];
+}
+
+function buildBurstColors(
+  seed: number,
+  count: number,
+  baseColor: string,
+): Float32Array {
+  const random = seededRandom(seed + 4_091);
+  const [baseR, baseG, baseB] = hexToRgb(baseColor);
+  const colors = new Float32Array(count * 3);
+
+  for (let index = 0; index < count; index += 1) {
+    const i3 = index * 3;
+    const sparkle = random();
+
+    if (sparkle > 0.72) {
+      const alt =
+        FIREWORK_COLORS[Math.floor(random() * FIREWORK_COLORS.length)];
+      const [altR, altG, altB] = hexToRgb(alt);
+      const blend = THREE.MathUtils.lerp(0.12, 0.38, random());
+      colors[i3] = THREE.MathUtils.lerp(baseR, altR, blend);
+      colors[i3 + 1] = THREE.MathUtils.lerp(baseG, altG, blend);
+      colors[i3 + 2] = THREE.MathUtils.lerp(baseB, altB, blend);
+    } else {
+      const shade = THREE.MathUtils.lerp(0.92, 1.08, random());
+      colors[i3] = THREE.MathUtils.clamp(baseR * shade, 0, 1);
+      colors[i3 + 1] = THREE.MathUtils.clamp(baseG * shade, 0, 1);
+      colors[i3 + 2] = THREE.MathUtils.clamp(baseB * shade, 0, 1);
+    }
+  }
+
+  return colors;
+}
 
 export type FireworkVariant = "classic" | "ring" | "glitter" | "willow";
 
@@ -32,6 +81,27 @@ function easeInOut(value: number) {
   const clampedValue = THREE.MathUtils.clamp(value, 0, 1);
 
   return clampedValue * clampedValue * (3 - 2 * clampedValue);
+}
+
+/** Rise → hold → fade so color reads longer than a single sin peak. */
+function burstVisibility(progress: number, intensity: number): number {
+  const clamped = THREE.MathUtils.clamp(progress, 0, 1);
+  const riseEnd = 0.16;
+  const holdEnd = 0.78;
+
+  if (clamped >= 1) {
+    return 0;
+  }
+
+  if (clamped < riseEnd) {
+    return easeInOut(clamped / riseEnd) * intensity;
+  }
+
+  if (clamped < holdEnd) {
+    return intensity;
+  }
+
+  return easeInOut((1 - clamped) / (1 - holdEnd)) * intensity;
 }
 
 function buildBurstOffsets(
@@ -79,7 +149,7 @@ export function FireworkBurst({
   color,
   delay,
   position,
-  cycle = 1.55,
+  cycle = 2.15,
   variant = "classic",
   intensity = 1,
   particleCount = 118,
@@ -111,9 +181,16 @@ export function FireworkBurst({
         3,
       ),
     );
+    burstGeometry.setAttribute(
+      "color",
+      new THREE.BufferAttribute(
+        buildBurstColors(seed, particleCount, color),
+        3,
+      ),
+    );
 
     return burstGeometry;
-  }, [particleCount, seed, variant]);
+  }, [color, particleCount, seed, variant]);
 
   useFrame(() => {
     const elapsed = performance.now() / 1_000 - startedAtRef.current;
@@ -155,9 +232,9 @@ export function FireworkBurst({
     }
 
     const burst = easeInOut(progress);
-    const peak = Math.sin(progress * Math.PI);
-    const opacity =
-      progress < 0.9 ? THREE.MathUtils.clamp(peak * 1.15 * intensity, 0, 1) : 0;
+    const visibility = burstVisibility(progress, intensity);
+    const opacity = THREE.MathUtils.clamp(visibility * 0.92, 0, 1);
+    const peak = visibility;
 
     if (groupRef.current) {
       const scale =
@@ -173,11 +250,11 @@ export function FireworkBurst({
     if (materialRef.current) {
       materialRef.current.opacity = opacity;
       materialRef.current.size =
-        (variant === "glitter" ? 0.28 : 0.38) + (1 - progress) * 0.32;
+        (variant === "glitter" ? 0.36 : 0.48) + (1 - progress) * 0.22;
     }
 
     if (lightRef.current) {
-      lightRef.current.intensity = peak * 42 * intensity;
+      lightRef.current.intensity = peak * 14 * intensity;
     }
   });
 
@@ -196,9 +273,10 @@ export function FireworkBurst({
           color={color}
           depthWrite={false}
           opacity={0}
-          size={0.46}
+          size={0.52}
           sizeAttenuation
           transparent
+          vertexColors
         />
       </points>
     </group>
@@ -223,7 +301,7 @@ function FireworkLetter({
   const groupRef = useRef<THREE.Group>(null);
   const materialRef = useRef<THREE.PointsMaterial>(null);
   const lightRef = useRef<THREE.PointLight>(null);
-  const letterDuration = 1.05;
+  const letterDuration = 1.65;
 
   const { geometry, sparkCount } = useMemo(() => {
     const dots = getLetterDots(char);
@@ -273,16 +351,16 @@ function FireworkLetter({
     }
 
     const progress = THREE.MathUtils.clamp(local / letterDuration, 0, 1);
-    const launch = easeInOut(Math.min(progress / 0.38, 1));
-    const hold = progress > 0.32 && progress < 0.78 ? 1 : 0;
-    const fade = progress > 0.72 ? 1 - easeInOut((progress - 0.72) / 0.28) : 1;
+    const launch = easeInOut(Math.min(progress / 0.32, 1));
+    const hold = progress > 0.22 && progress < 0.88 ? 1 : 0;
+    const fade = progress > 0.82 ? 1 - easeInOut((progress - 0.82) / 0.18) : 1;
     const burstScale = 0.25 + launch * 0.75 + hold * 0.15;
     const opacity = THREE.MathUtils.clamp(
-      (launch * 0.35 + hold * 0.95) * fade,
+      (launch * 0.45 + hold * 1) * fade,
       0,
       1,
     );
-    const shimmer = 0.88 + Math.sin(local * 22) * 0.12;
+    const shimmer = 0.94 + Math.sin(local * 18) * 0.06;
 
     if (groupRef.current) {
       groupRef.current.scale.setScalar(burstScale * (1 + hold * 0.08));
@@ -291,11 +369,11 @@ function FireworkLetter({
 
     if (materialRef.current) {
       materialRef.current.opacity = opacity * shimmer;
-      materialRef.current.size = 0.52 + hold * 0.22;
+      materialRef.current.size = 0.62 + hold * 0.28;
     }
 
     if (lightRef.current) {
-      lightRef.current.intensity = (opacity * 55 + hold * 25) * shimmer;
+      lightRef.current.intensity = (opacity * 18 + hold * 8) * shimmer;
     }
   });
 
@@ -317,9 +395,9 @@ function FireworkLetter({
       {sparkCount > 0 ? (
         <FireworkBurst
           color={color}
-          cycle={1.2}
+          cycle={1.85}
           delay={phaseOffset % 1.1}
-          intensity={1.35}
+          intensity={1.1}
           particleCount={72}
           position={[0, 0.2, 0]}
           variant="glitter"
@@ -385,7 +463,7 @@ export function VictoryFireworksShow({
         <FireworkBurst
           key={`ambient-${index}`}
           color={FIREWORK_COLORS[spec.colorIndex % FIREWORK_COLORS.length]}
-          cycle={1.35 + (index % 4) * 0.12}
+          cycle={2.05 + (index % 4) * 0.18}
           delay={spec.delay}
           intensity={1.25}
           particleCount={index % 3 === 0 ? 140 : 110}
@@ -405,7 +483,8 @@ export function VictoryFireworksShow({
 
         compactIndex += 1;
         const slot = compactIndex;
-        const color = FIREWORK_COLORS[slot % FIREWORK_COLORS.length];
+        const color =
+          FIREWORK_COLORS[(slot * 3 + index) % FIREWORK_COLORS.length];
         const x =
           anchorPosition[0] -
           ((compactLetters.length - 1) * FIREWORK_LETTER_WIDTH) / 2 +
@@ -446,10 +525,10 @@ export function VictoryFireworksShow({
       {[0, 1, 2].flatMap((repeat) => [
         <FireworkBurst
           key={`finale-burst-center-${repeat}`}
-          color={FIREWORK_COLORS[1]}
-          cycle={1.1}
+          color={FIREWORK_COLORS[(repeat * 2 + 1) % FIREWORK_COLORS.length]}
+          cycle={1.95}
           delay={0}
-          intensity={1.6}
+          intensity={1.25}
           loop={false}
           particleCount={160}
           position={[anchorPosition[0], letterBaseY + 4, letterBaseZ - 3]}
@@ -458,10 +537,10 @@ export function VictoryFireworksShow({
         />,
         <FireworkBurst
           key={`finale-burst-left-${repeat}`}
-          color={FIREWORK_COLORS[2]}
-          cycle={1.25}
+          color={FIREWORK_COLORS[(repeat * 2 + 4) % FIREWORK_COLORS.length]}
+          cycle={2.1}
           delay={0}
-          intensity={1.5}
+          intensity={1.2}
           loop={false}
           particleCount={150}
           position={[
@@ -474,10 +553,10 @@ export function VictoryFireworksShow({
         />,
         <FireworkBurst
           key={`finale-burst-right-${repeat}`}
-          color={FIREWORK_COLORS[3]}
-          cycle={1.15}
+          color={FIREWORK_COLORS[(repeat * 2 + 6) % FIREWORK_COLORS.length]}
+          cycle={2}
           delay={0}
-          intensity={1.5}
+          intensity={1.2}
           loop={false}
           particleCount={150}
           position={[
@@ -490,10 +569,10 @@ export function VictoryFireworksShow({
         />,
         <FireworkBurst
           key={`finale-burst-high-${repeat}`}
-          color={FIREWORK_COLORS[0]}
-          cycle={1.2}
+          color={FIREWORK_COLORS[(repeat * 2 + 8) % FIREWORK_COLORS.length]}
+          cycle={2.05}
           delay={0}
-          intensity={1.45}
+          intensity={1.15}
           loop={false}
           particleCount={148}
           position={[anchorPosition[0], letterBaseY + 7, letterBaseZ - 5]}

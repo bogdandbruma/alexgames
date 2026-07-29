@@ -1,6 +1,8 @@
 import { Rocket, RotateCcw, Users } from "lucide-react";
+import { useState } from "react";
 import { rooms } from "../../../game/board";
 import { useGameStore } from "../../../game/store";
+import { ConfirmLeaveGameModal } from "./ConfirmLeaveGameModal";
 
 type VictoryOverlayProps = {
   onExit: () => void;
@@ -12,6 +14,7 @@ export function VictoryOverlay({ onExit }: VictoryOverlayProps) {
   const players = useGameStore((state) => state.players);
   const startGame = useGameStore((state) => state.startGame);
   const resetGame = useGameStore((state) => state.resetGame);
+  const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
 
   const finished = phase === "finished";
   const winner =
@@ -34,9 +37,11 @@ export function VictoryOverlay({ onExit }: VictoryOverlayProps) {
   const returnToLobby = () => {
     resetGame();
     onExit();
+    setLeaveConfirmOpen(false);
   };
 
   return (
+    <>
     <div className="victory-overlay" role="dialog" aria-modal="true">
       <div className="victory-panel">
         <div className="victory-heading">
@@ -64,7 +69,7 @@ export function VictoryOverlay({ onExit }: VictoryOverlayProps) {
           <button
             type="button"
             className="secondary-button"
-            onClick={returnToLobby}
+            onClick={() => setLeaveConfirmOpen(true)}
           >
             <Users aria-hidden="true" size={18} />
             <span>In lobby</span>
@@ -72,5 +77,12 @@ export function VictoryOverlay({ onExit }: VictoryOverlayProps) {
         </div>
       </div>
     </div>
+      {leaveConfirmOpen ? (
+        <ConfirmLeaveGameModal
+          onCancel={() => setLeaveConfirmOpen(false)}
+          onConfirm={returnToLobby}
+        />
+      ) : null}
+    </>
   );
 }

@@ -33,7 +33,6 @@ export function AvatarSetupCompact({
         height={44}
       />
       <div className="avatar-setup-compact-copy">
-        <span className="avatar-setup-compact-label">Personaj</span>
         <strong>{selected.labelRo}</strong>
         {category ? (
           <span className="avatar-setup-compact-category">{category.labelRo}</span>

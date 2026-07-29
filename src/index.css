@@ -258,14 +258,6 @@ h2 {
   gap: 1px;
 }
 
-.avatar-setup-compact-label {
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: rgba(233, 236, 226, 0.58);
-}
-
 .avatar-setup-compact-copy strong {
   overflow: hidden;
   font-size: 0.92rem;
@@ -2645,6 +2637,76 @@ button:disabled {
   backdrop-filter: blur(5px);
 }
 
+.confirm-leave-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 320;
+  display: grid;
+  place-items: center;
+  padding: max(16px, env(safe-area-inset-top))
+    max(16px, env(safe-area-inset-right))
+    max(16px, env(safe-area-inset-bottom))
+    max(16px, env(safe-area-inset-left));
+  background: rgba(7, 10, 16, 0.58);
+  backdrop-filter: blur(6px);
+}
+
+.confirm-leave-panel {
+  width: min(400px, 100%);
+  padding: 18px;
+  display: grid;
+  gap: 14px;
+  border: 1px solid rgba(245, 247, 239, 0.18);
+  border-radius: 8px;
+  color: #f8fbf7;
+  background: rgba(24, 24, 25, 0.96);
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.confirm-leave-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.confirm-leave-heading svg {
+  flex-shrink: 0;
+  color: #f3c969;
+}
+
+.confirm-leave-heading div {
+  display: grid;
+  gap: 3px;
+}
+
+.confirm-leave-heading span {
+  color: #b9b9ad;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.confirm-leave-heading strong {
+  color: #f5f7ef;
+  font-size: 1.08rem;
+  line-height: 1.25;
+}
+
+.confirm-leave-copy {
+  margin: 0;
+  color: #d5d9cf;
+  font-size: 0.94rem;
+  line-height: 1.45;
+}
+
+.confirm-leave-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+}
+
 .target-panel {
   width: min(360px, 100%);
   padding: 16px;
@@ -3746,6 +3808,9 @@ button:disabled {
 
 @media (max-width: 1024px) and (orientation: portrait) {
   .app-shell-gameplay {
+    --gameplay-trailing-action-width: 44px;
+    --gameplay-status-row-top: calc(env(safe-area-inset-top) + 66px);
+    --gameplay-status-row-height: 64px;
     position: relative;
     height: 100svh;
     min-height: 100svh;
@@ -3859,11 +3924,12 @@ button:disabled {
   }
 
   .app-shell-gameplay .status-grid {
-    top: calc(env(safe-area-inset-top) + 66px);
+    top: var(--gameplay-status-row-top);
     right: calc(env(safe-area-inset-right) + 12px);
     grid-template-columns: minmax(0, 1fr) auto 48px;
     gap: 8px;
     align-items: stretch;
+    min-height: var(--gameplay-status-row-height);
   }
 
   .app-shell-gameplay .status-label {
@@ -3878,6 +3944,7 @@ button:disabled {
     min-height: 0;
     padding: 7px 10px;
     gap: 2px;
+    align-content: center;
   }
 
   .app-shell-gameplay .status-card-room {
@@ -4048,7 +4115,7 @@ button:disabled {
   }
 
   .app-shell-gameplay .game-actions {
-    grid-template-columns: minmax(0, 1fr) 44px;
+    grid-template-columns: minmax(0, 1fr) var(--gameplay-trailing-action-width);
     gap: 6px;
   }
 
@@ -4079,18 +4146,19 @@ button:disabled {
   }
 
   .app-shell-gameplay .dice-tray {
-    top: calc(env(safe-area-inset-top) + 66px);
+    top: var(--gameplay-status-row-top);
     right: calc(env(safe-area-inset-right) + 12px);
     bottom: auto;
     left: auto;
     z-index: 6;
     width: 48px;
+    height: var(--gameplay-status-row-height);
     min-width: 0;
     min-height: 0;
-    padding: 4px;
-    display: grid;
-    grid-template-columns: 1fr;
-    place-items: center;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     gap: 0;
     border: 1px solid rgba(245, 247, 239, 0.14);
     border-radius: 8px;
@@ -4176,7 +4244,10 @@ button:disabled {
   .app-shell-gameplay .map-fab {
     position: fixed;
     z-index: 12;
-    right: calc(env(safe-area-inset-right) + 12px + 44px + 6px);
+    right: calc(
+      env(safe-area-inset-right) + 12px + var(--gameplay-trailing-action-width) +
+        6px
+    );
     bottom: calc(env(safe-area-inset-bottom) + 8px);
     width: 44px;
     min-width: 44px;
@@ -4260,8 +4331,12 @@ button:disabled {
 }
 
 @media (max-width: 420px) and (orientation: portrait) {
+  .app-shell-gameplay {
+    --gameplay-trailing-action-width: 54px;
+  }
+
   .app-shell-gameplay .game-actions {
-    grid-template-columns: minmax(0, 1fr) 54px;
+    grid-template-columns: minmax(0, 1fr) var(--gameplay-trailing-action-width);
   }
 
   .app-shell-gameplay .primary-button span {
