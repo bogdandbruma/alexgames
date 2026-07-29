@@ -1,5 +1,5 @@
 import { MapControls } from "@react-three/drei";
-import { useFrame, useThree } from "@react-three/fiber";
+import { invalidate, useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import type { MapControls as MapControlsImpl } from "three-stdlib";
@@ -19,12 +19,14 @@ function easeInOut(value: number) {
 export type CameraRigProps = {
   focusKey: string;
   moving: boolean;
+  onCameraIdleChange: (idle: boolean) => void;
   targetPosition: Vector3Tuple;
 };
 
 export function CameraRig({
   focusKey,
   moving,
+  onCameraIdleChange,
   targetPosition,
 }: CameraRigProps) {
   const controlsRef = useRef<MapControlsImpl | null>(null);
@@ -36,21 +38,25 @@ export function CameraRig({
   const initializedRef = useRef(false);
   const cameraMovingRef = useRef(false);
   const focusStartedAtRef = useRef(0);
+  const lastIdleRef = useRef<boolean | null>(null);
   const [targetX, targetY, targetZ] = targetPosition;
 
   useEffect(() => {
     desiredTargetRef.current.set(targetX, targetY, targetZ);
 
     cameraMovingRef.current = true;
+    invalidate();
   }, [targetX, targetY, targetZ]);
 
   useEffect(() => {
     cameraMovingRef.current = true;
+    invalidate();
   }, [moving]);
 
   useEffect(() => {
     focusStartedAtRef.current = performance.now() / 1_000;
     cameraMovingRef.current = true;
+    invalidate();
   }, [focusKey]);
 
   useFrame((_, delta) => {
@@ -73,35 +79,45 @@ export function CameraRig({
 
     if (!cameraMovingRef.current) {
       controlsRef.current?.update();
-      return;
-    }
-
-    const targetInterpolation = 1 - Math.exp(-(moving ? 0.95 : 1.125) * delta);
-    const cameraInterpolation = 1 - Math.exp(-(moving ? 0.825 : 0.95) * delta);
-
-    targetRef.current.lerp(desiredTargetRef.current, targetInterpolation);
-    camera.position.lerp(desiredCameraRef.current, cameraInterpolation);
-
-    if (controlsRef.current) {
-      controlsRef.current.target.copy(targetRef.current);
-      controlsRef.current.update();
     } else {
-      camera.lookAt(targetRef.current);
-    }
+      const targetInterpolation = 1 - Math.exp(-(moving ? 0.95 : 1.125) * delta);
+      const cameraInterpolation = 1 - Math.exp(-(moving ? 0.825 : 0.95) * delta);
 
-    if (
-      targetRef.current.distanceTo(desiredTargetRef.current) < 0.035 &&
-      camera.position.distanceTo(desiredCameraRef.current) < 0.055
-    ) {
-      targetRef.current.copy(desiredTargetRef.current);
-      camera.position.copy(desiredCameraRef.current);
+      targetRef.current.lerp(desiredTargetRef.current, targetInterpolation);
+      camera.position.lerp(desiredCameraRef.current, cameraInterpolation);
 
       if (controlsRef.current) {
         controlsRef.current.target.copy(targetRef.current);
         controlsRef.current.update();
+      } else {
+        camera.lookAt(targetRef.current);
       }
 
-      cameraMovingRef.current = moving || focusProgress < 1;
+      if (
+        targetRef.current.distanceTo(desiredTargetRef.current) < 0.035 &&
+        camera.position.distanceTo(desiredCameraRef.current) < 0.055
+      ) {
+        targetRef.current.copy(desiredTargetRef.current);
+        camera.position.copy(desiredCameraRef.current);
+
+        if (controlsRef.current) {
+          controlsRef.current.target.copy(targetRef.current);
+          controlsRef.current.update();
+        }
+
+        cameraMovingRef.current = moving || focusProgress < 1;
+      }
+    }
+
+    const cameraIdle = !cameraMovingRef.current && !moving;
+
+    if (lastIdleRef.current !== cameraIdle) {
+      lastIdleRef.current = cameraIdle;
+      onCameraIdleChange(cameraIdle);
+    }
+
+    if (!cameraIdle) {
+      invalidate();
     }
   });
 
@@ -127,6 +143,10 @@ export function CameraRig({
       panSpeed={1.1}
       zoomSpeed={1.25}
       maxPolarAngle={Math.PI / 2.05}
+      onChange={() => {
+        cameraMovingRef.current = true;
+        invalidate();
+      }}
     />
   );
 }

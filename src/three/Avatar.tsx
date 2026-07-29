@@ -1,5 +1,5 @@
 import { Html, useGLTF } from "@react-three/drei";
-import { useFrame } from "@react-three/fiber";
+import { invalidate, useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { clone as cloneSkeleton } from "three/examples/jsm/utils/SkeletonUtils.js";
@@ -337,6 +337,10 @@ export function Avatar({
 
     if (haloRef.current) {
       haloRef.current.scale.set(pulse, pulse, pulse);
+    }
+
+    if (walkAnimationRef.current || portalAnimationRef.current) {
+      invalidate();
     }
   });
 

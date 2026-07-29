@@ -1,6 +1,6 @@
 import { Html } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
-import { Suspense, useMemo } from "react";
+import { Suspense, useCallback, useMemo, useState } from "react";
 import * as THREE from "three";
 import {
   roomConnections,
@@ -203,6 +203,10 @@ export function GameScene() {
   const portalTransition = useGameStore((state) => state.portalTransition);
   const winnerId = useGameStore((state) => state.winnerId);
   const rolling = useGameStore((state) => state.rolling);
+  const [cameraIdle, setCameraIdle] = useState(false);
+  const onCameraIdleChange = useCallback((idle: boolean) => {
+    setCameraIdle(idle);
+  }, []);
 
   const winner =
     players.find(({ id }) => id === winnerId) ??
@@ -228,9 +232,13 @@ export function GameScene() {
         ]
       : focusedPlayerPosition;
 
+  const frameloop =
+    cameraIdle && !rolling && phase !== "finished" ? "demand" : "always";
+
   return (
     <Canvas
       shadows
+      frameloop={frameloop}
       camera={{
         position: [9, 21, 23],
         fov: 52,
@@ -309,6 +317,7 @@ export function GameScene() {
       <CameraRig
         focusKey={`${phase}-${winnerId ?? focusedPlayer?.id ?? "setup"}`}
         moving={rolling || phase === "finished"}
+        onCameraIdleChange={onCameraIdleChange}
         targetPosition={cinematicTargetPosition}
       />
     </Canvas>
