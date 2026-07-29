@@ -1,6 +1,6 @@
 import { Html, MapControls } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Suspense, useEffect, useRef } from "react";
+import { Suspense, useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import type { MapControls as MapControlsImpl } from "three-stdlib";
 import {
@@ -19,11 +19,161 @@ const turnPullbackOffset = new THREE.Vector3(13, 31, 33);
 const turnCloseOffset = new THREE.Vector3(9, 24, 27);
 const movementOverviewOffset = new THREE.Vector3(5, 41, 24);
 const turnFocusDuration = 4.4;
+const sceneCenter: Vector3Tuple = [24, 0, 18];
+
+const craterDetails = [
+  { position: [-14, -0.18, 7], radius: 4.8, rotation: 0.28, scale: [1.35, 0.72, 1] },
+  { position: [-8, -0.17, 45], radius: 3.1, rotation: -0.35, scale: [1.18, 0.82, 1] },
+  { position: [5, -0.17, -11], radius: 2.7, rotation: 0.6, scale: [1.26, 0.78, 1] },
+  { position: [9, -0.17, 49], radius: 2.2, rotation: 0.08, scale: [0.95, 1.2, 1] },
+  { position: [23, -0.17, -15], radius: 3.8, rotation: -0.18, scale: [1.36, 0.82, 1] },
+  { position: [37, -0.17, 51], radius: 3.2, rotation: 0.42, scale: [1.2, 0.86, 1] },
+  { position: [54, -0.17, -8], radius: 4.2, rotation: -0.52, scale: [1.42, 0.78, 1] },
+  { position: [64, -0.17, 24], radius: 5.1, rotation: 0.18, scale: [1.18, 0.88, 1] },
+  { position: [58, -0.17, 51], radius: 2.6, rotation: -0.12, scale: [1.05, 0.95, 1] },
+] satisfies Array<{
+  position: Vector3Tuple;
+  radius: number;
+  rotation: number;
+  scale: Vector3Tuple;
+}>;
+
+const moonRocks = [
+  [-18, -0.01, 20, 0.24],
+  [-4, -0.02, -16, 0.2],
+  [2, -0.02, 47, 0.16],
+  [17, -0.02, -13, 0.18],
+  [31, -0.02, 50, 0.24],
+  [44, -0.02, -11, 0.18],
+  [60, -0.02, 8, 0.22],
+  [66, -0.02, 39, 0.26],
+] satisfies Array<[number, number, number, number]>;
 
 function easeInOut(value: number) {
   const clampedValue = THREE.MathUtils.clamp(value, 0, 1);
 
   return clampedValue * clampedValue * (3 - 2 * clampedValue);
+}
+
+function seededRandom(seed: number) {
+  let value = seed;
+
+  return () => {
+    value = (value * 16_807) % 2_147_483_647;
+
+    return (value - 1) / 2_147_483_646;
+  };
+}
+
+function MoonSky() {
+  const starsGeometry = useMemo(() => {
+    const random = seededRandom(44);
+    const positions: number[] = [];
+
+    for (let index = 0; index < 520; index += 1) {
+      const angle = random() * Math.PI * 2;
+      const elevation = THREE.MathUtils.lerp(0.08, 1.22, random());
+      const radius = THREE.MathUtils.lerp(92, 128, random());
+      const twinkle = index % 19 === 0 ? 1.55 : 1;
+
+      positions.push(
+        sceneCenter[0] + Math.cos(angle) * Math.cos(elevation) * radius,
+        THREE.MathUtils.lerp(15, 82, random()) * twinkle,
+        sceneCenter[2] + Math.sin(angle) * Math.cos(elevation) * radius,
+      );
+    }
+
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute(
+      "position",
+      new THREE.Float32BufferAttribute(positions, 3),
+    );
+
+    return geometry;
+  }, []);
+
+  return (
+    <>
+      <points geometry={starsGeometry}>
+        <pointsMaterial
+          color="#f8fbff"
+          size={1.35}
+          sizeAttenuation={false}
+          transparent
+          opacity={1}
+          fog={false}
+          depthWrite={false}
+        />
+      </points>
+
+      <mesh position={[86, 48, -42]}>
+        <sphereGeometry args={[3.3, 48, 24]} />
+        <meshBasicMaterial color="#dce9ff" transparent opacity={0.88} />
+      </mesh>
+      <mesh position={[84.9, 48.28, -41.7]}>
+        <sphereGeometry args={[3.35, 48, 24]} />
+        <meshBasicMaterial color="#07101f" transparent opacity={0.9} />
+      </mesh>
+    </>
+  );
+}
+
+function MoonSurface() {
+  return (
+    <group>
+      <mesh
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[sceneCenter[0], -0.23, sceneCenter[2]]}
+        receiveShadow
+      >
+        <circleGeometry args={[76, 128]} />
+        <meshStandardMaterial
+          color="#8e918d"
+          roughness={1}
+          metalness={0}
+        />
+      </mesh>
+
+      <mesh
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[sceneCenter[0], -0.225, sceneCenter[2]]}
+      >
+        <ringGeometry args={[30, 36.5, 96]} />
+        <meshBasicMaterial color="#c4c7c2" transparent opacity={0.1} />
+      </mesh>
+
+      {craterDetails.map((crater) => (
+        <group
+          key={crater.position.join(":")}
+          position={crater.position}
+          rotation={[-Math.PI / 2, 0, crater.rotation]}
+          scale={crater.scale}
+        >
+          <mesh position={[0, 0, 0.002]}>
+            <circleGeometry args={[crater.radius, 48]} />
+            <meshBasicMaterial color="#5e6261" transparent opacity={0.36} />
+          </mesh>
+          <mesh position={[0, 0, 0.006]}>
+            <ringGeometry args={[crater.radius * 0.78, crater.radius, 64]} />
+            <meshBasicMaterial color="#d0d2cd" transparent opacity={0.2} />
+          </mesh>
+        </group>
+      ))}
+
+      {moonRocks.map(([x, y, z, radius], index) => (
+        <mesh
+          key={`${x}:${z}:${index}`}
+          castShadow
+          receiveShadow
+          position={[x, y, z]}
+          rotation={[0.4 + index * 0.12, index * 0.47, -0.18]}
+        >
+          <dodecahedronGeometry args={[radius, 0]} />
+          <meshStandardMaterial color="#a9aca7" roughness={0.96} />
+        </mesh>
+      ))}
+    </group>
+  );
 }
 
 function SceneControls({
@@ -187,9 +337,18 @@ export function GameScene() {
       dpr={[1, 1.75]}
       gl={{ antialias: true }}
     >
-      <color attach="background" args={["#101113"]} />
-      <ambientLight intensity={1.45} />
-      <directionalLight castShadow position={[10, 18, 8]} intensity={2.1} />
+      <color attach="background" args={["#07101f"]} />
+      <fog attach="fog" args={["#07101f", 58, 155]} />
+      <MoonSky />
+      <MoonSurface />
+      <ambientLight intensity={1.08} color="#d9e7ff" />
+      <hemisphereLight args={["#edf5ff", "#5d625f", 0.72]} />
+      <directionalLight
+        castShadow
+        position={[-18, 34, -12]}
+        intensity={2.8}
+        color="#f4f7ff"
+      />
       <pointLight
         position={[4, 6, 8]}
         intensity={12}

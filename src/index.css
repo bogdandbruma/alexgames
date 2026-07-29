@@ -1015,7 +1015,26 @@ button:disabled {
   overflow: hidden;
 }
 
+.scene-container::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.95) 0 1px, transparent 1.8px)
+      12px 18px / 128px 112px repeat,
+    radial-gradient(circle, rgba(198, 226, 255, 0.9) 0 1.2px, transparent 2.2px)
+      74px 42px / 216px 164px repeat,
+    radial-gradient(circle, rgba(243, 201, 105, 0.78) 0 1px, transparent 2px)
+      34px 84px / 292px 216px repeat,
+    linear-gradient(to bottom, rgba(7, 16, 31, 0.84), rgba(7, 16, 31, 0));
+  mask-image: linear-gradient(to bottom, #000 0 24%, transparent 44%);
+}
+
 .scene-container canvas {
+  position: relative;
+  z-index: 0;
   display: block;
   max-width: 100%;
 }
@@ -1307,6 +1326,97 @@ button:disabled {
     min-height: 78px;
   }
 
+  .game-card {
+    padding: 16px 16px 18px;
+    gap: 16px;
+  }
+
+  .game-card-header {
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr) auto;
+    grid-template-areas:
+      "icon title status"
+      "teaser teaser teaser";
+    align-items: start;
+    gap: 12px 12px;
+  }
+
+  .game-icon {
+    grid-area: icon;
+    width: 52px;
+    height: 52px;
+  }
+
+  .game-card-head-copy {
+    display: contents;
+  }
+
+  .game-card-head-copy h2 {
+    grid-area: title;
+    font-size: 1.22rem;
+    align-self: center;
+  }
+
+  .game-card-teaser {
+    grid-area: teaser;
+    margin-top: 0;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .game-card-header .game-status {
+    grid-area: status;
+    margin-left: 0;
+    align-self: center;
+  }
+
+  .game-card-pets {
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .game-card-pet {
+    min-width: 0;
+    flex: 1 1 0;
+    max-width: 96px;
+    padding: 8px 6px 6px;
+  }
+
+  .game-card-story {
+    gap: 10px;
+  }
+
+  .game-card-highlight {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+    box-sizing: border-box;
+  }
+
+  .game-card-body {
+    font-size: 0.92rem;
+    line-height: 1.5;
+  }
+
+  .game-card-bottom {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .game-card-bottom-meta {
+    width: 100%;
+  }
+
+  .game-meta-chips {
+    justify-content: flex-start;
+  }
+
+  .game-card-action {
+    width: 100%;
+    min-width: 0;
+  }
+
   .scene-container {
     min-height: 64vh;
   }
@@ -1322,6 +1432,20 @@ button:disabled {
 }
 
 @media (max-width: 420px) {
+  .game-card-pet-label {
+    font-size: 0.62rem;
+  }
+
+  .game-card-pet svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .game-meta-chip {
+    font-size: 0.72rem;
+    padding: 4px 8px;
+  }
+
   .avatar-options {
     grid-template-columns: repeat(3, minmax(58px, 1fr));
   }
