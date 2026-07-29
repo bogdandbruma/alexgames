@@ -8,7 +8,7 @@ import {
   User,
   Users,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import { rooms } from "../../game/board";
 import { avatarOptions } from "../../game/avatars";
@@ -147,14 +147,6 @@ export function SpaceBoardGame({ onExit }: SpaceBoardGameProps) {
   const isSetup = phase === "setup";
   const isAiTurn =
     phase === "playing" && currentPlayer?.controller === "ai" && !rolling;
-
-  const roomOccupants = useMemo(
-    () =>
-      rooms.map((_, roomIndex) =>
-        players.filter((player) => player.positionIndex === roomIndex),
-      ),
-    [players],
-  );
 
   useEffect(() => {
     if (!isAiTurn) {
@@ -352,30 +344,6 @@ export function SpaceBoardGame({ onExit }: SpaceBoardGameProps) {
                   </div>
                 );
               })}
-            </section>
-
-            <section className="room-strip" aria-label="Camerele stației">
-              {rooms.map((room, index) => (
-                <span
-                  key={room.id}
-                  className={
-                    currentPlayer?.positionIndex === index
-                      ? "room-dot room-dot-current"
-                      : roomOccupants[index].length > 0
-                        ? "room-dot room-dot-occupied"
-                        : room.effect?.kind === "forward"
-                          ? "room-dot room-dot-forward"
-                          : room.effect?.kind === "backward"
-                            ? "room-dot room-dot-backward"
-                            : "room-dot"
-                  }
-                  title={room.name}
-                >
-                  {roomOccupants[index].length > 0
-                    ? roomOccupants[index].length
-                    : room.id}
-                </span>
-              ))}
             </section>
 
             <section className="message-box" aria-live="polite">

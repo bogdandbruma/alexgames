@@ -20,6 +20,7 @@ const turnCloseOffset = new THREE.Vector3(9, 24, 27);
 const movementOverviewOffset = new THREE.Vector3(5, 41, 24);
 const turnFocusDuration = 4.4;
 const sceneCenter: Vector3Tuple = [24, 0, 18];
+const moonHalfExtent = 76;
 
 const craterDetails = [
   { position: [-14, -0.18, 7], radius: 4.8, rotation: 0.28, scale: [1.35, 0.72, 1] },
@@ -119,6 +120,10 @@ function MoonSky() {
 }
 
 function MoonSurface() {
+  const moonSize = moonHalfExtent * 2;
+  const innerSquare = 60;
+  const frameSquare = 73;
+
   return (
     <group>
       <mesh
@@ -126,7 +131,7 @@ function MoonSurface() {
         position={[sceneCenter[0], -0.23, sceneCenter[2]]}
         receiveShadow
       >
-        <circleGeometry args={[76, 128]} />
+        <planeGeometry args={[moonSize, moonSize]} />
         <meshStandardMaterial
           color="#8e918d"
           roughness={1}
@@ -138,8 +143,16 @@ function MoonSurface() {
         rotation={[-Math.PI / 2, 0, 0]}
         position={[sceneCenter[0], -0.225, sceneCenter[2]]}
       >
-        <ringGeometry args={[30, 36.5, 96]} />
+        <planeGeometry args={[frameSquare, frameSquare]} />
         <meshBasicMaterial color="#c4c7c2" transparent opacity={0.1} />
+      </mesh>
+
+      <mesh
+        rotation={[-Math.PI / 2, 0, 0]}
+        position={[sceneCenter[0], -0.224, sceneCenter[2]]}
+      >
+        <planeGeometry args={[innerSquare, innerSquare]} />
+        <meshBasicMaterial color="#9a9d98" transparent opacity={0.14} />
       </mesh>
 
       {craterDetails.map((crater) => (
