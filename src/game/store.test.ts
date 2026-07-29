@@ -190,6 +190,58 @@ describe("space board store", () => {
     expect(rematchState.shopStock.pistol).toBe(true);
   });
 
+  test("rollDice does not emit intermediate positionIndex values", async () => {
+    vi.spyOn(Math, "random").mockReturnValue(0);
+
+    const { useGameStore } = await import("./store");
+
+    useGameStore.setState({
+      phase: "playing",
+      players: [
+        {
+          id: "player-1",
+          name: "Tester",
+          avatarId: "cat",
+          controller: "player",
+          positionIndex: 0,
+          coins: 0,
+          lastDice: null,
+          trapped: false,
+        },
+        {
+          id: "player-2",
+          name: "Next",
+          avatarId: "dog",
+          controller: "player",
+          positionIndex: 0,
+          coins: 0,
+          lastDice: null,
+          trapped: false,
+        },
+      ],
+      currentPlayerIndex: 0,
+      diceValue: null,
+      diceAnimating: false,
+      message: "Test turn",
+      rolling: false,
+      uiToast: null,
+    });
+
+    const seen: number[] = [];
+    const unsub = useGameStore.subscribe((state) => {
+      seen.push(state.players[0].positionIndex);
+    });
+
+    const roll = useGameStore.getState().rollDice();
+
+    await vi.advanceTimersByTimeAsync(20_000);
+    await roll;
+    unsub();
+
+    const unique = [...new Set(seen)];
+    expect(unique.length).toBeLessThanOrEqual(2);
+  });
+
   test("opens a shop overlay after landing in a shop room", async () => {
     vi.spyOn(Math, "random").mockReturnValue(0);
 
@@ -1049,12 +1101,12 @@ describe("space board store", () => {
 
     await vi.advanceTimersByTimeAsync(14_000);
 
-    expect(useGameStore.getState().players[0].positionIndex + 1).toBe(22);
     expect(useGameStore.getState().pendingPortal).toMatchObject({
       playerId: "player-1",
       fromRoomId: 22,
       toRoomId: 28,
     });
+    expect(useGameStore.getState().players[0].positionIndex).toBe(20);
 
     useGameStore.getState().acknowledgePortalTransition();
 

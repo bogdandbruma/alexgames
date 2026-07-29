@@ -37,6 +37,7 @@ import {
   pushPlayerCoinBursts,
   type PlayerCoinBurst,
 } from "./playerCoinBurst";
+import { getWalkDurationMs } from "./movementTiming";
 
 export type { AvatarId } from "./avatars";
 
@@ -171,8 +172,6 @@ const sleep = (milliseconds: number) =>
     window.setTimeout(resolve, milliseconds);
   });
 
-/** Matches dice-move pacing and Avatar walk duration (see Avatar.tsx). */
-const AVATAR_STEP_MS = 1_560;
 const DICE_ROLL_MIN_MS = 1_000;
 const DICE_ROLL_MAX_MS = 2_000;
 const DICE_RESULT_HOLD_MS = 2_000;
@@ -1643,23 +1642,9 @@ export const useGameStore = create<GameState>()(
 
         await sleep(DICE_POST_REVEAL_MS);
 
-        for (
-          let nextIndex = startingIndex + 1;
-          nextIndex <= landingIndex;
-          nextIndex += 1
-        ) {
-          await sleep(AVATAR_STEP_MS);
-          set((state) => ({
-            players: state.players.map((player) =>
-              player.id === currentPlayer.id
-                ? { ...player, positionIndex: nextIndex }
-                : player,
-            ),
-          }));
-        }
-
-        if (landingIndex > startingIndex) {
-          await sleep(AVATAR_STEP_MS);
+        const stepCount = Math.max(0, landingIndex - startingIndex);
+        if (stepCount > 0) {
+          await sleep(getWalkDurationMs(stepCount));
         }
 
         const resolvedLandingIndex = turnResult.positionId - 1;
@@ -1676,12 +1661,17 @@ export const useGameStore = create<GameState>()(
         }
 
         if (moveResult.outcome === "finished") {
-          set({
+          set((state) => ({
             phase: "finished",
             rolling: false,
             message: `${getPlayerName(currentPlayer)} a ajuns la ${landedRoom.name} și a câștigat!`,
             uiToast: createRoomToast(currentPlayer, landingIndex, "win"),
-          });
+            players: state.players.map((player) =>
+              player.id === currentPlayer.id
+                ? { ...player, positionIndex: landingIndex }
+                : player,
+            ),
+          }));
 
           set({
             actionItemUsedThisTurn: false,
