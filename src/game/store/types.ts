@@ -119,6 +119,23 @@ export type GameState = PersistedState & {
   useInventoryItem: (itemId: ShopItemId, targetPlayerId?: string) => boolean;
 };
 
+export type AiGameSnapshot = Pick<
+  GameState,
+  | "phase"
+  | "players"
+  | "currentPlayerIndex"
+  | "rolling"
+  | "diceAnimating"
+  | "diceValue"
+  | "actionItemUsedThisTurn"
+  | "activePlayerWalk"
+  | "pendingMystery"
+  | "pendingPortal"
+  | "pendingShop"
+  | "pendingTrivia"
+  | "shopStock"
+>;
+
 export type GameStoreSet = (
   partial:
     | Partial<GameState>

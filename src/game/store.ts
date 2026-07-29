@@ -323,7 +323,13 @@ export const useGameStore = create<GameState>()(
 
       useInventoryItem: (itemId, targetPlayerId) => {
         let used = false;
-        let deferredState: Partial<GameState> | null = null;
+        const deferredUpdate: {
+          state: Partial<GameState> | null;
+          triviaPlayerId: string | null;
+        } = {
+          state: null,
+          triviaPlayerId: null,
+        };
         const playersBefore = get().players;
         const focusedPlayerId =
           get().players[get().currentPlayerIndex]?.id ?? null;
@@ -445,12 +451,14 @@ export const useGameStore = create<GameState>()(
                 };
               }
 
-              deferredState = createPendingRoomActionState(
+              deferredUpdate.state = createPendingRoomActionState(
                 state,
                 currentPlayer.id,
                 movement.result,
                 message,
               );
+              deferredUpdate.triviaPlayerId =
+                deferredUpdate.state.pendingTrivia?.playerId ?? null;
 
               return {
                 actionItemUsedThisTurn: true,
@@ -595,12 +603,14 @@ export const useGameStore = create<GameState>()(
                 };
               }
 
-              deferredState = createPendingRoomActionState(
+              deferredUpdate.state = createPendingRoomActionState(
                 state,
                 currentPlayer.id,
                 currentLanding.result,
                 `${getPlayerName(currentPlayer)} a folosit sageata.`,
               );
+              deferredUpdate.triviaPlayerId =
+                deferredUpdate.state.pendingTrivia?.playerId ?? null;
 
               return {
                 actionItemUsedThisTurn: true,
@@ -687,12 +697,12 @@ export const useGameStore = create<GameState>()(
               focusedPlayerId,
             );
 
-            if (deferredState) {
-              const pendingDeferredState = deferredState;
-              const triviaPlayerId = pendingDeferredState.pendingTrivia?.playerId;
-
-              if (triviaPlayerId) {
-                await waitForPortalTransitionBeforeTrivia(get, triviaPlayerId);
+            if (deferredUpdate.state) {
+              if (deferredUpdate.triviaPlayerId) {
+                await waitForPortalTransitionBeforeTrivia(
+                  get,
+                  deferredUpdate.triviaPlayerId,
+                );
               }
 
               set((state) => {
@@ -700,7 +710,7 @@ export const useGameStore = create<GameState>()(
                   return {};
                 }
 
-                return pendingDeferredState;
+                return deferredUpdate.state ?? {};
               });
             }
           })();

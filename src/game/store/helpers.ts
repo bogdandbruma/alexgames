@@ -24,6 +24,7 @@ import {
   normalizeAvatarId,
 } from "../avatars";
 import type {
+  AiGameSnapshot,
   GamePlayer,
   GamePortalTransition,
   GameState,
@@ -124,13 +125,13 @@ export const normalizePlayerRuntimeState = (player: GamePlayer): GamePlayer => (
   armedDiceX2: player.armedDiceX2 ?? false,
 });
 
-export const hasRolledThisTurn = (state: GameState) =>
+export const hasRolledThisTurn = (state: Pick<GameState, "diceValue" | "rolling">) =>
   state.diceValue !== null && !state.rolling;
 
 export const playerHasUsableActionItem = (player: GamePlayer | undefined) =>
   getPlayerInventory(player).some(isActionShopItem);
 
-export const shouldDeferTurnEndForActionItems = (state: GameState) => {
+export const shouldDeferTurnEndForActionItems = (state: AiGameSnapshot) => {
   const player = state.players[state.currentPlayerIndex];
 
   if (!player || player.trapped) {

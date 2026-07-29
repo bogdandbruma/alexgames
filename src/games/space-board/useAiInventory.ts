@@ -9,6 +9,7 @@ import {
 } from "../../game/aiInventory";
 import { getPlayerInventory } from "../../game/store/helpers";
 import { useGameStore } from "../../game/store";
+import type { AiGameSnapshot } from "../../game/store/types";
 
 const AI_PRE_ROLL_DELAY_MS = 400;
 const AI_ACTION_ITEM_DELAY_MS = 1_200;
@@ -38,7 +39,7 @@ export function useAiInventory() {
   const useInventoryItem = useGameStore((state) => state.useInventoryItem);
   const endTurn = useGameStore((state) => state.endTurn);
 
-  const snapshot = {
+  const snapshot: AiGameSnapshot = {
     phase,
     players,
     currentPlayerIndex,

@@ -2,7 +2,7 @@ import {
   isActionShopItem,
   type ShopItemId,
 } from "./shop";
-import type { GamePlayer, GameState } from "./store/types";
+import type { GamePlayer, AiGameSnapshot } from "./store/types";
 import {
   getAffordableShopItems,
   hasRolledThisTurn,
@@ -80,7 +80,7 @@ export function pickAiActionItem(
   return { itemId, targetPlayerId: target.id };
 }
 
-export function isAiPlayBlocked(state: GameState): boolean {
+export function isAiPlayBlocked(state: AiGameSnapshot): boolean {
   return (
     state.pendingMystery !== null ||
     state.pendingPortal !== null ||
@@ -91,7 +91,7 @@ export function isAiPlayBlocked(state: GameState): boolean {
   );
 }
 
-export function isAiPreRollTurn(state: GameState): boolean {
+export function isAiPreRollTurn(state: AiGameSnapshot): boolean {
   const player = state.players[state.currentPlayerIndex];
 
   return (
@@ -103,7 +103,7 @@ export function isAiPreRollTurn(state: GameState): boolean {
   );
 }
 
-export function isAiPostRollActionTurn(state: GameState): boolean {
+export function isAiPostRollActionTurn(state: AiGameSnapshot): boolean {
   const player = state.players[state.currentPlayerIndex];
 
   return (
@@ -117,7 +117,7 @@ export function isAiPostRollActionTurn(state: GameState): boolean {
   );
 }
 
-export function canAiAutoEndTurn(state: GameState): boolean {
+export function canAiAutoEndTurn(state: AiGameSnapshot): boolean {
   const player = state.players[state.currentPlayerIndex];
 
   if (
@@ -143,7 +143,7 @@ export function canAiAutoEndTurn(state: GameState): boolean {
 }
 
 export function getAffordableShopItemIdsForPlayer(
-  state: GameState,
+  state: AiGameSnapshot,
   playerId: string,
 ): ShopItemId[] {
   const player = state.players.find(({ id }) => id === playerId);

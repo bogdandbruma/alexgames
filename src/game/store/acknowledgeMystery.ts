@@ -22,8 +22,13 @@ export async function executeAcknowledgeMystery(deps: {
   set: GameStoreSet;
 }) {
   const { get, set } = deps;
-  let pendingResultAfterReveal: DiceTurnResult | null = null;
-  let pendingResultPlayerId: string | null = null;
+  const pendingRoomAction: {
+    result: DiceTurnResult | null;
+    playerId: string | null;
+  } = {
+    result: null,
+    playerId: null,
+  };
   let shouldEndTurn = false;
   let revealedCardId: MysteryCardId | null = null;
   let mysteryCoinsDelta = 0;
@@ -79,15 +84,15 @@ export async function executeAcknowledgeMystery(deps: {
         : null;
 
     revealedCardId = cardId;
-    pendingResultAfterReveal =
+    pendingRoomAction.result =
       mysteryResult.winnerId === null &&
       shouldPauseForRoomAction(mysteryResult.activeResult)
         ? mysteryResult.activeResult
         : null;
-    pendingResultPlayerId =
-      pendingResultAfterReveal && player ? player.id : null;
+    pendingRoomAction.playerId =
+      pendingRoomAction.result && player ? player.id : null;
     shouldEndTurn =
-      mysteryResult.winnerId === null && pendingResultAfterReveal === null;
+      mysteryResult.winnerId === null && pendingRoomAction.result === null;
 
     return {
       players: mysteryResult.players,
@@ -112,9 +117,9 @@ export async function executeAcknowledgeMystery(deps: {
     await syncFocusedPlayerWalkIfMoved(get, set, playersBefore, mysteryPlayerId);
   }
 
-  if (pendingResultAfterReveal && pendingResultPlayerId) {
-    const result = pendingResultAfterReveal;
-    const playerId = pendingResultPlayerId;
+  if (pendingRoomAction.result && pendingRoomAction.playerId) {
+    const result = pendingRoomAction.result;
+    const playerId = pendingRoomAction.playerId;
 
     if (result.action === "trivia") {
       await waitForPortalTransitionBeforeTrivia(get, playerId);
