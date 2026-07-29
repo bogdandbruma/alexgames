@@ -1106,7 +1106,7 @@ describe("space board store", () => {
       fromRoomId: 22,
       toRoomId: 28,
     });
-    expect(useGameStore.getState().players[0].positionIndex).toBe(20);
+    expect(useGameStore.getState().players[0].positionIndex).toBe(21);
 
     useGameStore.getState().acknowledgePortalTransition();
 

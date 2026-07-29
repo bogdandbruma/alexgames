@@ -1644,6 +1644,13 @@ export const useGameStore = create<GameState>()(
 
         const stepCount = Math.max(0, landingIndex - startingIndex);
         if (stepCount > 0) {
+          set((state) => ({
+            players: state.players.map((player) =>
+              player.id === currentPlayer.id
+                ? { ...player, positionIndex: landingIndex }
+                : player,
+            ),
+          }));
           await sleep(getWalkDurationMs(stepCount));
         }
 
