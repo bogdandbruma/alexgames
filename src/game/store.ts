@@ -1,5 +1,6 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
+import { createDebouncedStorage } from "./persist/debounceStorage";
 import { rooms } from "./board";
 import { finishRoomId, trapEscapeCoinCost } from "./rooms";
 import {
@@ -1909,6 +1910,9 @@ export const useGameStore = create<GameState>()(
     }),
     {
       name: "space-board-demo",
+      storage: createJSONStorage(() =>
+        createDebouncedStorage(localStorage, 300),
+      ),
       version: 4,
       migrate: migratePersistedState,
       merge: (persistedState, currentState) => ({
