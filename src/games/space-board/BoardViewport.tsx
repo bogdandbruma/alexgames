@@ -7,6 +7,7 @@ import { SpaceMinimap } from "./SpaceMinimap";
 import { CoinAmount } from "./CoinAmount";
 import { BigDiceRollOverlay } from "./dice/BigDiceRollOverlay";
 import { DiceTray } from "./dice/DiceTray";
+import { VictoryOverlay } from "./modals/VictoryOverlay";
 
 function SceneToast() {
   const toast = useGameStore((state) => state.uiToast);
@@ -35,7 +36,13 @@ function SceneToast() {
   );
 }
 
-export const BoardViewport = memo(function BoardViewport() {
+type BoardViewportProps = {
+  onExit: () => void;
+};
+
+export const BoardViewport = memo(function BoardViewport({
+  onExit,
+}: BoardViewportProps) {
   const phase = useGameStore((state) => state.phase);
   const players = useGameStore((state) => state.players);
   const currentPlayerIndex = useGameStore((state) => state.currentPlayerIndex);
@@ -140,6 +147,7 @@ export const BoardViewport = memo(function BoardViewport() {
         rolling={diceAnimating}
         value={diceValue}
       />
+      <VictoryOverlay onExit={onExit} />
     </section>
   );
 });

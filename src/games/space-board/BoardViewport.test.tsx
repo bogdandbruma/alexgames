@@ -12,9 +12,9 @@ vi.mock("./SpaceMinimap", () => ({
 
 let viewportRenderCount = 0;
 
-function ViewportProbe() {
+function ViewportProbe({ onExit }: { onExit: () => void }) {
   viewportRenderCount += 1;
-  return <BoardViewport />;
+  return <BoardViewport onExit={onExit} />;
 }
 
 describe("BoardViewport", () => {
@@ -48,7 +48,7 @@ describe("BoardViewport", () => {
       diceMultiplier: 1,
     });
 
-    render(<ViewportProbe />);
+    render(<ViewportProbe onExit={() => {}} />);
     const rendersAfterMount = viewportRenderCount;
 
     await act(async () => {

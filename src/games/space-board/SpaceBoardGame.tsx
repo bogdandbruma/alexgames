@@ -8,7 +8,6 @@ import { PortalOverlay } from "./modals/PortalOverlay";
 import { ShopOverlay } from "./modals/ShopOverlay";
 import { TargetOverlay } from "./modals/TargetOverlay";
 import { TriviaOverlay } from "./modals/TriviaOverlay";
-import { VictoryOverlay } from "./modals/VictoryOverlay";
 import { useAiDiceRoll } from "./useAiDiceRoll";
 
 type SpaceBoardGameProps = {
@@ -44,9 +43,8 @@ export function SpaceBoardGame({ onExit }: SpaceBoardGameProps) {
         onExit={onExit}
         onRequestTargetItem={setTargetItemId}
       />
-      <BoardViewport />
+      <BoardViewport onExit={onExit} />
       <TriviaOverlay />
-      <VictoryOverlay onExit={onExit} />
       <PortalOverlay />
       <MysteryOverlay />
       <ShopOverlay />
