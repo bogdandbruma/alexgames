@@ -12,6 +12,7 @@ import { BoardAvatars } from "./BoardAvatars";
 import { BoardRooms } from "./BoardRooms";
 import { CameraRig } from "./CameraRig";
 import { Hallway } from "./Hallway";
+import { sceneQuality } from "./sceneQuality";
 
 const sceneCenter: Vector3Tuple = [42, 0, 37];
 const moonHalfExtent = 116;
@@ -237,7 +238,7 @@ export function GameScene() {
 
   return (
     <Canvas
-      shadows
+      shadows={sceneQuality.shadows}
       frameloop={frameloop}
       camera={{
         position: [9, 21, 23],
@@ -245,10 +246,12 @@ export function GameScene() {
         near: 0.1,
         far: 240,
       }}
-      dpr={[1, 1.75]}
-      gl={{ antialias: true }}
+      dpr={sceneQuality.dpr}
+      gl={{ antialias: sceneQuality.antialias }}
       onCreated={({ gl }) => {
-        gl.shadowMap.type = THREE.PCFShadowMap;
+        if (sceneQuality.shadows) {
+          gl.shadowMap.type = THREE.PCFShadowMap;
+        }
       }}
     >
       <color attach="background" args={["#07101f"]} />
