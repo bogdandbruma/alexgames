@@ -31,6 +31,8 @@ export function useTriviaCountdown({
     setProgress(1);
     let cancelled = false;
     const start = performance.now();
+    let lastProgress = 1;
+    let lastSecond = TRIVIA_ANSWER_SECONDS;
 
     const tick = () => {
       if (cancelled) {
@@ -39,8 +41,17 @@ export function useTriviaCountdown({
 
       const elapsed = performance.now() - start;
       const remaining = Math.max(0, TRIVIA_ANSWER_MS - elapsed);
-      setProgress(remaining / TRIVIA_ANSWER_MS);
-      setSecondsLeft(remaining <= 0 ? 0 : Math.ceil(remaining / 1000));
+      const nextProgress = remaining / TRIVIA_ANSWER_MS;
+      const nextSecond = remaining <= 0 ? 0 : Math.ceil(remaining / 1000);
+
+      if (Math.abs(nextProgress - lastProgress) >= 1 / 120) {
+        lastProgress = nextProgress;
+        setProgress(nextProgress);
+      }
+      if (nextSecond !== lastSecond) {
+        lastSecond = nextSecond;
+        setSecondsLeft(nextSecond);
+      }
 
       if (remaining <= 0) {
         onExpireRef.current();

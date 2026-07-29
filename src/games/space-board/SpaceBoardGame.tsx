@@ -1,9 +1,7 @@
 import {
   Bot,
-  CheckCircle2,
   Coins,
   Dices,
-  HelpCircle,
   Map,
   Package,
   Minus,
@@ -17,18 +15,13 @@ import {
   User,
   Users,
   X,
-  XCircle,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, RefObject } from "react";
 import type { LucideIcon } from "lucide-react";
 import { rooms } from "../../game/board";
 import { SpaceMinimap } from "./SpaceMinimap";
-import {
-  TriviaTimeBar,
-  TriviaTimerRing,
-  useTriviaCountdown,
-} from "./TriviaAnswerTimer";
+import { TriviaOverlay } from "./modals/TriviaOverlay";
 import { avatarOptionById, hashNameToAvatarId, pickRandomAvatarId } from "../../game/avatars";
 import { getDicePips } from "../../game/dice";
 import {
@@ -498,7 +491,6 @@ export function SpaceBoardGame({ onExit }: SpaceBoardGameProps) {
   const acknowledgePortalTransition = useGameStore(
     (state) => state.acknowledgePortalTransition,
   );
-  const answerTrivia = useGameStore((state) => state.answerTrivia);
   const buyShopItem = useGameStore((state) => state.buyShopItem);
   const closeShop = useGameStore((state) => state.closeShop);
   const pickMysteryCard = useGameStore((state) => state.pickMysteryCard);
@@ -520,18 +512,6 @@ export function SpaceBoardGame({ onExit }: SpaceBoardGameProps) {
     number | null
   >(null);
   const diceTrayFaceRef = useRef<HTMLDivElement>(null);
-
-  const triviaAwaitingAnswer =
-    pendingTrivia != null && pendingTrivia.result == null;
-  const triviaCountdownKey = pendingTrivia
-    ? `${pendingTrivia.playerId}-${pendingTrivia.question.id}`
-    : "";
-  const { secondsLeft: triviaSecondsLeft, progress: triviaTimeProgress } =
-    useTriviaCountdown({
-      active: triviaAwaitingAnswer,
-      resetKey: triviaCountdownKey,
-      onExpire: () => answerTrivia("wrong"),
-    });
 
   const currentPlayer = players[currentPlayerIndex];
   const visibleDiceMultiplier =
@@ -1059,99 +1039,6 @@ export function SpaceBoardGame({ onExit }: SpaceBoardGameProps) {
             </div>
           </div>
         ) : null}
-        {pendingTrivia ? (
-          <div className="trivia-overlay" role="dialog" aria-modal="true">
-            {triviaAwaitingAnswer ? (
-              <TriviaTimerRing
-                secondsLeft={triviaSecondsLeft}
-                progress={triviaTimeProgress}
-              />
-            ) : null}
-            <div
-              className={
-                pendingTrivia.result
-                  ? `trivia-panel trivia-panel-${pendingTrivia.result.answer}`
-                  : "trivia-panel"
-              }
-            >
-              {triviaAwaitingAnswer ? (
-                <TriviaTimeBar
-                  secondsLeft={triviaSecondsLeft}
-                  progress={triviaTimeProgress}
-                />
-              ) : null}
-              <div className="trivia-heading">
-                <HelpCircle aria-hidden="true" size={22} />
-                <span>Trivia spatiala</span>
-              </div>
-
-              <p className="trivia-question">{pendingTrivia.question.question}</p>
-
-              <div className="trivia-options">
-                {pendingTrivia.question.options.map((option) => {
-                  const answered = pendingTrivia.result != null;
-                  const selected =
-                    pendingTrivia.result?.answer === option.result;
-
-                  return (
-                    <button
-                      key={`${pendingTrivia.question.id}-${option.answer}`}
-                      type="button"
-                      className={
-                        selected
-                          ? `trivia-option-button trivia-option-${option.result}`
-                          : answered
-                            ? "trivia-option-button trivia-option-dimmed"
-                            : "trivia-option-button"
-                      }
-                      disabled={answered}
-                      onClick={() => answerTrivia(option.result)}
-                    >
-                      {option.answer}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {pendingTrivia.result ? (
-                <div
-                  key={`${pendingTrivia.question.id}-${pendingTrivia.result.answer}`}
-                  className={`trivia-result trivia-result-${pendingTrivia.result.answer}`}
-                  aria-live="polite"
-                >
-                  {pendingTrivia.result.answer === "correct" ? (
-                    <CheckCircle2 aria-hidden="true" size={26} />
-                  ) : (
-                    <XCircle aria-hidden="true" size={26} />
-                  )}
-                  <div>
-                    <strong>
-                      {pendingTrivia.result.answer === "correct"
-                        ? "Raspuns corect"
-                        : "Raspuns gresit"}
-                    </strong>
-                    <span>
-                      {pendingTrivia.result.coinsDelta > 0
-                        ? "Ai castigat coins."
-                        : pendingTrivia.result.coinsDelta < 0
-                          ? "Ai pierdut coins."
-                          : "Nu ai avut coins de pierdut."}
-                    </span>
-                  </div>
-                  <CoinAmount
-                    amount={pendingTrivia.result.coinsDelta}
-                    className={
-                      pendingTrivia.result.coinsDelta < 0
-                        ? "coin-amount-trivia coin-amount-trivia-loss"
-                        : "coin-amount-trivia"
-                    }
-                    signed
-                  />
-                </div>
-              ) : null}
-            </div>
-          </div>
-        ) : null}
         {pendingMystery ? (
           <div className="mystery-overlay" role="dialog" aria-modal="true">
             <div className="mystery-panel">
@@ -1394,6 +1281,7 @@ export function SpaceBoardGame({ onExit }: SpaceBoardGameProps) {
           value={diceValue}
         />
       </section>
+      <TriviaOverlay />
     </main>
   );
 }
