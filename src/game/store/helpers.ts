@@ -11,6 +11,7 @@ import {
 import {
   createInitialShopStock,
   getShopItemById,
+  isActionShopItem,
   MAX_INVENTORY_ITEMS,
   shopItems,
   type ShopItemId,
@@ -113,6 +114,54 @@ export const normalizePlayerRuntimeState = (player: GamePlayer): GamePlayer => (
 
 export const hasRolledThisTurn = (state: GameState) =>
   state.diceValue !== null && !state.rolling;
+
+export const playerHasUsableActionItem = (player: GamePlayer | undefined) =>
+  getPlayerInventory(player).some(isActionShopItem);
+
+export const shouldDeferTurnEndForActionItems = (state: GameState) => {
+  const player = state.players[state.currentPlayerIndex];
+
+  if (!player || player.controller !== "player" || player.trapped) {
+    return false;
+  }
+
+  if (
+    !hasRolledThisTurn(state) ||
+    state.actionItemUsedThisTurn ||
+    state.pendingShop !== null ||
+    state.pendingMystery !== null ||
+    state.pendingTrivia !== null ||
+    state.pendingPortal !== null
+  ) {
+    return false;
+  }
+
+  return playerHasUsableActionItem(player);
+};
+
+export const canPlayerEndTurn = (state: GameState) => {
+  const player = state.players[state.currentPlayerIndex];
+
+  if (
+    state.phase !== "playing" ||
+    state.rolling ||
+    !player ||
+    player.controller !== "player"
+  ) {
+    return false;
+  }
+
+  if (
+    state.pendingShop !== null ||
+    state.pendingMystery !== null ||
+    state.pendingTrivia !== null ||
+    state.pendingPortal !== null
+  ) {
+    return false;
+  }
+
+  return hasRolledThisTurn(state);
+};
 
 export const getAffordableShopItems = (player: GamePlayer, shopStock: ShopStock) =>
   shopItems.filter(

@@ -101,8 +101,12 @@ export function SpaceBoardPanel({
   const pendingShop = useGameStore((state) => state.pendingShop);
   const pendingTrivia = useGameStore((state) => state.pendingTrivia);
   const rolling = useGameStore((state) => state.rolling);
+  const actionItemUsedThisTurn = useGameStore(
+    (state) => state.actionItemUsedThisTurn,
+  );
   const startGame = useGameStore((state) => state.startGame);
   const rollDice = useGameStore((state) => state.rollDice);
+  const endTurn = useGameStore((state) => state.endTurn);
   const resetGame = useGameStore((state) => state.resetGame);
   const activateInventoryItem = useGameStore((state) => state.useInventoryItem);
 
@@ -131,6 +135,66 @@ export function SpaceBoardPanel({
   const isSetup = phase === "setup";
   const currentInventory = currentPlayer?.inventory ?? [];
   const targetablePlayers = players.filter(({ id }) => id !== currentPlayer?.id);
+  const hasRolled =
+    diceValue !== null && !rolling && !diceAnimating;
+  const canEndTurn =
+    phase === "playing" &&
+    currentPlayer?.controller === "player" &&
+    hasRolled &&
+    pendingMystery === null &&
+    pendingPortal === null &&
+    pendingShop === null &&
+    pendingTrivia === null;
+
+  const getInventoryItemTitle = (itemId: ShopItemId, needsTarget: boolean) => {
+    const item = shopItems.find(({ id }) => id === itemId);
+
+    if (finished || phase !== "playing") {
+      return item?.description;
+    }
+
+    if (currentPlayer?.controller === "ai") {
+      return "Nu e randul tau.";
+    }
+
+    if (rolling || diceAnimating) {
+      return "Asteapta sa se termine zarul.";
+    }
+
+    if (isActionShopItem(itemId) && currentPlayer?.trapped) {
+      return "Esti in capcana — nu poti folosi iteme de mutare.";
+    }
+
+    if (isActionShopItem(itemId) && diceValue === null) {
+      return "Da cu zarul, apoi poti folosi itemul.";
+    }
+
+    if (isActionShopItem(itemId) && actionItemUsedThisTurn) {
+      return "Ai folosit deja un item de actiune in acest tur.";
+    }
+
+    if (pendingMystery !== null) {
+      return "Termina mai intai cartea mister.";
+    }
+
+    if (pendingPortal !== null) {
+      return "Confirma portalul mai intai.";
+    }
+
+    if (pendingShop !== null) {
+      return "Termina vizita la magazin.";
+    }
+
+    if (pendingTrivia !== null) {
+      return "Raspunde la trivia mai intai.";
+    }
+
+    if (needsTarget && targetablePlayers.length === 0) {
+      return "Nu exista alt jucator de tintit.";
+    }
+
+    return item?.description;
+  };
 
   const startRematch = () => {
     const rematchPlayers = players.map(({ avatarId, controller, name }) => ({
@@ -456,8 +520,12 @@ export function SpaceBoardPanel({
                           finished ||
                           phase !== "playing" ||
                           rolling ||
+                          diceAnimating ||
                           needsRollFirst ||
                           currentPlayer?.controller === "ai" ||
+                          (isActionShopItem(itemId) &&
+                            (currentPlayer?.trapped ||
+                              actionItemUsedThisTurn)) ||
                           pendingMystery !== null ||
                           pendingPortal !== null ||
                           pendingShop !== null ||
@@ -472,7 +540,7 @@ export function SpaceBoardPanel({
 
                           activateInventoryItem(itemId);
                         }}
-                        title={item?.description}
+                        title={getInventoryItemTitle(itemId, needsTarget)}
                       >
                         <span>{item?.icon}</span>
                         <strong>{item?.name ?? itemId}</strong>
@@ -484,12 +552,22 @@ export function SpaceBoardPanel({
             </section>
 
             <div className="game-actions">
+              {canEndTurn ? (
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => endTurn()}
+                >
+                  <span>Termină turul</span>
+                </button>
+              ) : null}
               <button
                 type="button"
                 className="primary-button"
                 disabled={
                   rolling ||
                   finished ||
+                  canEndTurn ||
                   pendingShop !== null ||
                   pendingMystery !== null ||
                   pendingPortal !== null ||

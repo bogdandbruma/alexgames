@@ -697,6 +697,67 @@ describe("space board store", () => {
     expect(state.actionItemUsedThisTurn).toBe(true);
   });
 
+  test("keeps the turn open after rolling when the player can still use an action item", async () => {
+    vi.spyOn(Math, "random").mockReturnValue(0);
+
+    const { useGameStore } = await import("./store");
+
+    useGameStore.setState({
+      phase: "playing",
+      players: [
+        {
+          id: "player-1",
+          name: "Active",
+          avatarId: "cat",
+          controller: "player",
+          positionIndex: 0,
+          coins: 0,
+          lastDice: null,
+          trapped: false,
+          inventory: ["claw"],
+        },
+        {
+          id: "player-2",
+          name: "Target",
+          avatarId: "dog",
+          controller: "player",
+          positionIndex: 5,
+          coins: 0,
+          lastDice: null,
+          trapped: false,
+          inventory: [],
+        },
+      ],
+      currentPlayerIndex: 0,
+      diceValue: null,
+      diceAnimating: false,
+      message: "Items",
+      rolling: false,
+      uiToast: null,
+      actionItemUsedThisTurn: false,
+    });
+
+    const roll = useGameStore.getState().rollDice();
+
+    await vi.advanceTimersByTimeAsync(14_000);
+    await roll;
+
+    const afterRoll = useGameStore.getState();
+
+    expect(afterRoll.currentPlayerIndex).toBe(0);
+    expect(afterRoll.diceValue).toBe(1);
+    expect(afterRoll.message).toMatch(/inventar/i);
+
+    expect(
+      useGameStore.getState().useInventoryItem("claw", "player-2"),
+    ).toBe(true);
+
+    useGameStore.getState().endTurn();
+
+    expect(useGameStore.getState().currentPlayerIndex).toBe(1);
+    expect(useGameStore.getState().diceValue).toBeNull();
+  });
+
   test("resolves destination actions after an inventory movement triggers a portal", async () => {
     const { useGameStore } = await import("./store");
 
@@ -1403,6 +1464,7 @@ describe("space board store", () => {
 
     expect(state.pendingTrivia).toBeNull();
     expect(state.currentPlayerIndex).toBe(1);
+    expect(state.diceValue).toBeNull();
     expect(state.message).toContain("Randul lui Next");
   });
 

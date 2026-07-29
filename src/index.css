@@ -2222,6 +2222,121 @@ button:disabled {
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
+.portal-panel-forward {
+  border-color: rgba(95, 212, 168, 0.48);
+}
+
+.portal-panel-backward {
+  border-color: rgba(255, 120, 103, 0.52);
+}
+
+.portal-route-art {
+  width: 100%;
+  max-height: 108px;
+  display: block;
+}
+
+.portal-message-forward {
+  color: #d8f5e8;
+}
+
+.portal-message-backward {
+  color: #ff9a8a;
+}
+
+.portal-route {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 14px;
+  padding: 12px 10px 10px;
+  border-radius: 8px;
+  background: rgba(12, 14, 20, 0.55);
+}
+
+.portal-route-forward {
+  box-shadow: inset 0 0 0 1px rgba(95, 212, 168, 0.18);
+}
+
+.portal-route-backward {
+  box-shadow: inset 0 0 0 1px rgba(255, 120, 103, 0.22);
+}
+
+.portal-room-badge {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  min-width: 72px;
+}
+
+.portal-room-badge-caption {
+  color: #b9b9ad;
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+.portal-room-badge-chip {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+}
+
+.portal-room-badge-wide .portal-room-badge-chip {
+  width: 58px;
+  height: 58px;
+}
+
+.portal-room-badge-circle {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: #67d5c8;
+  border: 2px solid rgba(23, 20, 16, 0.55);
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.portal-room-badge-id {
+  position: relative;
+  z-index: 1;
+  color: #171410;
+  font-size: 1.12rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.portal-room-badge-wide .portal-room-badge-id {
+  font-size: 1.02rem;
+}
+
+.portal-route-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+  flex-shrink: 0;
+}
+
+.portal-route-arrow-forward {
+  color: #5fd4a8;
+  filter: drop-shadow(0 0 10px rgba(95, 212, 168, 0.45));
+}
+
+.portal-route-arrow-backward {
+  color: #ff7867;
+  filter: drop-shadow(0 0 10px rgba(255, 120, 103, 0.42));
+}
+
+.portal-panel-backward .portal-heading svg {
+  color: #ff7867;
+}
+
 .portal-heading {
   min-width: 0;
   display: flex;
@@ -2252,6 +2367,11 @@ button:disabled {
   color: #f5f7ef;
   font-size: 1.08rem;
   line-height: 1.25;
+}
+
+.portal-heading .portal-message-forward,
+.portal-heading .portal-message-backward {
+  white-space: normal;
 }
 
 .portal-panel p {

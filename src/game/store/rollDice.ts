@@ -23,6 +23,7 @@ import {
   purchaseShopItem,
   removeInventoryItem,
   resolvePlayerRoomEntry,
+  shouldDeferTurnEndForActionItems,
   sleep,
 } from "./helpers";
 
@@ -415,6 +416,13 @@ export async function executeRollDice(deps: {
       state.pendingPortal !== null
     ) {
       return { rolling: false };
+    }
+
+    if (shouldDeferTurnEndForActionItems(state)) {
+      return {
+        rolling: false,
+        message: `${message} Poți folosi un item din inventar sau termină turul.`,
+      };
     }
 
     return createEndTurnState(state, message);

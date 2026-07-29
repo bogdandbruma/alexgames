@@ -102,6 +102,7 @@ export type GameState = PersistedState & {
   acknowledgeMystery: () => void;
   startGame: (players: PlayerSetup[]) => void;
   rollDice: () => Promise<void>;
+  endTurn: () => void;
   resetGame: () => void;
   useInventoryItem: (itemId: ShopItemId, targetPlayerId?: string) => boolean;
 };

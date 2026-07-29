@@ -29,9 +29,9 @@ import {
   createTriviaToast,
   createTurnToast,
   defaultPlayers,
-  getNextPlayerIndex,
   getPlayerInventory,
   getPlayerName,
+  canPlayerEndTurn,
   hasRolledThisTurn,
   initialPersistedState,
   MYSTERY_COIN_TOAST_MS,
@@ -106,11 +106,6 @@ export const useGameStore = create<GameState>()(
           return;
         }
 
-        const nextPlayerIndex = getNextPlayerIndex(
-          state.players,
-          state.currentPlayerIndex,
-        );
-        const nextPlayer = state.players[nextPlayerIndex];
         const answeredPlayer = state.players.find(
           (player) => player.id === pendingTrivia.playerId,
         );
@@ -187,11 +182,10 @@ export const useGameStore = create<GameState>()(
               return {};
             }
 
-            return {
-              currentPlayerIndex: nextPlayerIndex,
-              message: `${resultMessage} ${getPlayerName(answeredPlayer)} continua aventura. Randul lui ${getPlayerName(nextPlayer)}.`,
-              uiToast: createTurnToast(nextPlayer),
-            };
+            return createEndTurnState(
+              latestState,
+              `${resultMessage} ${getPlayerName(answeredPlayer)} continua aventura.`,
+            );
           });
         }, TRIVIA_MODAL_RESULT_MS + TRIVIA_TOAST_MS);
       },
@@ -266,6 +260,25 @@ export const useGameStore = create<GameState>()(
           return createEndTurnState(
             state,
             `${getPlayerName(player)} a iesit din magazin.`,
+          );
+        });
+      },
+
+      endTurn: () => {
+        set((state) => {
+          if (!canPlayerEndTurn(state)) {
+            if (state.phase === "finished") {
+              return clearFinishedInteractiveState();
+            }
+
+            return {};
+          }
+
+          const player = state.players[state.currentPlayerIndex];
+
+          return createEndTurnState(
+            state,
+            `${getPlayerName(player)} a terminat turul.`,
           );
         });
       },
