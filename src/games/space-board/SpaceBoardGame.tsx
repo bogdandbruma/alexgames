@@ -1,12 +1,9 @@
 import {
   Bot,
-  Cat,
   Dices,
-  Dog,
   Minus,
   PawPrint,
   Plus,
-  Rabbit,
   RotateCcw,
   User,
   Users,
@@ -14,36 +11,25 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import { rooms } from "../../game/board";
-import type {
-  AvatarId,
-  PlayerController,
-  PlayerSetup,
-} from "../../game/store";
+import { avatarOptions } from "../../game/avatars";
+import type { PlayerController, PlayerSetup } from "../../game/store";
 import { useGameStore } from "../../game/store";
 import { GameScene } from "../../three/GameScene";
 
-const avatars: Array<{
-  id: AvatarId;
-  label: string;
-  Icon: LucideIcon;
-}> = [
-  { id: "cat", label: "Cat", Icon: Cat },
-  { id: "dog", label: "Dog", Icon: Dog },
-  { id: "bunny", label: "Bunny", Icon: Rabbit },
-];
+const avatars = avatarOptions;
 
 const controllers: Array<{
   id: PlayerController;
   label: string;
   Icon: LucideIcon;
 }> = [
-  { id: "player", label: "Player", Icon: User },
-  { id: "ai", label: "AI", Icon: Bot },
+  { id: "player", label: "Jucător", Icon: User },
+  { id: "ai", label: "Robot", Icon: Bot },
 ];
 
 const defaultSetupPlayers: PlayerSetup[] = [
-  { name: "Player 1", avatarId: "cat", controller: "player" },
-  { name: "AI 1", avatarId: "dog", controller: "ai" },
+  { name: "Jucător 1", avatarId: "cat", controller: "player" },
+  { name: "Robot 1", avatarId: "dog", controller: "ai" },
 ];
 
 const dicePips: Record<number, string[]> = {
@@ -64,7 +50,7 @@ const dicePips: Record<number, string[]> = {
 
 function createSetupPlayer(index: number): PlayerSetup {
   return {
-    name: index === 0 ? "Player 1" : `AI ${index}`,
+    name: index === 0 ? "Jucător 1" : `Robot ${index}`,
     avatarId: avatars[index % avatars.length].id,
     controller: index === 0 ? "player" : "ai",
   };
@@ -207,15 +193,15 @@ export function SpaceBoardGame({ onExit }: SpaceBoardGameProps) {
     >
       <aside className="game-panel">
         <header className="panel-header">
-          <p className="eyebrow">Local 3D prototype</p>
+          <p className="eyebrow">Aventură în stație</p>
           <div className="panel-title-row">
-            <h1>Space Board</h1>
+            <h1>Cursa spațială</h1>
             <button type="button" className="text-button" onClick={onExit}>
-              Games
+              Jocuri
             </button>
           </div>
           <p className="subtitle">
-            Reach the Command Center before the station systems send you back.
+            Ajunge primul la Centrul de comandă — dar ai grijă la camerele capcană!
           </p>
         </header>
 
@@ -223,14 +209,14 @@ export function SpaceBoardGame({ onExit }: SpaceBoardGameProps) {
           <>
             <section className="panel-section" aria-labelledby="players-heading">
               <div className="section-heading-row">
-                <h2 id="players-heading">Players</h2>
-                <div className="stepper" aria-label="Number of players">
+                <h2 id="players-heading">Jucători</h2>
+                <div className="stepper" aria-label="Număr de jucători">
                   <button
                     type="button"
                     className="icon-button"
                     disabled={setupPlayers.length <= 1}
                     onClick={() => setPlayerCount(setupPlayers.length - 1)}
-                    aria-label="Remove player"
+                    aria-label="Scade un jucător"
                   >
                     <Minus aria-hidden="true" size={17} />
                   </button>
@@ -240,7 +226,7 @@ export function SpaceBoardGame({ onExit }: SpaceBoardGameProps) {
                     className="icon-button"
                     disabled={setupPlayers.length >= 4}
                     onClick={() => setPlayerCount(setupPlayers.length + 1)}
-                    aria-label="Add player"
+                    aria-label="Adaugă un jucător"
                   >
                     <Plus aria-hidden="true" size={17} />
                   </button>
@@ -251,7 +237,7 @@ export function SpaceBoardGame({ onExit }: SpaceBoardGameProps) {
                 {setupPlayers.map((player, playerIndex) => (
                   <div className="setup-player" key={`setup-${playerIndex}`}>
                     <label className="name-field">
-                      <span>Name</span>
+                      <span>Nume</span>
                       <input
                         value={player.name}
                         maxLength={18}
@@ -285,7 +271,7 @@ export function SpaceBoardGame({ onExit }: SpaceBoardGameProps) {
                     </div>
 
                     <div className="avatar-options">
-                      {avatars.map(({ id, label, Icon }) => (
+                      {avatars.map(({ id, labelRo, Icon }) => (
                         <button
                           key={id}
                           type="button"
@@ -298,10 +284,10 @@ export function SpaceBoardGame({ onExit }: SpaceBoardGameProps) {
                             updateSetupPlayer(playerIndex, { avatarId: id })
                           }
                           aria-pressed={player.avatarId === id}
-                          title={label}
+                          title={labelRo}
                         >
                           <Icon aria-hidden="true" size={22} strokeWidth={2.2} />
-                          <span>{label}</span>
+                          <span>{labelRo}</span>
                         </button>
                       ))}
                     </div>
@@ -316,31 +302,31 @@ export function SpaceBoardGame({ onExit }: SpaceBoardGameProps) {
               onClick={() => startGame(setupPlayers)}
             >
               <Users aria-hidden="true" size={20} />
-              <span>Start game</span>
+              <span>Începe jocul</span>
             </button>
           </>
         ) : (
           <>
-            <section className="status-grid" aria-label="Current game state">
+            <section className="status-grid" aria-label="Starea jocului">
               <div className="status-card">
-                <span className="status-label">Turn</span>
+                <span className="status-label">Rând</span>
                 <strong>{currentPlayer?.name ?? "-"}</strong>
               </div>
 
               <div className="status-card status-card-small">
-                <span className="status-label">Dice</span>
+                <span className="status-label">Zar</span>
                 <strong>{diceValue ?? "-"}</strong>
               </div>
             </section>
 
-            <section className="status-card" aria-label="Current room">
-              <span className="status-label">Room</span>
+            <section className="status-card" aria-label="Camera curentă">
+              <span className="status-label">Camera</span>
               <strong>
                 {currentRoom.id}. {currentRoom.name}
               </strong>
             </section>
 
-            <section className="player-roster" aria-label="Players">
+            <section className="player-roster" aria-label="Jucători">
               {players.map((player, index) => {
                 const avatar = avatars.find(({ id }) => id === player.avatarId);
                 const Icon = avatar?.Icon ?? PawPrint;
@@ -358,7 +344,7 @@ export function SpaceBoardGame({ onExit }: SpaceBoardGameProps) {
                     <div>
                       <strong>{player.name}</strong>
                       <span>
-                        {player.controller === "ai" ? "AI" : "Player"} - Room{" "}
+                        {player.controller === "ai" ? "Robot" : "Jucător"} — camera{" "}
                         {player.positionIndex + 1}
                       </span>
                     </div>
@@ -368,7 +354,7 @@ export function SpaceBoardGame({ onExit }: SpaceBoardGameProps) {
               })}
             </section>
 
-            <section className="room-strip" aria-label="Station room progress">
+            <section className="room-strip" aria-label="Camerele stației">
               {rooms.map((room, index) => (
                 <span
                   key={room.id}
@@ -412,12 +398,12 @@ export function SpaceBoardGame({ onExit }: SpaceBoardGameProps) {
                 <Dices aria-hidden="true" size={20} />
                 <span>
                   {rolling
-                    ? "Rolling"
+                    ? "Se rostogolește..."
                     : finished
-                      ? "Mission complete"
+                      ? "Ai câștigat!"
                       : currentPlayer?.controller === "ai"
-                        ? "AI rolling"
-                        : "Roll dice"}
+                        ? "Robotul dă cu zarul"
+                        : "Dă cu zarul"}
                 </span>
               </button>
 
@@ -428,18 +414,18 @@ export function SpaceBoardGame({ onExit }: SpaceBoardGameProps) {
                 onClick={resetGame}
               >
                 <RotateCcw aria-hidden="true" size={18} />
-                <span>Restart</span>
+                <span>Joc nou</span>
               </button>
             </div>
           </>
         )}
 
         <p className="save-note">
-          Game state saves automatically in this browser.
+          Jocul se salvează automat în acest browser.
         </p>
       </aside>
 
-      <section className="scene-container" aria-label="3D space board">
+      <section className="scene-container" aria-label="Tabla spațială 3D">
         <GameScene />
         <SceneToast />
         <DiceTray rolling={diceAnimating} value={diceValue} />

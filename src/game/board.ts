@@ -276,26 +276,26 @@ const accentColors = [
 ];
 
 const roomNames = [
-  "Launch Bay",
-  "Storage",
-  "Observation Room",
-  "Teleport Chamber",
-  "Corner Module",
-  "Research Lab",
-  "Cargo Room",
-  "Broken Airlock",
-  "Command Corridor",
-  "Navigation Hub",
-  "Hydroponics",
-  "Drone Dock",
-  "Reactor Watch",
-  "Medical Pod",
-  "Signal Nest",
-  "Gravity Core",
-  "Armor Vault",
-  "Map Archive",
-  "Shield Relay",
-  "Command Center",
+  "Poarta de plecare",
+  "Depozitul",
+  "Camera cu stele",
+  "Teleportorul",
+  "Colțul stației",
+  "Laboratorul",
+  "Sala cu cutii",
+  "Podul stricat",
+  "Coridorul șefilor",
+  "Centrul de navigație",
+  "Grădina din spațiu",
+  "Stația dronelor",
+  "Sala reactorului",
+  "Capsula medicală",
+  "Cuibul semnalelor",
+  "Nucleul gravitației",
+  "Armeria",
+  "Arhiva hărților",
+  "Releul scutului",
+  "Centrul de comandă",
 ];
 
 export const rooms: RoomDefinition[] = positions.map((position, index) => {
@@ -313,13 +313,13 @@ export const rooms: RoomDefinition[] = positions.map((position, index) => {
         ? {
             toIndex: 5,
             kind: "forward",
-            message: "The teleporter sends you forward to room 6.",
+            message: "Uau! Teleportorul te duce direct la camera 6!",
           }
         : id === 8
           ? {
               toIndex: 4,
               kind: "backward",
-              message: "The airlock malfunctions. Return to room 5.",
+              message: "Ups! Podul s-a stricat și te trimite înapoi la camera 5.",
             }
           : undefined,
   };

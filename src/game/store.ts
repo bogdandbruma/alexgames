@@ -45,7 +45,7 @@ type GameState = PersistedState & {
 const defaultPlayers: GamePlayer[] = [
   {
     id: "player-1",
-    name: "Player 1",
+    name: "Jucător 1",
     avatarId: "cat",
     controller: "player",
     positionIndex: 0,
@@ -58,7 +58,7 @@ const initialPersistedState: PersistedState = {
   players: defaultPlayers,
   currentPlayerIndex: 0,
   diceValue: null,
-  message: "Choose players, pets, and start the game.",
+  message: "Alege jucători și prieteni blănoși, apoi pornește jocul!",
 };
 
 const sleep = (milliseconds: number) =>
@@ -70,13 +70,13 @@ const getNextPlayerIndex = (players: GamePlayer[], currentIndex: number) =>
   (currentIndex + 1) % players.length;
 
 const getPlayerName = (player: GamePlayer | undefined) =>
-  player?.name.trim() || "Player";
+  player?.name.trim() || "Jucător";
 
 let toastId = 0;
 
 const createTurnToast = (player: GamePlayer | undefined): GameToast => ({
   id: (toastId += 1),
-  title: "Urmeaza jucatorul",
+  title: "Urmează jucătorul",
   description: getPlayerName(player),
   tone: "player",
 });
@@ -101,7 +101,7 @@ const normalizePlayerSetup = (
   index: number,
 ): GamePlayer => ({
   id: `player-${index + 1}`,
-  name: player.name.trim() || `Player ${index + 1}`,
+  name: player.name.trim() || `Jucător ${index + 1}`,
   avatarId: player.avatarId,
   controller: player.controller,
   positionIndex: 0,
@@ -145,7 +145,7 @@ export const useGameStore = create<GameState>()(
           diceValue: null,
           diceAnimating: false,
           rolling: false,
-          message: `Turn: ${getPlayerName(firstPlayer)}.`,
+          message: `Rândul lui ${getPlayerName(firstPlayer)}.`,
           uiToast: createTurnToast(firstPlayer),
         });
       },
@@ -167,7 +167,7 @@ export const useGameStore = create<GameState>()(
         set({
           rolling: true,
           diceAnimating: true,
-          message: `${getPlayerName(currentPlayer)} rolls the dice...`,
+          message: `${getPlayerName(currentPlayer)} dă cu zarul...`,
         });
 
         await sleep(1_400);
@@ -188,7 +188,7 @@ export const useGameStore = create<GameState>()(
               ? { ...player, lastDice: diceValue }
               : player,
           ),
-          message: `${getPlayerName(currentPlayer)} rolled ${diceValue}.`,
+          message: `${getPlayerName(currentPlayer)} a dat ${diceValue}.`,
         }));
 
         await sleep(1_100);
@@ -214,14 +214,14 @@ export const useGameStore = create<GameState>()(
           set({
             phase: "finished",
             rolling: false,
-            message: `${getPlayerName(currentPlayer)} reached ${landedRoom.name} and wins.`,
+            message: `${getPlayerName(currentPlayer)} a ajuns la ${landedRoom.name} și a câștigat!`,
             uiToast: createRoomToast(currentPlayer, landingIndex, "win"),
           });
 
           return;
         }
 
-        let message = `${getPlayerName(currentPlayer)} arrived at ${landedRoom.name}.`;
+        let message = `${getPlayerName(currentPlayer)} a ajuns la ${landedRoom.name}.`;
         set({ uiToast: createRoomToast(currentPlayer, landingIndex) });
 
         const roomEffect = landedRoom.effect;
@@ -254,7 +254,7 @@ export const useGameStore = create<GameState>()(
           return {
             rolling: false,
             currentPlayerIndex: nextPlayerIndex,
-            message: `${message} Turn: ${getPlayerName(nextPlayer)}.`,
+            message: `${message} Rândul lui ${getPlayerName(nextPlayer)}.`,
             uiToast: createTurnToast(nextPlayer),
           };
         });

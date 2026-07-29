@@ -27,7 +27,7 @@ await page.addInitScript(() => {
 });
 
 await page.goto(appUrl, { waitUntil: "load" });
-await page.getByRole("heading", { name: "Games" }).waitFor();
+await page.getByRole("heading", { name: "Jocurile noastre" }).waitFor();
 await page.getByRole("button", { name: /play/i }).click();
 await page.getByRole("heading", { name: "Space Board" }).waitFor();
 await page.locator("canvas").waitFor();
