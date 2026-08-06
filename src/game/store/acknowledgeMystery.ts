@@ -14,6 +14,7 @@ import {
   shouldPauseForRoomAction,
   waitForPortalTransitionBeforeTrivia,
 } from "./helpers";
+import { getPendingMystery } from "./pendingEvent";
 import { syncFocusedPlayerWalkIfMoved } from "./playerWalk";
 import type { GameState, GameStoreSet } from "./types";
 
@@ -36,7 +37,7 @@ export async function executeAcknowledgeMystery(deps: {
   const playersBefore = get().players;
 
   set((state) => {
-    const pendingMystery = state.pendingMystery;
+    const pendingMystery = getPendingMystery(state.pendingEvent);
     const cardId = pendingMystery?.revealedCardId ?? null;
 
     if (
@@ -103,7 +104,7 @@ export async function executeAcknowledgeMystery(deps: {
             `${getPlayerName(player)} a dezvaluit ${card.title} si a castigat!`,
           )
         : {
-            pendingMystery: null,
+            pendingEvent: null,
             message: `${getPlayerName(player)} a dezvaluit ${card.title}.`,
           }),
     };
@@ -175,7 +176,7 @@ export async function executeAcknowledgeMystery(deps: {
             : "nu avea coins de pierdut.";
 
       return {
-        pendingMystery: null,
+        pendingEvent: null,
         message: `${getPlayerName(player)} a terminat misterul. ${getPlayerName(player)} ${coinMessage}`,
         uiToast: createMysteryCoinToast(player, card, coinsDelta),
         playerCoinBursts: pushPlayerCoinBursts(

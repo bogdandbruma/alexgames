@@ -1,26 +1,30 @@
 import { rooms } from "../board";
-import { finishRoomId, trapEscapeCoinCost } from "../rooms";
+import { finishRoomId } from "../rooms";
 import { resolveDiceMove, resolveDiceTurn } from "../rules";
 import { createMysteryOffer } from "../mystery";
 import { drawTriviaQuestion } from "../trivia";
 import { pushPlayerCoinBursts } from "../playerCoinBurst";
 import { portalAcknowledgement } from "./portalAck";
+import {
+  createMysteryEvent,
+  createPortalEvent,
+  createShopEvent,
+  createTrapEvent,
+  createTriviaEvent,
+  getPendingMystery,
+} from "./pendingEvent";
 import type { GameState, GameStoreSet } from "./types";
 import {
   clearFinishedInteractiveState,
-  createCoinDeltaToast,
   createEndTurnState,
   createPortalTransition,
   createRoomToast,
-  createTurnToast,
   DICE_POST_REVEAL_MS,
+  applyTriviaCancelIfAvailable,
   getAffordableShopItems,
-  getNextPlayerIndex,
-  getPlayerInventory,
   getPlayerName,
   getRandomDiceRollDuration,
   purchaseShopItem,
-  removeInventoryItem,
   resolvePlayerRoomEntry,
   shouldDeferTurnEndForActionItems,
   sleep,
@@ -42,10 +46,7 @@ export async function executeRollDice(deps: {
 
   if (
     currentState.rolling ||
-    currentState.pendingShop !== null ||
-    currentState.pendingMystery !== null ||
-    currentState.pendingPortal !== null ||
-    currentState.pendingTrivia !== null ||
+    currentState.pendingEvent !== null ||
     currentState.phase !== "playing" ||
     !currentPlayer ||
     currentPlayer.positionIndex === rooms.length - 1
@@ -57,75 +58,15 @@ export async function executeRollDice(deps: {
     return;
   }
 
-  const cosmicKeyIndex = getPlayerInventory(currentPlayer).indexOf("cosmic-key");
-  const escapesTrapWithKey = currentPlayer.trapped && cosmicKeyIndex !== -1;
-
-  if (
-    currentPlayer.trapped &&
-    !escapesTrapWithKey &&
-    currentPlayer.coins < trapEscapeCoinCost
-  ) {
-    set((state) => {
-      const nextPlayerIndex = getNextPlayerIndex(
-        state.players,
-        state.currentPlayerIndex,
-      );
-      const nextPlayer = state.players[nextPlayerIndex];
-
-      return {
-        actionItemUsedThisTurn: false,
-        diceAnimating: false,
-        diceMultiplier: 1,
-        diceValue: null,
-        rolling: false,
-        currentPlayerIndex: nextPlayerIndex,
-        players: state.players.map((player) =>
-          player.id === currentPlayer.id
-            ? { ...player, trapped: false }
-            : player,
-        ),
-        message: `${getPlayerName(currentPlayer)} pierde turul in capcana. Randul lui ${getPlayerName(nextPlayer)}.`,
-        uiToast: createTurnToast(nextPlayer),
-      };
-    });
-
-    return;
-  }
-
-  const trapEscapeCost =
-    currentPlayer.trapped &&
-    !escapesTrapWithKey &&
-    currentPlayer.coins >= trapEscapeCoinCost
-      ? trapEscapeCoinCost
-      : 0;
-  const turnCoins = currentPlayer.coins - trapEscapeCost;
-
-  if (trapEscapeCost > 0 || escapesTrapWithKey) {
-    set((state) => ({
-      players: state.players.map((player) =>
-        player.id === currentPlayer.id
-          ? {
-              ...removeInventoryItem(player, "cosmic-key"),
-              coins: turnCoins,
-              trapped: false,
-            }
-          : player,
+  if (currentPlayer.trapped) {
+    set({
+      pendingEvent: createTrapEvent(
+        currentPlayer.id,
+        currentPlayer.positionIndex + 1,
       ),
-      ...(trapEscapeCost > 0
-        ? {
-            uiToast: createCoinDeltaToast(
-              "Capcana",
-              currentPlayer,
-              -trapEscapeCost,
-            ),
-            playerCoinBursts: pushPlayerCoinBursts(
-              state.playerCoinBursts,
-              currentPlayer.id,
-              -trapEscapeCost,
-            ),
-          }
-        : {}),
-    }));
+      message: `${getPlayerName(currentPlayer)} e prins in capcana.`,
+    });
+    return;
   }
 
   const currentDiceMultiplier = currentPlayer.armedDiceX2 ? 2 : 1;
@@ -147,6 +88,7 @@ export async function executeRollDice(deps: {
   const diceMultiplier = latestCurrentPlayer.armedDiceX2 ? 2 : 1;
   const diceValue = rolledDiceValue * diceMultiplier;
   const coinsOnEnterMultiplier = latestCurrentPlayer.armedCoinsX3 ? 3 : 1;
+  const turnCoins = latestCurrentPlayer.coins;
   const startingIndex =
     get().players[currentState.currentPlayerIndex]?.positionIndex ??
     currentPlayer.positionIndex;
@@ -226,6 +168,7 @@ export async function executeRollDice(deps: {
     set((state) => ({
       phase: "finished",
       rolling: false,
+      pendingEvent: null,
       message: `${getPlayerName(currentPlayer)} a ajuns la ${landedRoom.name} și a câștigat!`,
       uiToast: createRoomToast(currentPlayer, landingIndex, "win"),
       players: state.players.map((player) =>
@@ -238,9 +181,6 @@ export async function executeRollDice(deps: {
     set({
       actionItemUsedThisTurn: false,
       diceAnimating: false,
-      pendingMystery: null,
-      pendingShop: null,
-      pendingTrivia: null,
       winnerId: currentPlayer.id,
     });
 
@@ -251,7 +191,7 @@ export async function executeRollDice(deps: {
     const portalSourceRoom = rooms[landingIndex];
 
     set({
-      pendingPortal: portalTransition,
+      pendingEvent: createPortalEvent(portalTransition),
       message: `${getPlayerName(currentPlayer)} a activat portalul din ${portalSourceRoom.name}.`,
     });
 
@@ -272,6 +212,7 @@ export async function executeRollDice(deps: {
       : 0;
   set((state) => ({
     rolling: false,
+    pendingEvent: null,
     players: state.players.map((player) =>
       player.id === currentPlayer.id
         ? {
@@ -305,21 +246,14 @@ export async function executeRollDice(deps: {
   }));
 
   if (turnResult.action === "trivia") {
-    const playerWithTriviaCancel = get().players.find(
-      ({ id }) => id === currentPlayer.id,
+    const triviaCancel = applyTriviaCancelIfAvailable(
+      get(),
+      currentPlayer.id,
+      message,
     );
 
-    if (
-      getPlayerInventory(playerWithTriviaCancel).includes("trivia-cancel")
-    ) {
-      set((state) => ({
-        players: state.players.map((player) =>
-          player.id === currentPlayer.id
-            ? removeInventoryItem(player, "trivia-cancel")
-            : player,
-        ),
-        message: `${message} Anularea trivia a sarit intrebarea.`,
-      }));
+    if (triviaCancel) {
+      set(triviaCancel);
 
       await sleep(2_400);
 
@@ -337,12 +271,11 @@ export async function executeRollDice(deps: {
 
     set({
       rolling: false,
-      pendingTrivia: {
-        playerId: currentPlayer.id,
-        roomId: turnResult.positionId,
-        question: drawTriviaQuestion(),
-        result: null,
-      },
+      pendingEvent: createTriviaEvent(
+        currentPlayer.id,
+        turnResult.positionId,
+        drawTriviaQuestion(),
+      ),
       message: `${message} Raspunde la intrebarea trivia.`,
     });
 
@@ -353,12 +286,11 @@ export async function executeRollDice(deps: {
     const offer = createMysteryOffer();
 
     set({
-      pendingMystery: {
-        playerId: currentPlayer.id,
-        roomId: turnResult.positionId,
-        cards: offer.cards,
-        revealedCardId: null,
-      },
+      pendingEvent: createMysteryEvent(
+        currentPlayer.id,
+        turnResult.positionId,
+        offer.cards,
+      ),
       rolling: false,
       message: `${message} A gasit carti misterioase.`,
     });
@@ -366,7 +298,7 @@ export async function executeRollDice(deps: {
     if (currentPlayer.controller === "ai") {
       await sleep(900);
 
-      const pendingMystery = get().pendingMystery;
+      const pendingMystery = getPendingMystery(get().pendingEvent);
       const randomIndex = pendingMystery
         ? Math.floor(Math.random() * pendingMystery.cards.length)
         : -1;
@@ -416,11 +348,7 @@ export async function executeRollDice(deps: {
     }
 
     set({
-      pendingShop: {
-        playerId: currentPlayer.id,
-        roomId: turnResult.positionId,
-        purchased: false,
-      },
+      pendingEvent: createShopEvent(currentPlayer.id, turnResult.positionId),
       rolling: false,
       message: `${message} A intrat in magazin.`,
     });
@@ -431,12 +359,7 @@ export async function executeRollDice(deps: {
   await sleep(2_400);
 
   set((state) => {
-    if (
-      state.pendingShop !== null ||
-      state.pendingMystery !== null ||
-      state.pendingTrivia !== null ||
-      state.pendingPortal !== null
-    ) {
+    if (state.pendingEvent !== null) {
       return { rolling: false };
     }
 

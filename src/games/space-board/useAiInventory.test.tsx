@@ -76,10 +76,7 @@ describe("useAiInventory", () => {
       message: "Robot turn",
       rolling: false,
       uiToast: null,
-      pendingShop: null,
-      pendingMystery: null,
-      pendingPortal: null,
-      pendingTrivia: null,
+      pendingEvent: null,
       actionItemUsedThisTurn: false,
       activePlayerWalk: null,
     });
@@ -147,10 +144,7 @@ describe("useAiInventory", () => {
       message: "Inventar",
       rolling: false,
       uiToast: null,
-      pendingShop: null,
-      pendingMystery: null,
-      pendingPortal: null,
-      pendingTrivia: null,
+      pendingEvent: null,
       actionItemUsedThisTurn: false,
       activePlayerWalk: null,
     });

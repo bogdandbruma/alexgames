@@ -14,6 +14,7 @@ import { portalAcknowledgement } from "./store/portalAck";
 import { migratePersistedState } from "./store/migrate";
 import { executeRollDice } from "./store/rollDice";
 import { executeAcknowledgeMystery } from "./store/acknowledgeMystery";
+import { executeResolveTrap } from "./store/resolveTrap";
 import { syncFocusedPlayerWalkIfMoved } from "./store/playerWalk";
 import {
   applyPositionResultToPlayer,
@@ -34,15 +35,25 @@ import {
   normalizePlayerSetup,
   purchaseShopItem,
   removeInventoryItem,
+  resolveOrphanedPortalLanding,
+  sleep,
   TRIVIA_MODAL_RESULT_MS,
   TRIVIA_TOAST_MS,
   waitForPortalTransitionBeforeTrivia,
 } from "./store/helpers";
+import {
+  getPendingMystery,
+  getPendingPortal,
+  getPendingShop,
+  getPendingTrap,
+  getPendingTrivia,
+} from "./store/pendingEvent";
 import type {
   GamePlayer,
   GamePortalTransition,
   GameState,
   PersistedState,
+  TrapEscapeChoice,
   TriviaFeedback,
 } from "./store/types";
 
@@ -52,14 +63,9 @@ export const useGameStore = create<GameState>()(
   persist(
     (set, get) => ({
       ...initialPersistedState,
-      actionItemUsedThisTurn: false,
       activePlayerWalk: null,
       diceAnimating: false,
       diceMultiplier: 1,
-      pendingMystery: null,
-      pendingPortal: null,
-      pendingShop: null,
-      pendingTrivia: null,
       portalTransition: null,
       rolling: false,
       uiToast: null,
@@ -74,21 +80,19 @@ export const useGameStore = create<GameState>()(
       },
 
       acknowledgePortalTransition: () => {
-        const pendingPortal = get().pendingPortal;
-
-        if (!pendingPortal) {
+        const pendingPortal = getPendingPortal(get().pendingEvent);
+        if (!pendingPortal) return;
+        const resumed = portalAcknowledgement.completeAcknowledgement(pendingPortal.id);
+        if (resumed) {
+          set({ pendingEvent: null });
           return;
         }
-
-        set({
-          pendingPortal: null,
-        });
-        portalAcknowledgement.completeAcknowledgement(pendingPortal.id);
+        set((state) => resolveOrphanedPortalLanding(state) ?? {});
       },
 
       answerTrivia: (answer) => {
         const state = get();
-        const pendingTrivia = state.pendingTrivia;
+        const pendingTrivia = getPendingTrivia(state.pendingEvent);
 
         if (
           !pendingTrivia ||
@@ -119,7 +123,7 @@ export const useGameStore = create<GameState>()(
           answer === "correct" ? "Raspuns corect." : "Raspuns gresit.";
 
         set({
-          pendingTrivia: {
+          pendingEvent: {
             ...pendingTrivia,
             result: triviaFeedback,
           },
@@ -144,7 +148,7 @@ export const useGameStore = create<GameState>()(
 
         window.setTimeout(() => {
           set((latestState) => {
-            const latestTrivia = latestState.pendingTrivia;
+            const latestTrivia = getPendingTrivia(latestState.pendingEvent);
 
             if (
               latestState.phase !== "playing" ||
@@ -156,7 +160,7 @@ export const useGameStore = create<GameState>()(
             }
 
             return {
-              pendingTrivia: null,
+              pendingEvent: null,
               uiToast: createTriviaToast(answeredPlayer, triviaFeedback),
               playerCoinBursts: pushPlayerCoinBursts(
                 latestState.playerCoinBursts,
@@ -169,7 +173,7 @@ export const useGameStore = create<GameState>()(
 
         window.setTimeout(() => {
           set((latestState) => {
-            const latestTrivia = latestState.pendingTrivia;
+            const latestTrivia = getPendingTrivia(latestState.pendingEvent);
 
             if (
               latestState.phase !== "playing" ||
@@ -191,7 +195,7 @@ export const useGameStore = create<GameState>()(
         let bought = false;
 
         set((state) => {
-          const pendingShop = state.pendingShop;
+          const pendingShop = getPendingShop(state.pendingEvent);
 
           if (state.phase !== "playing") {
             return state.phase === "finished"
@@ -246,12 +250,14 @@ export const useGameStore = create<GameState>()(
               : {};
           }
 
-          if (!state.pendingShop) {
+          const pendingShop = getPendingShop(state.pendingEvent);
+
+          if (!pendingShop) {
             return {};
           }
 
           const player = state.players.find(
-            ({ id }) => id === state.pendingShop?.playerId,
+            ({ id }) => id === pendingShop.playerId,
           );
 
           return createEndTurnState(
@@ -284,7 +290,7 @@ export const useGameStore = create<GameState>()(
         let picked = false;
 
         set((state) => {
-          const pendingMystery = state.pendingMystery;
+          const pendingMystery = getPendingMystery(state.pendingEvent);
 
           if (
             !pendingMystery ||
@@ -308,7 +314,7 @@ export const useGameStore = create<GameState>()(
           picked = true;
 
           return {
-            pendingMystery: {
+            pendingEvent: {
               ...pendingMystery,
               revealedCardId: cardId,
             },
@@ -321,8 +327,12 @@ export const useGameStore = create<GameState>()(
 
       acknowledgeMystery: () => executeAcknowledgeMystery({ get, set }),
 
+      resolveTrap: (choice: TrapEscapeChoice) =>
+        executeResolveTrap({ set, choice }),
+
       useInventoryItem: (itemId, targetPlayerId) => {
         let used = false;
+        let endTurnAfterTriviaCancel = false;
         const deferredUpdate: {
           state: Partial<GameState> | null;
           triviaPlayerId: string | null;
@@ -338,9 +348,8 @@ export const useGameStore = create<GameState>()(
           if (
             state.phase !== "playing" ||
             state.rolling ||
-            state.pendingMystery !== null ||
-            state.pendingShop !== null ||
-            state.pendingTrivia !== null
+            (state.pendingEvent !== null &&
+              (state.pendingEvent.type !== "trivia" || itemId !== "trivia-cancel"))
           ) {
             if (state.phase === "finished") {
               return clearFinishedInteractiveState();
@@ -409,6 +418,9 @@ export const useGameStore = create<GameState>()(
               used = true;
 
               return {
+                pendingEvent: getPendingTrap(state.pendingEvent)
+                  ? null
+                  : state.pendingEvent,
                 players: state.players.map((player) =>
                   player.id === currentPlayer.id
                     ? {
@@ -419,8 +431,30 @@ export const useGameStore = create<GameState>()(
                 ),
                 message: `${getPlayerName(currentPlayer)} a folosit cheia cosmica.`,
               };
-            case "trivia-cancel":
-              return {};
+            case "trivia-cancel": {
+              const pendingTrivia = getPendingTrivia(state.pendingEvent);
+
+              if (
+                !pendingTrivia ||
+                pendingTrivia.playerId !== currentPlayer.id ||
+                pendingTrivia.result !== null
+              ) {
+                return {};
+              }
+
+              used = true;
+              endTurnAfterTriviaCancel = true;
+
+              return {
+                pendingEvent: null,
+                players: state.players.map((player) =>
+                  player.id === currentPlayer.id
+                    ? removeInventoryItem(player, itemId)
+                    : player,
+                ),
+                message: `${getPlayerName(currentPlayer)} a sarit trivia.`,
+              };
+            }
             case "star": {
               const movement = applyPositionResultToPlayer(
                 currentPlayer,
@@ -432,17 +466,18 @@ export const useGameStore = create<GameState>()(
                 movement.result,
               );
               const message = `${getPlayerName(currentPlayer)} a folosit steluta.`;
+              const playersAfterMove = state.players.map((player) =>
+                player.id === currentPlayer.id
+                  ? removeInventoryItem(movement.player, itemId)
+                  : player,
+              );
 
               used = true;
 
               if (movement.finished) {
                 return {
                   ...(portalTransition ? { portalTransition } : {}),
-                  players: state.players.map((player) =>
-                    player.id === currentPlayer.id
-                      ? removeInventoryItem(movement.player, itemId)
-                      : player,
-                  ),
+                  players: playersAfterMove,
                   ...createFinishedState(
                     currentPlayer.id,
                     `${getPlayerName(currentPlayer)} a folosit steluta si a castigat!`,
@@ -452,22 +487,19 @@ export const useGameStore = create<GameState>()(
               }
 
               deferredUpdate.state = createPendingRoomActionState(
-                state,
+                { ...state, players: playersAfterMove },
                 currentPlayer.id,
                 movement.result,
                 message,
               );
               deferredUpdate.triviaPlayerId =
-                deferredUpdate.state.pendingTrivia?.playerId ?? null;
+                getPendingTrivia(deferredUpdate.state.pendingEvent ?? null)
+                  ?.playerId ?? null;
 
               return {
                 actionItemUsedThisTurn: true,
                 ...(portalTransition ? { portalTransition } : {}),
-                players: state.players.map((player) =>
-                  player.id === currentPlayer.id
-                    ? removeInventoryItem(movement.player, itemId)
-                    : player,
-                ),
+                players: playersAfterMove,
                 message,
               };
             }
@@ -576,6 +608,17 @@ export const useGameStore = create<GameState>()(
 
               used = true;
 
+              const swapMessage = `${getPlayerName(currentPlayer)} a folosit sageata.`;
+              const playersAfterSwap = state.players.map((player) => {
+                if (player.id === currentPlayer.id) {
+                  return removeInventoryItem(currentLanding.player, itemId);
+                }
+
+                return player.id === targetPlayer.id
+                  ? targetLanding.player
+                  : player;
+              });
+
               if (currentLanding.finished || targetLanding.finished) {
                 return {
                   ...(currentPortalTransition || targetPortalTransition
@@ -584,15 +627,7 @@ export const useGameStore = create<GameState>()(
                           currentPortalTransition ?? targetPortalTransition,
                       }
                     : {}),
-                  players: state.players.map((player) => {
-                    if (player.id === currentPlayer.id) {
-                      return removeInventoryItem(currentLanding.player, itemId);
-                    }
-
-                    return player.id === targetPlayer.id
-                      ? targetLanding.player
-                      : player;
-                  }),
+                  players: playersAfterSwap,
                   ...createFinishedState(
                     currentLanding.finished ? currentPlayer.id : targetPlayer.id,
                     `${getPlayerName(
@@ -604,13 +639,14 @@ export const useGameStore = create<GameState>()(
               }
 
               deferredUpdate.state = createPendingRoomActionState(
-                state,
+                { ...state, players: playersAfterSwap },
                 currentPlayer.id,
                 currentLanding.result,
-                `${getPlayerName(currentPlayer)} a folosit sageata.`,
+                swapMessage,
               );
               deferredUpdate.triviaPlayerId =
-                deferredUpdate.state.pendingTrivia?.playerId ?? null;
+                getPendingTrivia(deferredUpdate.state.pendingEvent ?? null)
+                  ?.playerId ?? null;
 
               return {
                 actionItemUsedThisTurn: true,
@@ -620,16 +656,8 @@ export const useGameStore = create<GameState>()(
                         currentPortalTransition ?? targetPortalTransition,
                     }
                   : {}),
-                players: state.players.map((player) => {
-                  if (player.id === currentPlayer.id) {
-                    return removeInventoryItem(currentLanding.player, itemId);
-                  }
-
-                  return player.id === targetPlayer.id
-                    ? targetLanding.player
-                    : player;
-                }),
-                message: `${getPlayerName(currentPlayer)} a folosit sageata.`,
+                players: playersAfterSwap,
+                message: swapMessage,
               };
             }
             case "bomb": {
@@ -697,6 +725,23 @@ export const useGameStore = create<GameState>()(
               focusedPlayerId,
             );
 
+            if (endTurnAfterTriviaCancel) {
+              await sleep(1_200);
+              set((state) => {
+                if (state.phase !== "playing") {
+                  return {};
+                }
+
+                const player = state.players[state.currentPlayerIndex];
+
+                return createEndTurnState(
+                  state,
+                  `${getPlayerName(player)} a sarit trivia.`,
+                );
+              });
+              return;
+            }
+
             if (deferredUpdate.state) {
               if (deferredUpdate.triviaPlayerId) {
                 await waitForPortalTransitionBeforeTrivia(
@@ -737,10 +782,7 @@ export const useGameStore = create<GameState>()(
           activePlayerWalk: null,
           diceAnimating: false,
           diceMultiplier: 1,
-          pendingPortal: null,
-          pendingShop: null,
-          pendingMystery: null,
-          pendingTrivia: null,
+          pendingEvent: null,
           portalTransition: null,
           rolling: false,
           shopStock: createInitialShopStock(),
@@ -757,14 +799,10 @@ export const useGameStore = create<GameState>()(
       resetGame: () => {
         set({
           ...initialPersistedState,
-          actionItemUsedThisTurn: false,
           activePlayerWalk: null,
           diceAnimating: false,
           diceMultiplier: 1,
-          pendingPortal: null,
-          pendingShop: null,
-          pendingMystery: null,
-          pendingTrivia: null,
+          pendingEvent: null,
           portalTransition: null,
           rolling: false,
           shopStock: createInitialShopStock(),
@@ -780,7 +818,7 @@ export const useGameStore = create<GameState>()(
       storage: createJSONStorage(() =>
         createDebouncedStorage(localStorage, 300),
       ),
-      version: 4,
+      version: 5,
       migrate: migratePersistedState,
       merge: (persistedState, currentState) => ({
         ...currentState,
@@ -792,9 +830,11 @@ export const useGameStore = create<GameState>()(
         players: state.players,
         currentPlayerIndex: state.currentPlayerIndex,
         diceValue: state.diceValue,
+        actionItemUsedThisTurn: state.actionItemUsedThisTurn,
         message: state.message,
         shopStock: state.shopStock,
         winnerId: state.winnerId,
+        pendingEvent: state.pendingEvent,
       }),
     },
   ),

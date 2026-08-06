@@ -7,9 +7,11 @@ import { MysteryOverlay } from "./modals/MysteryOverlay";
 import { PortalOverlay } from "./modals/PortalOverlay";
 import { ShopOverlay } from "./modals/ShopOverlay";
 import { TargetOverlay } from "./modals/TargetOverlay";
+import { TrapOverlay } from "./modals/TrapOverlay";
 import { TriviaOverlay } from "./modals/TriviaOverlay";
 import { useAiDiceRoll } from "./useAiDiceRoll";
 import { useAiInventory } from "./useAiInventory";
+import { useAiTrapResolve } from "./useAiTrapResolve";
 import { useAiTriviaAnswer } from "./useAiTriviaAnswer";
 
 type SpaceBoardGameProps = {
@@ -25,6 +27,7 @@ export function SpaceBoardGame({ onExit }: SpaceBoardGameProps) {
 
   useAiDiceRoll();
   useAiInventory();
+  useAiTrapResolve();
   useAiTriviaAnswer();
 
   useEffect(() => {
@@ -52,6 +55,7 @@ export function SpaceBoardGame({ onExit }: SpaceBoardGameProps) {
       <PortalOverlay />
       <MysteryOverlay />
       <ShopOverlay />
+      <TrapOverlay />
       <TargetOverlay
         targetItemId={targetItemId}
         onClose={() => setTargetItemId(null)}

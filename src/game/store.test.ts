@@ -69,9 +69,7 @@ describe("space board store", () => {
       diceValue: null,
       diceAnimating: false,
       message: "Finish turn",
-      pendingMystery: null,
-      pendingShop: null,
-      pendingTrivia: null,
+      pendingEvent: null,
       rolling: false,
       shopStock: createInitialShopStock(),
       uiToast: null,
@@ -85,9 +83,7 @@ describe("space board store", () => {
     expect(useGameStore.getState()).toMatchObject({
       phase: "finished",
       currentPlayerIndex: 0,
-      pendingMystery: null,
-      pendingShop: null,
-      pendingTrivia: null,
+      pendingEvent: null,
       rolling: false,
     });
     expect(useGameStore.getState().players[0].positionIndex + 1).toBe(
@@ -95,18 +91,8 @@ describe("space board store", () => {
     );
 
     useGameStore.setState({
-      pendingMystery: {
-        playerId: "player-1",
-        roomId: 56,
-        cards: mysteryCards.slice(0, 3),
-        revealedCardId: null,
-      },
-      pendingShop: {
-        playerId: "player-1",
-        roomId: 53,
-        purchased: false,
-      },
-      pendingTrivia: {
+      pendingEvent: {
+        type: "trivia",
         playerId: "player-1",
         roomId: 50,
         question: {
@@ -117,6 +103,7 @@ describe("space board store", () => {
             { answer: "Venus", result: "wrong" },
           ],
         },
+        result: null,
       },
     });
 
@@ -138,9 +125,7 @@ describe("space board store", () => {
     expect(useGameStore.getState()).toMatchObject({
       phase: "finished",
       currentPlayerIndex: 0,
-      pendingMystery: null,
-      pendingShop: null,
-      pendingTrivia: null,
+      pendingEvent: null,
     });
 
     useGameStore.setState({
@@ -166,9 +151,7 @@ describe("space board store", () => {
       phase: "playing",
       currentPlayerIndex: 0,
       diceValue: null,
-      pendingMystery: null,
-      pendingShop: null,
-      pendingTrivia: null,
+      pendingEvent: null,
       rolling: false,
     });
     expect(rematchState.players).toEqual([
@@ -277,7 +260,7 @@ describe("space board store", () => {
       message: "Test turn",
       rolling: false,
       uiToast: null,
-      pendingShop: null,
+      pendingEvent: null,
     });
 
     const roll = useGameStore.getState().rollDice();
@@ -287,7 +270,7 @@ describe("space board store", () => {
 
     const state = useGameStore.getState();
 
-    expect(state.pendingShop).toMatchObject({
+    expect(state.pendingEvent).toMatchObject({
       playerId: "player-1",
       roomId: 13,
       purchased: false,
@@ -329,9 +312,7 @@ describe("space board store", () => {
       diceValue: null,
       diceAnimating: false,
       message: "Test turn",
-      pendingMystery: null,
-      pendingShop: null,
-      pendingTrivia: null,
+      pendingEvent: null,
       rolling: false,
       uiToast: null,
     });
@@ -346,9 +327,8 @@ describe("space board store", () => {
     expect(state.players[0].positionIndex + 1).toBe(17);
     expect(state.currentPlayerIndex).toBe(0);
     expect(state.rolling).toBe(false);
-    expect(state.pendingShop).toBeNull();
-    expect(state.pendingTrivia).toBeNull();
-    expect(state.pendingMystery).toMatchObject({
+    expect(state.pendingEvent).toMatchObject({
+      type: "mystery",
       playerId: "player-1",
       roomId: 17,
       revealedCardId: null,
@@ -388,7 +368,8 @@ describe("space board store", () => {
       diceValue: 1,
       diceAnimating: false,
       message: "Mystery",
-      pendingMystery: {
+      pendingEvent: {
+      type: "mystery",
         playerId: "player-1",
         roomId: 17,
         cards: mysteryCards.filter(({ id }) =>
@@ -403,7 +384,7 @@ describe("space board store", () => {
     expect(useGameStore.getState().pickMysteryCard("phone")).toBe(true);
 
     expect(useGameStore.getState().players[0].coins).toBe(1);
-    expect(useGameStore.getState().pendingMystery).toMatchObject({
+    expect(useGameStore.getState().pendingEvent).toMatchObject({
       revealedCardId: "phone",
     });
     expect(useGameStore.getState().currentPlayerIndex).toBe(0);
@@ -421,7 +402,7 @@ describe("space board store", () => {
       coinsDelta: -1,
       tone: "loss",
     });
-    expect(state.pendingMystery).toBeNull();
+    expect(state.pendingEvent).toBeNull();
     expect(state.currentPlayerIndex).toBe(0);
 
     await vi.advanceTimersByTimeAsync(2_400);
@@ -463,7 +444,8 @@ describe("space board store", () => {
       diceValue: 1,
       diceAnimating: false,
       message: "Mystery",
-      pendingMystery: {
+      pendingEvent: {
+      type: "mystery",
         playerId: "player-1",
         roomId: 41,
         cards: mysteryCards.filter(({ id }) =>
@@ -478,7 +460,8 @@ describe("space board store", () => {
     expect(useGameStore.getState().pickMysteryCard("rocket")).toBe(true);
 
     expect(useGameStore.getState()).toMatchObject({
-      pendingMystery: {
+      pendingEvent: {
+      type: "mystery",
         revealedCardId: "rocket",
       },
     });
@@ -500,8 +483,8 @@ describe("space board store", () => {
 
     expect(state.players[0].positionIndex + 1).toBe(38);
     expect(state.players[0].trapped).toBe(false);
-    expect(state.pendingMystery).toBeNull();
-    expect(state.pendingTrivia).toMatchObject({
+    expect(state.pendingEvent).toMatchObject({
+      type: "trivia",
       playerId: "player-1",
       roomId: 38,
     });
@@ -531,7 +514,8 @@ describe("space board store", () => {
       diceValue: null,
       diceAnimating: false,
       message: "Mystery",
-      pendingMystery: {
+      pendingEvent: {
+      type: "mystery",
         playerId: "player-1",
         roomId: 56,
         cards: mysteryCards.slice(0, 3),
@@ -552,7 +536,7 @@ describe("space board store", () => {
       trapped: true,
       inventory: ["cosmic-key"],
     });
-    expect(useGameStore.getState().pendingMystery).not.toBeNull();
+    expect(useGameStore.getState().pendingEvent).not.toBeNull();
   });
 
   test("buys one in-stock item per shop visit and removes it from global stock", async () => {
@@ -578,7 +562,8 @@ describe("space board store", () => {
       message: "Shop",
       rolling: false,
       uiToast: null,
-      pendingShop: {
+      pendingEvent: {
+      type: "shop",
         playerId: "player-1",
         roomId: 13,
         purchased: false,
@@ -595,7 +580,7 @@ describe("space board store", () => {
       inventory: ["dice-x2"],
     });
     expect(state.shopStock["dice-x2"]).toBe(false);
-    expect(state.pendingShop).toMatchObject({ purchased: true });
+    expect(state.pendingEvent).toMatchObject({ purchased: true });
     expect(state.uiToast).toMatchObject({
       coinsDelta: -5,
       tone: "loss",
@@ -626,7 +611,8 @@ describe("space board store", () => {
       message: "Shop",
       rolling: false,
       uiToast: null,
-      pendingShop: {
+      pendingEvent: {
+      type: "shop",
         playerId: "player-1",
         roomId: 28,
         purchased: false,
@@ -789,7 +775,7 @@ describe("space board store", () => {
       rolling: false,
       uiToast: null,
       actionItemUsedThisTurn: false,
-      pendingTrivia: null,
+      pendingEvent: null,
     });
 
     expect(useGameStore.getState().useInventoryItem("star")).toBe(true);
@@ -799,7 +785,7 @@ describe("space board store", () => {
     const state = useGameStore.getState();
 
     expect(state.players[0].positionIndex + 1).toBe(42);
-    expect(state.pendingTrivia).toMatchObject({
+    expect(state.pendingEvent).toMatchObject({
       playerId: "player-1",
       roomId: 42,
     });
@@ -963,7 +949,7 @@ describe("space board store", () => {
       diceValue: null,
       diceAnimating: false,
       message: "Buffs",
-      pendingShop: null,
+      pendingEvent: null,
       rolling: false,
       uiToast: null,
     });
@@ -979,7 +965,7 @@ describe("space board store", () => {
       coins: 0,
       armedCoinsX3: true,
     });
-    expect(useGameStore.getState().pendingShop).toMatchObject({
+    expect(useGameStore.getState().pendingEvent).toMatchObject({
       roomId: 13,
     });
 
@@ -1047,7 +1033,7 @@ describe("space board store", () => {
 
     const state = useGameStore.getState();
 
-    expect(state.pendingTrivia).toBeNull();
+    expect(state.pendingEvent).toBeNull();
     expect(state.players[0]).toMatchObject({
       coins: 2,
       inventory: [],
@@ -1055,7 +1041,50 @@ describe("space board store", () => {
     expect(state.players[1].positionIndex + 1).toBe(28);
   });
 
-  test("uses a cosmic key to escape a blocked trap turn before paying coins", async () => {
+  test("opens a trap pending event instead of auto-escaping with a cosmic key", async () => {
+    const { useGameStore } = await import("./store");
+
+    useGameStore.setState({
+      phase: "playing",
+      players: [
+        {
+          id: "player-1",
+          name: "Tester",
+          avatarId: "cat",
+          controller: "player",
+          positionIndex: 51,
+          coins: 10,
+          lastDice: null,
+          trapped: true,
+          inventory: ["cosmic-key"],
+        },
+      ],
+      currentPlayerIndex: 0,
+      diceValue: null,
+      diceAnimating: false,
+      message: "Trap",
+      rolling: false,
+      pendingEvent: null,
+      uiToast: null,
+    });
+
+    await useGameStore.getState().rollDice();
+
+    const state = useGameStore.getState();
+    const player = state.players[0];
+
+    expect(state.pendingEvent).toMatchObject({
+      type: "trap",
+      playerId: "player-1",
+      roomId: 52,
+    });
+    expect(player.coins).toBe(10);
+    expect(player.inventory).toEqual(["cosmic-key"]);
+    expect(player.trapped).toBe(true);
+    expect(player.lastDice).toBeNull();
+  });
+
+  test("lets a trapped player escape with a cosmic key from the trap modal", async () => {
     vi.spyOn(Math, "random").mockReturnValue(0);
 
     const { useGameStore } = await import("./store");
@@ -1080,20 +1109,29 @@ describe("space board store", () => {
       diceAnimating: false,
       message: "Trap",
       rolling: false,
+      pendingEvent: {
+        type: "trap",
+        playerId: "player-1",
+        roomId: 52,
+      },
       uiToast: null,
     });
 
-    const roll = useGameStore.getState().rollDice();
+    expect(useGameStore.getState().resolveTrap("key")).toBe(true);
 
+    const afterEscape = useGameStore.getState();
+    expect(afterEscape.pendingEvent).toBeNull();
+    expect(afterEscape.players[0].trapped).toBe(false);
+    expect(afterEscape.players[0].inventory).toEqual([]);
+    expect(afterEscape.players[0].coins).toBe(10);
+
+    const roll = useGameStore.getState().rollDice();
     await vi.advanceTimersByTimeAsync(14_000);
     await roll;
 
     const player = useGameStore.getState().players[0];
-
     expect(player.positionIndex + 1).toBe(53);
-    expect(player.coins).toBe(10);
-    expect(player.inventory).toEqual([]);
-    expect(player.trapped).toBe(false);
+    expect(player.lastDice).toBe(1);
   });
 
   test("lets AI buy one random affordable in-stock shop item", async () => {
@@ -1133,7 +1171,7 @@ describe("space board store", () => {
 
     const state = useGameStore.getState();
 
-    expect(state.pendingShop).toBeNull();
+    expect(state.pendingEvent).toBeNull();
     expect(state.players[0].inventory).toEqual(["cosmic-key"]);
     expect(state.players[0].coins).toBe(0);
     expect(state.shopStock["cosmic-key"]).toBe(false);
@@ -1170,7 +1208,7 @@ describe("space board store", () => {
 
     await vi.advanceTimersByTimeAsync(14_000);
 
-    expect(useGameStore.getState().pendingPortal).toMatchObject({
+    expect(useGameStore.getState().pendingEvent).toMatchObject({
       playerId: "player-1",
       fromRoomId: 22,
       toRoomId: 28,
@@ -1187,7 +1225,12 @@ describe("space board store", () => {
 
     expect(player.positionIndex + 1).toBe(28);
     expect(player.coins).toBe(0);
-    expect(state.pendingPortal).toBeNull();
+    expect(state.pendingEvent).toMatchObject({
+      type: "shop",
+      playerId: "player-1",
+      roomId: 28,
+      purchased: false,
+    });
     expect(state.portalTransition).toMatchObject({
       playerId: "player-1",
       fromRoomId: 22,
@@ -1233,7 +1276,7 @@ describe("space board store", () => {
     expect(player.trapped).toBe(true);
   });
 
-  test("lets a trapped player pay the escape cost at turn start and roll normally", async () => {
+  test("lets a trapped player pay the escape cost from the trap modal and roll", async () => {
     vi.spyOn(Math, "random").mockReturnValue(0);
 
     const { trapEscapeCoinCost } = await import("./rooms");
@@ -1258,25 +1301,32 @@ describe("space board store", () => {
       diceAnimating: false,
       message: "Test turn",
       rolling: false,
+      pendingEvent: {
+        type: "trap",
+        playerId: "player-1",
+        roomId: 52,
+      },
       uiToast: null,
     });
 
-    const roll = useGameStore.getState().rollDice();
+    expect(useGameStore.getState().resolveTrap("pay")).toBe(true);
 
+    const afterPay = useGameStore.getState();
+    expect(afterPay.pendingEvent).toBeNull();
+    expect(afterPay.players[0].coins).toBe(0);
+    expect(afterPay.players[0].trapped).toBe(false);
+    expect(afterPay.currentPlayerIndex).toBe(0);
+
+    const roll = useGameStore.getState().rollDice();
     await vi.advanceTimersByTimeAsync(14_000);
     await roll;
 
     const player = useGameStore.getState().players[0];
-
     expect(player.positionIndex + 1).toBe(53);
-    expect(player.coins).toBe(0);
     expect(player.lastDice).toBe(1);
-    expect(player.trapped).toBe(false);
   });
 
-  test("skips a trapped player's turn without rolling when they cannot pay", async () => {
-    vi.spyOn(Math, "random").mockReturnValue(0);
-
+  test("lets a trapped player stay one turn from the trap modal", async () => {
     const { trapEscapeCoinCost } = await import("./rooms");
     const { useGameStore } = await import("./store");
 
@@ -1309,13 +1359,15 @@ describe("space board store", () => {
       diceAnimating: false,
       message: "Test turn",
       rolling: false,
+      pendingEvent: {
+        type: "trap",
+        playerId: "player-1",
+        roomId: 52,
+      },
       uiToast: null,
     });
 
-    const roll = useGameStore.getState().rollDice();
-
-    await vi.advanceTimersByTimeAsync(14_000);
-    await roll;
+    expect(useGameStore.getState().resolveTrap("stay")).toBe(true);
 
     const state = useGameStore.getState();
     const player = state.players[0];
@@ -1325,7 +1377,55 @@ describe("space board store", () => {
     expect(player.lastDice).toBeNull();
     expect(player.trapped).toBe(false);
     expect(state.currentPlayerIndex).toBe(1);
+    expect(state.pendingEvent).toBeNull();
     expect(state.diceValue).toBeNull();
+  });
+
+  test("opens a trap pending event when turn advances to a trapped player", async () => {
+    const { useGameStore } = await import("./store");
+
+    useGameStore.setState({
+      phase: "playing",
+      players: [
+        {
+          id: "player-1",
+          name: "Tester",
+          avatarId: "cat",
+          controller: "player",
+          positionIndex: 3,
+          coins: 0,
+          lastDice: 2,
+          trapped: false,
+        },
+        {
+          id: "player-2",
+          name: "Trapped",
+          avatarId: "dog",
+          controller: "player",
+          positionIndex: 51,
+          coins: 0,
+          lastDice: null,
+          trapped: true,
+        },
+      ],
+      currentPlayerIndex: 0,
+      diceValue: 2,
+      diceAnimating: false,
+      message: "End turn",
+      rolling: false,
+      pendingEvent: null,
+      uiToast: null,
+    });
+
+    useGameStore.getState().endTurn();
+
+    const state = useGameStore.getState();
+    expect(state.currentPlayerIndex).toBe(1);
+    expect(state.pendingEvent).toMatchObject({
+      type: "trap",
+      playerId: "player-2",
+      roomId: 52,
+    });
   });
 
   test("opens trivia instead of ending the turn when landing on a trivia room", async () => {
@@ -1363,7 +1463,7 @@ describe("space board store", () => {
       message: "Test turn",
       rolling: false,
       uiToast: null,
-      pendingTrivia: null,
+      pendingEvent: null,
     });
 
     const roll = useGameStore.getState().rollDice();
@@ -1378,7 +1478,7 @@ describe("space board store", () => {
     expect(player.coins).toBe(5);
     expect(state.currentPlayerIndex).toBe(0);
     expect(state.rolling).toBe(false);
-    expect(state.pendingTrivia).toMatchObject({
+    expect(state.pendingEvent).toMatchObject({
       playerId: "player-1",
       roomId: 32,
       question: {
@@ -1426,7 +1526,8 @@ describe("space board store", () => {
       message: "Trivia",
       rolling: false,
       uiToast: null,
-      pendingTrivia: {
+      pendingEvent: {
+        type: "trivia",
         playerId: "player-1",
         roomId: 32,
         question: {
@@ -1437,6 +1538,7 @@ describe("space board store", () => {
             { answer: "Venus", result: "wrong" },
           ],
         },
+        result: null,
       },
     });
 
@@ -1445,7 +1547,8 @@ describe("space board store", () => {
     const feedbackState = useGameStore.getState();
 
     expect(feedbackState.players[0].coins).toBe(6);
-    expect(feedbackState.pendingTrivia).toMatchObject({
+    expect(feedbackState.pendingEvent).toMatchObject({
+      type: "trivia",
       result: {
         answer: "correct",
         coinsDelta: 1,
@@ -1459,7 +1562,7 @@ describe("space board store", () => {
 
     const afterModalState = useGameStore.getState();
 
-    expect(afterModalState.pendingTrivia).toBeNull();
+    expect(afterModalState.pendingEvent).toBeNull();
     expect(afterModalState.currentPlayerIndex).toBe(0);
     expect(afterModalState.uiToast).toMatchObject({
       title: "Raspuns corect",
@@ -1470,7 +1573,7 @@ describe("space board store", () => {
 
     const state = useGameStore.getState();
 
-    expect(state.pendingTrivia).toBeNull();
+    expect(state.pendingEvent).toBeNull();
     expect(state.currentPlayerIndex).toBe(1);
     expect(state.diceValue).toBeNull();
     expect(state.message).toContain("Randul lui Next");
@@ -1501,7 +1604,8 @@ describe("space board store", () => {
       message: "Trivia",
       rolling: false,
       uiToast: null,
-      pendingTrivia: {
+      pendingEvent: {
+        type: "trivia",
         playerId: "player-1",
         roomId: 32,
         question: {
@@ -1512,6 +1616,7 @@ describe("space board store", () => {
             { answer: "Venus", result: "wrong" },
           ],
         },
+        result: null,
       },
     });
 
@@ -1524,6 +1629,6 @@ describe("space board store", () => {
 
     expect(state.players[0].positionIndex + 1).toBe(32);
     expect(state.diceValue).toBeNull();
-    expect(state.pendingTrivia).not.toBeNull();
+    expect(state.pendingEvent).not.toBeNull();
   });
 });

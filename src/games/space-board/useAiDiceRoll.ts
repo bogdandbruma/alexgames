@@ -6,10 +6,7 @@ export function useAiDiceRoll() {
   const players = useGameStore((state) => state.players);
   const currentPlayerIndex = useGameStore((state) => state.currentPlayerIndex);
   const rolling = useGameStore((state) => state.rolling);
-  const pendingMystery = useGameStore((state) => state.pendingMystery);
-  const pendingPortal = useGameStore((state) => state.pendingPortal);
-  const pendingShop = useGameStore((state) => state.pendingShop);
-  const pendingTrivia = useGameStore((state) => state.pendingTrivia);
+  const pendingEvent = useGameStore((state) => state.pendingEvent);
   const diceValue = useGameStore((state) => state.diceValue);
   const rollDice = useGameStore((state) => state.rollDice);
 
@@ -19,10 +16,7 @@ export function useAiDiceRoll() {
     currentPlayer?.controller === "ai" &&
     !rolling &&
     diceValue === null &&
-    pendingMystery === null &&
-    pendingPortal === null &&
-    pendingShop === null &&
-    pendingTrivia === null;
+    pendingEvent === null;
 
   useEffect(() => {
     if (!isAiTurn) {

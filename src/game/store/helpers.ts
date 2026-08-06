@@ -35,6 +35,15 @@ import type {
 } from "./types";
 import { PLAYER_NAME_MAX_LENGTH } from "./types";
 import { nextPortalTransitionId } from "./portalTransitionId";
+import {
+  createMysteryEvent,
+  createShopEvent,
+  createTrapEvent,
+  createTriviaEvent,
+  getPendingShop,
+  getPendingPortal,
+  portalEventToTransition,
+} from "./pendingEvent";
 
 export const defaultPlayers: GamePlayer[] = [
   {
@@ -57,8 +66,10 @@ export const initialPersistedState: PersistedState = {
   players: defaultPlayers,
   currentPlayerIndex: 0,
   diceValue: null,
+  actionItemUsedThisTurn: false,
   shopStock: createInitialShopStock(),
   winnerId: null,
+  pendingEvent: null,
   message: "Alege jucători și prieteni blănoși, apoi pornește jocul!",
 };
 
@@ -141,10 +152,7 @@ export const shouldDeferTurnEndForActionItems = (state: AiGameSnapshot) => {
   if (
     !hasRolledThisTurn(state) ||
     state.actionItemUsedThisTurn ||
-    state.pendingShop !== null ||
-    state.pendingMystery !== null ||
-    state.pendingTrivia !== null ||
-    state.pendingPortal !== null
+    state.pendingEvent !== null
   ) {
     return false;
   }
@@ -164,12 +172,7 @@ export const canPlayerEndTurn = (state: GameState) => {
     return false;
   }
 
-  if (
-    state.pendingShop !== null ||
-    state.pendingMystery !== null ||
-    state.pendingTrivia !== null ||
-    state.pendingPortal !== null
-  ) {
+  if (state.pendingEvent !== null) {
     return false;
   }
 
@@ -270,10 +273,7 @@ export const createEndTurnState = (
   | "diceValue"
   | "diceMultiplier"
   | "message"
-  | "pendingMystery"
-  | "pendingPortal"
-  | "pendingShop"
-  | "pendingTrivia"
+  | "pendingEvent"
   | "rolling"
   | "uiToast"
 > => {
@@ -282,17 +282,20 @@ export const createEndTurnState = (
     state.currentPlayerIndex,
   );
   const nextPlayer = state.players[nextPlayerIndex];
+  const trapPending =
+    nextPlayer?.trapped === true
+      ? createTrapEvent(nextPlayer.id, nextPlayer.positionIndex + 1)
+      : null;
 
   return {
     actionItemUsedThisTurn: false,
     currentPlayerIndex: nextPlayerIndex,
     diceValue: null,
     diceMultiplier: 1,
-    message: `${message} Randul lui ${getPlayerName(nextPlayer)}.`,
-    pendingMystery: null,
-    pendingPortal: null,
-    pendingShop: null,
-    pendingTrivia: null,
+    message: trapPending
+      ? `${message} ${getPlayerName(nextPlayer)} e prins in capcana.`
+      : `${message} Randul lui ${getPlayerName(nextPlayer)}.`,
+    pendingEvent: trapPending,
     rolling: false,
     uiToast: createTurnToast(nextPlayer),
   };
@@ -307,10 +310,7 @@ export const createFinishedState = (
   | "actionItemUsedThisTurn"
   | "diceAnimating"
   | "message"
-  | "pendingMystery"
-  | "pendingPortal"
-  | "pendingShop"
-  | "pendingTrivia"
+  | "pendingEvent"
   | "phase"
   | "rolling"
   | "uiToast"
@@ -319,10 +319,7 @@ export const createFinishedState = (
   actionItemUsedThisTurn: false,
   diceAnimating: false,
   message,
-  pendingMystery: null,
-  pendingPortal: null,
-  pendingShop: null,
-  pendingTrivia: null,
+  pendingEvent: null,
   phase: "finished",
   rolling: false,
   uiToast,
@@ -333,18 +330,12 @@ export const clearFinishedInteractiveState = (): Pick<
   GameState,
   | "diceAnimating"
   | "diceMultiplier"
-  | "pendingMystery"
-  | "pendingPortal"
-  | "pendingShop"
-  | "pendingTrivia"
+  | "pendingEvent"
   | "rolling"
 > => ({
   diceAnimating: false,
   diceMultiplier: 1,
-  pendingMystery: null,
-  pendingPortal: null,
-  pendingShop: null,
-  pendingTrivia: null,
+  pendingEvent: null,
   rolling: false,
 });
 
@@ -353,9 +344,10 @@ export const purchaseShopItem = (
   playerId: string,
   itemId: ShopItemId,
   markPendingShopPurchased: boolean,
-): Pick<GameState, "pendingShop" | "players" | "shopStock"> | null => {
+): Pick<GameState, "pendingEvent" | "players" | "shopStock"> | null => {
   const item = getShopItemById(itemId);
   const player = state.players.find(({ id }) => id === playerId);
+  const pendingShop = getPendingShop(state.pendingEvent);
 
   if (
     !player ||
@@ -367,10 +359,10 @@ export const purchaseShopItem = (
   }
 
   return {
-    pendingShop:
-      markPendingShopPurchased && state.pendingShop
-        ? { ...state.pendingShop, purchased: true }
-        : state.pendingShop,
+    pendingEvent:
+      markPendingShopPurchased && pendingShop
+        ? { ...pendingShop, purchased: true }
+        : state.pendingEvent,
     players: state.players.map((candidate) =>
       candidate.id === playerId
         ? {
@@ -443,6 +435,85 @@ export const createPortalTransition = (
       }
     : null;
 
+/** Completes a portal after refresh when rollDice's waiter is gone. */
+export const resolveOrphanedPortalLanding = (
+  state: GameState,
+): Partial<GameState> | null => {
+  const portal = getPendingPortal(state.pendingEvent);
+
+  if (!portal) {
+    return null;
+  }
+
+  const player = state.players.find(({ id }) => id === portal.playerId);
+
+  if (!player) {
+    return { pendingEvent: null };
+  }
+
+  const result = resolvePositionChange({
+    positionId: portal.fromRoomId,
+    steps: 0,
+    coins: player.coins,
+    coinsOnEnterMultiplier: player.armedCoinsX3 ? 3 : 1,
+  });
+  const players = state.players.map((candidate) =>
+    candidate.id === player.id
+      ? {
+          ...resolvePlayerRoomEntry(
+            candidate,
+            result.positionId,
+            result.coins,
+            result.trap !== undefined,
+          ),
+          armedCoinsX3:
+            result.action === "coins" ? false : candidate.armedCoinsX3,
+        }
+      : candidate,
+  );
+  const message = `${getPlayerName(player)} a trecut prin portal.`;
+  const roomAction = createPendingRoomActionState(
+    { ...state, players },
+    player.id,
+    result,
+    message,
+  );
+
+  return {
+    rolling: false,
+    portalTransition: portalEventToTransition(portal),
+    players,
+    ...roomAction,
+    ...(roomAction.pendingEvent === undefined
+      ? { pendingEvent: null }
+      : {}),
+    message: roomAction.message ?? message,
+  };
+};
+
+export const applyTriviaCancelIfAvailable = (
+  state: GameState,
+  playerId: string,
+  message: string,
+): Partial<GameState> | null => {
+  const player = state.players.find(({ id }) => id === playerId);
+
+  if (!player || !getPlayerInventory(player).includes("trivia-cancel")) {
+    return null;
+  }
+
+  return {
+    pendingEvent: null,
+    rolling: false,
+    players: state.players.map((candidate) =>
+      candidate.id === playerId
+        ? removeInventoryItem(candidate, "trivia-cancel")
+        : candidate,
+    ),
+    message: `${message} Anularea trivia a sarit intrebarea.`,
+  };
+};
+
 export const createPendingRoomActionState = (
   state: GameState,
   playerId: string,
@@ -452,28 +523,26 @@ export const createPendingRoomActionState = (
   const player = state.players.find(({ id }) => id === playerId);
 
   switch (result.action) {
-    case "trivia":
+    case "trivia": {
+      const triviaCancel = applyTriviaCancelIfAvailable(state, playerId, message);
+
+      if (triviaCancel) {
+        return triviaCancel;
+      }
+
       return {
-        pendingMystery: null,
-        pendingShop: null,
-        pendingTrivia: {
+        pendingEvent: createTriviaEvent(
           playerId,
-          roomId: result.positionId,
-          question: drawTriviaQuestion(),
-          result: null,
-        },
+          result.positionId,
+          drawTriviaQuestion(),
+        ),
         rolling: false,
         message: `${message} Raspunde la intrebarea trivia.`,
       };
+    }
     case "shop":
       return {
-        pendingMystery: null,
-        pendingShop: {
-          playerId,
-          roomId: result.positionId,
-          purchased: false,
-        },
-        pendingTrivia: null,
+        pendingEvent: createShopEvent(playerId, result.positionId),
         rolling: false,
         message: `${message} A intrat in magazin.`,
       };
@@ -481,14 +550,11 @@ export const createPendingRoomActionState = (
       const offer = createMysteryOffer();
 
       return {
-        pendingMystery: {
+        pendingEvent: createMysteryEvent(
           playerId,
-          roomId: result.positionId,
-          cards: offer.cards,
-          revealedCardId: null,
-        },
-        pendingShop: null,
-        pendingTrivia: null,
+          result.positionId,
+          offer.cards,
+        ),
         rolling: false,
         message: `${message} A gasit carti misterioase.`,
       };

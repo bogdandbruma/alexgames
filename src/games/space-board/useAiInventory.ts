@@ -9,6 +9,11 @@ import {
 } from "../../game/aiInventory";
 import { getPlayerInventory } from "../../game/store/helpers";
 import { useGameStore } from "../../game/store";
+import {
+  getPendingMystery,
+  getPendingPortal,
+  getPendingShop,
+} from "../../game/store/pendingEvent";
 import type { AiGameSnapshot } from "../../game/store/types";
 
 const AI_PRE_ROLL_DELAY_MS = 400;
@@ -30,14 +35,15 @@ export function useAiInventory() {
     (state) => state.actionItemUsedThisTurn,
   );
   const activePlayerWalk = useGameStore((state) => state.activePlayerWalk);
-  const pendingMystery = useGameStore((state) => state.pendingMystery);
-  const pendingPortal = useGameStore((state) => state.pendingPortal);
-  const pendingShop = useGameStore((state) => state.pendingShop);
-  const pendingTrivia = useGameStore((state) => state.pendingTrivia);
+  const pendingEvent = useGameStore((state) => state.pendingEvent);
   const shopStock = useGameStore((state) => state.shopStock);
 
   const useInventoryItem = useGameStore((state) => state.useInventoryItem);
   const endTurn = useGameStore((state) => state.endTurn);
+
+  const pendingShop = getPendingShop(pendingEvent);
+  const pendingMystery = getPendingMystery(pendingEvent);
+  const pendingPortal = getPendingPortal(pendingEvent);
 
   const snapshot: AiGameSnapshot = {
     phase,
@@ -48,10 +54,7 @@ export function useAiInventory() {
     diceValue,
     actionItemUsedThisTurn,
     activePlayerWalk,
-    pendingMystery,
-    pendingPortal,
-    pendingShop,
-    pendingTrivia,
+    pendingEvent,
     shopStock,
   };
 
@@ -164,7 +167,7 @@ export function useAiInventory() {
 
     const timer = window.setTimeout(() => {
       const latest = useGameStore.getState();
-      const shop = latest.pendingShop;
+      const shop = getPendingShop(latest.pendingEvent);
 
       if (!shop || shop.purchased) {
         return;
@@ -207,7 +210,7 @@ export function useAiInventory() {
       }
 
       const latest = useGameStore.getState();
-      const mystery = latest.pendingMystery;
+      const mystery = getPendingMystery(latest.pendingEvent);
 
       if (!mystery || mystery.revealedCardId !== null) {
         return;

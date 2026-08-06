@@ -73,7 +73,8 @@ describe("useAiTriviaAnswer", () => {
       message: "Trivia",
       rolling: false,
       uiToast: null,
-      pendingTrivia: {
+      pendingEvent: {
+      type: "trivia",
         playerId: "robot-1",
         roomId: 42,
         question: {
@@ -94,8 +95,11 @@ describe("useAiTriviaAnswer", () => {
 
     const answered = useGameStore.getState();
 
-    expect(answered.pendingTrivia?.result).toMatchObject({
-      answer: "correct",
+    expect(answered.pendingEvent).toMatchObject({
+      type: "trivia",
+      result: {
+        answer: "correct",
+      },
     });
   });
 });

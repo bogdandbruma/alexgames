@@ -40,7 +40,7 @@ type PortalAnimation = {
   duration: number;
   elapsed: number;
   from: THREE.Vector3;
-  id: number;
+  id: string;
   to: THREE.Vector3;
 };
 
@@ -140,7 +140,7 @@ export function Avatar({
   const portalDiskRef = useRef<THREE.MeshBasicMaterial>(null);
   const portalRingRef = useRef<THREE.MeshBasicMaterial>(null);
   const previousRoomIdRef = useRef(roomId);
-  const handledPortalIdRef = useRef<number | null>(null);
+  const handledPortalIdRef = useRef<string | null>(null);
   const walkAnimationRef = useRef<WalkAnimation | null>(null);
   const portalAnimationRef = useRef<PortalAnimation | null>(null);
   const facingYRef = useRef(Math.PI);

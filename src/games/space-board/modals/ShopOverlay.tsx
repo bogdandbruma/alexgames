@@ -1,10 +1,12 @@
 import { ShoppingBag } from "lucide-react";
 import { useGameStore } from "../../../game/store";
+import { getPendingShop } from "../../../game/store/pendingEvent";
 import { shopItems } from "../../../game/shop";
 import { CoinAmount } from "../CoinAmount";
 
 export function ShopOverlay() {
-  const pendingShop = useGameStore((state) => state.pendingShop);
+  const pendingEvent = useGameStore((state) => state.pendingEvent);
+  const pendingShop = getPendingShop(pendingEvent);
   const shopStock = useGameStore((state) => state.shopStock);
   const players = useGameStore((state) => state.players);
   const currentPlayerIndex = useGameStore((state) => state.currentPlayerIndex);

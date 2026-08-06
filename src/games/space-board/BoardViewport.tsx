@@ -2,6 +2,7 @@ import { Map, X } from "lucide-react";
 import { memo, useEffect, useRef, useState } from "react";
 import { rooms } from "../../game/board";
 import { useGameStore } from "../../game/store";
+import { getPendingTrivia } from "../../game/store/pendingEvent";
 import { GameScene } from "../../three/GameScene";
 import { SpaceMinimap } from "./SpaceMinimap";
 import { CoinAmount } from "./CoinAmount";
@@ -11,7 +12,8 @@ import { VictoryOverlay } from "./modals/VictoryOverlay";
 
 function SceneToast() {
   const toast = useGameStore((state) => state.uiToast);
-  const pendingTrivia = useGameStore((state) => state.pendingTrivia);
+  const pendingEvent = useGameStore((state) => state.pendingEvent);
+  const pendingTrivia = getPendingTrivia(pendingEvent);
 
   if (!toast || pendingTrivia) {
     return null;

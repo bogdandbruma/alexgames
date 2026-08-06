@@ -1,9 +1,9 @@
 export class PortalAcknowledgement {
-  private portalAcknowledgementId: number | null = null;
+  private portalAcknowledgementId: string | null = null;
 
   private resolvePortalAcknowledgement: (() => void) | null = null;
 
-  waitForAcknowledgement(portalId: number): Promise<void> {
+  waitForAcknowledgement(portalId: string): Promise<void> {
     return new Promise<void>((resolve) => {
       this.portalAcknowledgementId = portalId;
       this.resolvePortalAcknowledgement = () => {
@@ -14,14 +14,18 @@ export class PortalAcknowledgement {
     });
   }
 
-  completeAcknowledgement(portalId?: number): void {
+  /** Returns true when an in-flight rollDice waiter was resumed. */
+  completeAcknowledgement(portalId?: string): boolean {
     if (
       this.resolvePortalAcknowledgement &&
       (portalId === undefined ||
         this.portalAcknowledgementId === portalId)
     ) {
       this.resolvePortalAcknowledgement();
+      return true;
     }
+
+    return false;
   }
 }
 

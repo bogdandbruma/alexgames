@@ -1,5 +1,6 @@
 import { ArrowRight, Orbit, TriangleAlert } from "lucide-react";
 import { useGameStore } from "../../../game/store";
+import { getPendingPortal } from "../../../game/store/pendingEvent";
 
 function PortalRoomBadge({
   roomId,
@@ -89,7 +90,8 @@ function PortalRouteVisual({ isForward }: { isForward: boolean }) {
 }
 
 export function PortalOverlay() {
-  const pendingPortal = useGameStore((state) => state.pendingPortal);
+  const pendingEvent = useGameStore((state) => state.pendingEvent);
+  const pendingPortal = getPendingPortal(pendingEvent);
   const acknowledgePortalTransition = useGameStore(
     (state) => state.acknowledgePortalTransition,
   );

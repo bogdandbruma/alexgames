@@ -2133,6 +2133,17 @@ button:disabled {
   backdrop-filter: blur(5px);
 }
 
+.trap-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(18, 10, 12, 0.55);
+  backdrop-filter: blur(5px);
+}
+
 .victory-overlay {
   position: absolute;
   inset: 0;
@@ -2385,6 +2396,131 @@ button:disabled {
 .portal-ok-button {
   justify-self: end;
   min-width: 118px;
+}
+
+.trap-panel {
+  width: min(440px, 100%);
+  padding: 18px;
+  display: grid;
+  gap: 14px;
+  border: 1px solid rgba(255, 120, 103, 0.48);
+  border-radius: 8px;
+  color: #f8fbf7;
+  background: rgba(24, 24, 25, 0.95);
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.trap-visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: 72px;
+}
+
+.trap-chain {
+  width: 54px;
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 120, 103, 0.15),
+    rgba(255, 120, 103, 0.85),
+    rgba(255, 120, 103, 0.15)
+  );
+  animation: trap-chain-pulse 1.6s ease-in-out infinite;
+}
+
+.trap-chain-right {
+  animation-delay: 0.35s;
+}
+
+.trap-lock {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  color: #ff9a8a;
+  border: 2px solid rgba(255, 120, 103, 0.55);
+  background: rgba(40, 18, 18, 0.9);
+  box-shadow: 0 0 24px rgba(255, 120, 103, 0.22);
+  animation: trap-lock-breathe 2.2s ease-in-out infinite;
+}
+
+.trap-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #ff9a8a;
+}
+
+.trap-heading div {
+  min-width: 0;
+  flex: 1;
+  display: grid;
+  gap: 2px;
+}
+
+.trap-heading span {
+  color: #b9b9ad;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.trap-heading strong {
+  color: #f8fbf7;
+  font-size: 1.05rem;
+}
+
+.trap-copy {
+  margin: 0;
+  color: #d8dbd0;
+  font-size: 0.92rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.trap-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.trap-action-button {
+  width: 100%;
+  justify-content: center;
+}
+
+.trap-stay-button {
+  opacity: 0.92;
+}
+
+@keyframes trap-chain-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scaleX(0.92);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+@keyframes trap-lock-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 18px rgba(255, 120, 103, 0.18);
+  }
+  50% {
+    transform: scale(1.04);
+    box-shadow: 0 0 28px rgba(255, 120, 103, 0.32);
+  }
 }
 
 .mystery-panel {
@@ -3888,6 +4024,10 @@ button:disabled {
   }
 
   .mystery-overlay {
+    padding: 14px;
+  }
+
+  .trap-overlay {
     padding: 14px;
   }
 

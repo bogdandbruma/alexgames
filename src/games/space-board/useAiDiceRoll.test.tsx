@@ -74,10 +74,7 @@ describe("useAiDiceRoll", () => {
       message: "Robot turn",
       rolling: false,
       uiToast: null,
-      pendingShop: null,
-      pendingMystery: null,
-      pendingPortal: null,
-      pendingTrivia: null,
+      pendingEvent: null,
     });
 
     render(<AiDiceHost />);

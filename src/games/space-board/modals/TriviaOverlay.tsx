@@ -5,6 +5,7 @@ import {
   useTriviaCountdown,
 } from "../TriviaAnswerTimer";
 import { useGameStore } from "../../../game/store";
+import { getPendingTrivia } from "../../../game/store/pendingEvent";
 
 function CoinAmount({
   amount,
@@ -30,7 +31,8 @@ function CoinAmount({
 }
 
 export function TriviaOverlay() {
-  const pendingTrivia = useGameStore((state) => state.pendingTrivia);
+  const pendingEvent = useGameStore((state) => state.pendingEvent);
+  const pendingTrivia = getPendingTrivia(pendingEvent);
   const answerTrivia = useGameStore((state) => state.answerTrivia);
 
   const triviaAwaitingAnswer =

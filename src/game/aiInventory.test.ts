@@ -2,8 +2,10 @@ import { describe, expect, test } from "vitest";
 import {
   getAiPreRollItems,
   pickAiActionItem,
+  pickAiTrapChoice,
   shopItemNeedsTarget,
 } from "./aiInventory";
+import { trapEscapeCoinCost } from "./rooms";
 
 describe("aiInventory", () => {
   test("orders pre-roll buffs as dice-x2 then coins-x3", () => {
@@ -16,6 +18,36 @@ describe("aiInventory", () => {
   test("flags targeted shop items", () => {
     expect(shopItemNeedsTarget("pistol")).toBe(true);
     expect(shopItemNeedsTarget("star")).toBe(false);
+  });
+
+  test("picks trap escape as key, then pay, then stay", () => {
+    expect(
+      pickAiTrapChoice(
+        {
+          coins: trapEscapeCoinCost,
+          inventory: ["cosmic-key"],
+        },
+        trapEscapeCoinCost,
+      ),
+    ).toBe("key");
+    expect(
+      pickAiTrapChoice(
+        {
+          coins: trapEscapeCoinCost,
+          inventory: [],
+        },
+        trapEscapeCoinCost,
+      ),
+    ).toBe("pay");
+    expect(
+      pickAiTrapChoice(
+        {
+          coins: trapEscapeCoinCost - 1,
+          inventory: [],
+        },
+        trapEscapeCoinCost,
+      ),
+    ).toBe("stay");
   });
 
   test("picks a random action item with a target when needed", () => {

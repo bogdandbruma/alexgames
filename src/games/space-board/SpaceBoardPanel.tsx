@@ -24,6 +24,12 @@ import {
   type PlayerSetup,
   useGameStore,
 } from "../../game/store";
+import {
+  getPendingMystery,
+  getPendingPortal,
+  getPendingShop,
+  getPendingTrivia,
+} from "../../game/store/pendingEvent";
 import { isActionShopItem, shopItems, type ShopItemId } from "../../game/shop";
 import { AvatarPickerModal, AvatarSetupCompact } from "./AvatarSetupPicker";
 import { CoinAmount } from "./CoinAmount";
@@ -96,10 +102,11 @@ export function SpaceBoardPanel({
   const diceAnimating = useGameStore((state) => state.diceAnimating);
   const diceMultiplier = useGameStore((state) => state.diceMultiplier);
   const message = useGameStore((state) => state.message);
-  const pendingMystery = useGameStore((state) => state.pendingMystery);
-  const pendingPortal = useGameStore((state) => state.pendingPortal);
-  const pendingShop = useGameStore((state) => state.pendingShop);
-  const pendingTrivia = useGameStore((state) => state.pendingTrivia);
+  const pendingEvent = useGameStore((state) => state.pendingEvent);
+  const pendingMystery = getPendingMystery(pendingEvent);
+  const pendingPortal = getPendingPortal(pendingEvent);
+  const pendingShop = getPendingShop(pendingEvent);
+  const pendingTrivia = getPendingTrivia(pendingEvent);
   const rolling = useGameStore((state) => state.rolling);
   const actionItemUsedThisTurn = useGameStore(
     (state) => state.actionItemUsedThisTurn,
@@ -141,10 +148,7 @@ export function SpaceBoardPanel({
     phase === "playing" &&
     currentPlayer?.controller === "player" &&
     hasRolled &&
-    pendingMystery === null &&
-    pendingPortal === null &&
-    pendingShop === null &&
-    pendingTrivia === null;
+    pendingEvent === null;
 
   const getInventoryItemTitle = (itemId: ShopItemId, needsTarget: boolean) => {
     const item = shopItems.find(({ id }) => id === itemId);
@@ -186,7 +190,19 @@ export function SpaceBoardPanel({
     }
 
     if (pendingTrivia !== null) {
+      if (itemId === "trivia-cancel") {
+        return item?.description ?? "Sari peste intrebarea trivia.";
+      }
+
       return "Raspunde la trivia mai intai.";
+    }
+
+    if (itemId === "trivia-cancel" && pendingTrivia === null) {
+      return "Se foloseste automat la urmatoarea intrebare trivia (sau apasa cand apare).";
+    }
+
+    if (itemId === "cosmic-key" && !currentPlayer?.trapped) {
+      return "Se foloseste cand esti in capcana.";
     }
 
     if (needsTarget && targetablePlayers.length === 0) {
@@ -526,10 +542,10 @@ export function SpaceBoardPanel({
                           (isActionShopItem(itemId) &&
                             (currentPlayer?.trapped ||
                               actionItemUsedThisTurn)) ||
-                          pendingMystery !== null ||
-                          pendingPortal !== null ||
-                          pendingShop !== null ||
-                          pendingTrivia !== null ||
+                          (pendingEvent !== null &&
+                            itemId !== "trivia-cancel") ||
+                          (itemId === "trivia-cancel" &&
+                            pendingTrivia === null) ||
                           (needsTarget && targetablePlayers.length === 0)
                         }
                         onClick={() => {
@@ -568,10 +584,7 @@ export function SpaceBoardPanel({
                   rolling ||
                   finished ||
                   canEndTurn ||
-                  pendingShop !== null ||
-                  pendingMystery !== null ||
-                  pendingPortal !== null ||
-                  pendingTrivia !== null ||
+                  pendingEvent !== null ||
                   phase !== "playing" ||
                   currentPlayer?.controller === "ai"
                 }

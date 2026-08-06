@@ -9,8 +9,24 @@ import {
   playerHasUsableActionItem,
   shouldDeferTurnEndForActionItems,
 } from "./store/helpers";
+import type { TrapEscapeChoice } from "./store/pendingEvent";
 
 const PRE_ROLL_ITEM_ORDER: ShopItemId[] = ["dice-x2", "coins-x3"];
+
+export function pickAiTrapChoice(
+  player: Pick<GamePlayer, "coins"> & { inventory?: ShopItemId[] },
+  escapeCost: number,
+): TrapEscapeChoice {
+  if ((player.inventory ?? []).includes("cosmic-key")) {
+    return "key";
+  }
+
+  if (player.coins >= escapeCost) {
+    return "pay";
+  }
+
+  return "stay";
+}
 
 export function shopItemNeedsTarget(itemId: ShopItemId): boolean {
   switch (itemId) {
@@ -82,10 +98,7 @@ export function pickAiActionItem(
 
 export function isAiPlayBlocked(state: AiGameSnapshot): boolean {
   return (
-    state.pendingMystery !== null ||
-    state.pendingPortal !== null ||
-    state.pendingShop !== null ||
-    state.pendingTrivia !== null ||
+    state.pendingEvent !== null ||
     state.rolling ||
     state.activePlayerWalk !== null
   );

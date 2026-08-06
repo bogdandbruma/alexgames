@@ -1,11 +1,15 @@
 import { useEffect } from "react";
 import type { TriviaAnswer } from "../../game/rules";
+import { getPlayerInventory } from "../../game/store/helpers";
 import { useGameStore } from "../../game/store";
+import { getPendingTrivia } from "../../game/store/pendingEvent";
 
 export function useAiTriviaAnswer() {
-  const pendingTrivia = useGameStore((state) => state.pendingTrivia);
+  const pendingEvent = useGameStore((state) => state.pendingEvent);
+  const pendingTrivia = getPendingTrivia(pendingEvent);
   const players = useGameStore((state) => state.players);
   const answerTrivia = useGameStore((state) => state.answerTrivia);
+  const useInventoryItem = useGameStore((state) => state.useInventoryItem);
 
   const triviaPlayer = pendingTrivia
     ? players.find(({ id }) => id === pendingTrivia.playerId)
@@ -17,13 +21,20 @@ export function useAiTriviaAnswer() {
     triviaPlayer?.controller === "ai";
 
   useEffect(() => {
-    if (!isAiTriviaPending || !pendingTrivia) {
+    if (!isAiTriviaPending || !pendingTrivia || !triviaPlayer) {
       return;
     }
 
-    const options = pendingTrivia.question.options;
+    const hasTriviaCancel =
+      getPlayerInventory(triviaPlayer).includes("trivia-cancel");
 
     const aiAnswer = window.setTimeout(() => {
+      if (hasTriviaCancel) {
+        useInventoryItem("trivia-cancel");
+        return;
+      }
+
+      const options = pendingTrivia.question.options;
       const randomIndex = Math.floor(Math.random() * options.length);
       const picked = options[randomIndex];
 
@@ -34,9 +45,10 @@ export function useAiTriviaAnswer() {
 
     return () => window.clearTimeout(aiAnswer);
   }, [
-    isAiTriviaPending,
-    pendingTrivia?.playerId,
-    pendingTrivia?.question.id,
     answerTrivia,
+    isAiTriviaPending,
+    pendingTrivia,
+    triviaPlayer,
+    useInventoryItem,
   ]);
 }

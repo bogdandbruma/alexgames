@@ -1,14 +1,29 @@
 import type { Vector3Tuple } from "../board";
 import type { AvatarId } from "../avatars";
 import type { PlayerCoinBurst } from "../playerCoinBurst";
-import type { MysteryCard, MysteryCardId } from "../mystery";
+import type { MysteryCardId } from "../mystery";
 import type { ShopItemId, ShopStock } from "../shop";
-import type { TriviaQuestion } from "../trivia";
 import type { TriviaAnswer } from "../rules";
+import type {
+  GamePortalTransition,
+  PendingEvent,
+  TrapEscapeChoice,
+} from "./pendingEvent";
 
 export type { AvatarId } from "../avatars";
 export type { PlayerCoinBurst } from "../playerCoinBurst";
 export { PLAYER_COIN_BURST_MS } from "../playerCoinBurst";
+export type {
+  GamePortalTransition,
+  PendingEvent,
+  PendingMysteryEvent,
+  PendingPortalEvent,
+  PendingShopEvent,
+  PendingTrapEvent,
+  PendingTriviaEvent,
+  TrapEscapeChoice,
+  TriviaFeedback,
+} from "./pendingEvent";
 
 export type PlayerController = "player" | "ai";
 export type GamePhase = "setup" | "playing" | "finished";
@@ -40,38 +55,6 @@ export type GameToast = {
   coinsDelta?: number;
 };
 
-export type TriviaFeedback = {
-  answer: TriviaAnswer;
-  coinsDelta: number;
-};
-
-export type PendingTrivia = {
-  playerId: string;
-  roomId: number;
-  question: TriviaQuestion;
-  result?: TriviaFeedback | null;
-};
-
-export type PendingShop = {
-  playerId: string;
-  roomId: number;
-  purchased: boolean;
-};
-
-export type PendingMystery = {
-  playerId: string;
-  roomId: number;
-  cards: MysteryCard[];
-  revealedCardId: MysteryCardId | null;
-};
-
-export type GamePortalTransition = {
-  id: number;
-  playerId: string;
-  fromRoomId: number;
-  toRoomId: number;
-};
-
 export type ActivePlayerWalk = {
   durationMs: number;
   endPosition: Vector3Tuple;
@@ -87,21 +70,18 @@ export type PersistedState = {
   players: GamePlayer[];
   currentPlayerIndex: number;
   diceValue: number | null;
+  actionItemUsedThisTurn: boolean;
   message: string;
   shopStock: ShopStock;
   winnerId: string | null;
+  pendingEvent: PendingEvent;
 };
 
 export type GameState = PersistedState & {
-  actionItemUsedThisTurn: boolean;
   activePlayerWalk: ActivePlayerWalk | null;
   diceAnimating: boolean;
   diceMultiplier: number;
   rolling: boolean;
-  pendingMystery: PendingMystery | null;
-  pendingPortal: GamePortalTransition | null;
-  pendingShop: PendingShop | null;
-  pendingTrivia: PendingTrivia | null;
   portalTransition: GamePortalTransition | null;
   uiToast: GameToast | null;
   playerCoinBursts: PlayerCoinBurst[];
@@ -112,6 +92,7 @@ export type GameState = PersistedState & {
   closeShop: () => void;
   pickMysteryCard: (cardId: MysteryCardId) => boolean;
   acknowledgeMystery: () => Promise<void>;
+  resolveTrap: (choice: TrapEscapeChoice) => boolean;
   startGame: (players: PlayerSetup[]) => void;
   rollDice: () => Promise<void>;
   endTurn: () => void;
@@ -129,10 +110,7 @@ export type AiGameSnapshot = Pick<
   | "diceValue"
   | "actionItemUsedThisTurn"
   | "activePlayerWalk"
-  | "pendingMystery"
-  | "pendingPortal"
-  | "pendingShop"
-  | "pendingTrivia"
+  | "pendingEvent"
   | "shopStock"
 >;
 

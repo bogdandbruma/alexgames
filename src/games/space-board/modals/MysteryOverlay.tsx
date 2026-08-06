@@ -1,9 +1,11 @@
 import { Sparkles } from "lucide-react";
 import { useGameStore } from "../../../game/store";
+import { getPendingMystery } from "../../../game/store/pendingEvent";
 import { MysteryCardDescription } from "./MysteryCardDescription";
 
 export function MysteryOverlay() {
-  const pendingMystery = useGameStore((state) => state.pendingMystery);
+  const pendingEvent = useGameStore((state) => state.pendingEvent);
+  const pendingMystery = getPendingMystery(pendingEvent);
   const pickMysteryCard = useGameStore((state) => state.pickMysteryCard);
   const acknowledgeMystery = useGameStore((state) => state.acknowledgeMystery);
 

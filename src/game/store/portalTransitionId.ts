@@ -1,6 +1,6 @@
 let portalTransitionId = 0;
 
-export function nextPortalTransitionId(): number {
+export function nextPortalTransitionId(): string {
   portalTransitionId += 1;
-  return portalTransitionId;
+  return `portal-${portalTransitionId}`;
 }
