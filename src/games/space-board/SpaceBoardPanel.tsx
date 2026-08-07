@@ -34,6 +34,7 @@ import { isActionShopItem, shopItems, type ShopItemId } from "../../game/shop";
 import { AvatarPickerModal, AvatarSetupCompact } from "./AvatarSetupPicker";
 import { CoinAmount } from "./CoinAmount";
 import { ConfirmLeaveGameModal } from "./modals/ConfirmLeaveGameModal";
+import { useSpaceBoardOnlineActions } from "./online/onlineActionsContext";
 
 const controllers: Array<{
   id: PlayerController;
@@ -88,12 +89,20 @@ function createSetupPlayer(index: number): PlayerSetup {
 type SpaceBoardPanelProps = {
   onExit: () => void;
   onRequestTargetItem: (itemId: ShopItemId) => void;
+  /** When set, roll/endTurn go through online envelopes instead of local store. */
+  onlineControls?: {
+    canAct: boolean;
+    onRoll: () => void;
+    onEndTurn: () => void;
+  } | null;
 };
 
 export function SpaceBoardPanel({
   onExit,
   onRequestTargetItem,
+  onlineControls = null,
 }: SpaceBoardPanelProps) {
+  const onlineActions = useSpaceBoardOnlineActions();
   const phase = useGameStore((state) => state.phase);
   const winnerId = useGameStore((state) => state.winnerId);
   const players = useGameStore((state) => state.players);
@@ -554,6 +563,13 @@ export function SpaceBoardPanel({
                             return;
                           }
 
+                          if (onlineActions) {
+                            if (onlineActions.canAct) {
+                              onlineActions.onUseInventoryItem(itemId);
+                            }
+                            return;
+                          }
+
                           activateInventoryItem(itemId);
                         }}
                         title={getInventoryItemTitle(itemId, needsTarget)}
@@ -572,7 +588,14 @@ export function SpaceBoardPanel({
                 <button
                   type="button"
                   className="secondary-button"
-                  onClick={() => endTurn()}
+                  disabled={onlineControls ? !onlineControls.canAct : false}
+                  onClick={() => {
+                    if (onlineControls) {
+                      onlineControls.onEndTurn();
+                      return;
+                    }
+                    endTurn();
+                  }}
                 >
                   <span>Termină turul</span>
                 </button>
@@ -586,9 +609,16 @@ export function SpaceBoardPanel({
                   canEndTurn ||
                   pendingEvent !== null ||
                   phase !== "playing" ||
-                  currentPlayer?.controller === "ai"
+                  currentPlayer?.controller === "ai" ||
+                  (onlineControls ? !onlineControls.canAct : false)
                 }
-                onClick={() => void rollDice()}
+                onClick={() => {
+                  if (onlineControls) {
+                    onlineControls.onRoll();
+                    return;
+                  }
+                  void rollDice();
+                }}
               >
                 <Dices aria-hidden="true" size={20} />
                 <span>

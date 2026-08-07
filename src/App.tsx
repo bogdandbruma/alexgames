@@ -2,6 +2,7 @@ import { Box, Gamepad2, Palette, Play, Sparkles, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { avatarOptionById } from "./game/avatars";
 import { games } from "./games/registry";
+import { PlaySession } from "./online/PlaySession";
 
 const getSelectedGameIdFromHash = () =>
   window.location.hash.replace(/^#\/?/, "") || null;
@@ -39,7 +40,14 @@ function App() {
   if (selectedGame) {
     const SelectedGame = selectedGame.Component;
 
-    return <SelectedGame onExit={returnToDashboard} />;
+    return (
+      <PlaySession
+        Game={SelectedGame}
+        gameSlug={selectedGame.id}
+        OnlinePlay={selectedGame.OnlinePlay}
+        onExit={returnToDashboard}
+      />
+    );
   }
 
   const gameCountLabel = games.length === 1 ? "joc" : "jocuri";

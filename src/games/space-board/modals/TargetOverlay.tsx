@@ -1,5 +1,6 @@
 import { useGameStore } from "../../../game/store";
 import { shopItems, type ShopItemId } from "../../../game/shop";
+import { useSpaceBoardOnlineActions } from "../online/onlineActionsContext";
 
 type TargetOverlayProps = {
   targetItemId: ShopItemId | null;
@@ -10,6 +11,7 @@ export function TargetOverlay({ targetItemId, onClose }: TargetOverlayProps) {
   const players = useGameStore((state) => state.players);
   const currentPlayerIndex = useGameStore((state) => state.currentPlayerIndex);
   const activateInventoryItem = useGameStore((state) => state.useInventoryItem);
+  const online = useSpaceBoardOnlineActions();
 
   const currentPlayer = players[currentPlayerIndex];
   const targetablePlayers = players.filter(({ id }) => id !== currentPlayer?.id);
@@ -35,7 +37,15 @@ export function TargetOverlay({ targetItemId, onClose }: TargetOverlayProps) {
               key={player.id}
               type="button"
               className="target-player-button"
+              disabled={online ? !online.canAct : false}
               onClick={() => {
+                if (online) {
+                  if (online.canAct) {
+                    online.onUseInventoryItem(targetItemId, player.id);
+                    onClose();
+                  }
+                  return;
+                }
                 const used = activateInventoryItem(targetItemId, player.id);
                 if (used) {
                   onClose();

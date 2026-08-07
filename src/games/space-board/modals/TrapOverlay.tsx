@@ -2,8 +2,12 @@ import { KeyRound, Link2, Wallet } from "lucide-react";
 import { trapEscapeCoinCost } from "../../../game/rooms";
 import { getPlayerInventory } from "../../../game/store/helpers";
 import { useGameStore } from "../../../game/store";
-import { getPendingTrap } from "../../../game/store/pendingEvent";
+import {
+  getPendingTrap,
+  type TrapEscapeChoice,
+} from "../../../game/store/pendingEvent";
 import { CoinAmount } from "../CoinAmount";
+import { useSpaceBoardOnlineActions } from "../online/onlineActionsContext";
 
 export function TrapOverlay() {
   const pendingEvent = useGameStore((state) => state.pendingEvent);
@@ -11,16 +15,31 @@ export function TrapOverlay() {
   const players = useGameStore((state) => state.players);
   const currentPlayerIndex = useGameStore((state) => state.currentPlayerIndex);
   const resolveTrap = useGameStore((state) => state.resolveTrap);
+  const online = useSpaceBoardOnlineActions();
 
   const currentPlayer = players[currentPlayerIndex];
+  const trapPlayer = players.find((player) => player.id === pendingTrap?.playerId);
 
-  if (!pendingTrap || !currentPlayer || currentPlayer.id !== pendingTrap.playerId) {
+  if (!pendingTrap || !trapPlayer) {
     return null;
   }
 
-  const hasKey = getPlayerInventory(currentPlayer).includes("cosmic-key");
-  const canPay = currentPlayer.coins >= trapEscapeCoinCost;
-  const isHuman = currentPlayer.controller === "player";
+  const hasKey = getPlayerInventory(trapPlayer).includes("cosmic-key");
+  const canPay = trapPlayer.coins >= trapEscapeCoinCost;
+  const isActor =
+    currentPlayer?.id === pendingTrap.playerId &&
+    currentPlayer.controller === "player";
+  const canResolve = online ? online.canAct && isActor : isActor;
+
+  const submit = (choice: TrapEscapeChoice) => {
+    if (online) {
+      if (online.canAct) {
+        online.onResolveTrap(choice);
+      }
+      return;
+    }
+    resolveTrap(choice);
+  };
 
   return (
     <div className="trap-overlay" role="dialog" aria-modal="true">
@@ -40,14 +59,14 @@ export function TrapOverlay() {
             <strong>Camera {pendingTrap.roomId}</strong>
           </div>
           <CoinAmount
-            amount={currentPlayer.coins}
+            amount={trapPlayer.coins}
             className="coin-amount-shop-balance"
           />
         </div>
 
         <p className="trap-copy">
-          Esti prins o tura. Poti iesi cu cheia cosmica, plati taxa, sau pierde
-          tura.
+          {trapPlayer.name} este prins o tura. Poate iesi cu cheia cosmica, plati
+          taxa, sau pierde tura.
         </p>
 
         <div className="trap-actions">
@@ -55,8 +74,8 @@ export function TrapOverlay() {
             <button
               type="button"
               className="primary-button trap-action-button"
-              disabled={!isHuman}
-              onClick={() => resolveTrap("key")}
+              disabled={!canResolve}
+              onClick={() => submit("key")}
             >
               <KeyRound aria-hidden="true" size={18} />
               <span>Foloseste cheia cosmica</span>
@@ -67,8 +86,8 @@ export function TrapOverlay() {
             <button
               type="button"
               className="secondary-button trap-action-button"
-              disabled={!isHuman}
-              onClick={() => resolveTrap("pay")}
+              disabled={!canResolve}
+              onClick={() => submit("pay")}
             >
               <Wallet aria-hidden="true" size={18} />
               <span>
@@ -84,8 +103,8 @@ export function TrapOverlay() {
           <button
             type="button"
             className="secondary-button trap-action-button trap-stay-button"
-            disabled={!isHuman}
-            onClick={() => resolveTrap("stay")}
+            disabled={!canResolve}
+            onClick={() => submit("stay")}
           >
             <Link2 aria-hidden="true" size={18} />
             <span>Stai 1 tura</span>

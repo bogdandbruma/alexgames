@@ -1,8 +1,9 @@
 import { ShoppingBag } from "lucide-react";
 import { useGameStore } from "../../../game/store";
 import { getPendingShop } from "../../../game/store/pendingEvent";
-import { shopItems } from "../../../game/shop";
+import { shopItems, type ShopItemId } from "../../../game/shop";
 import { CoinAmount } from "../CoinAmount";
+import { useSpaceBoardOnlineActions } from "../online/onlineActionsContext";
 
 export function ShopOverlay() {
   const pendingEvent = useGameStore((state) => state.pendingEvent);
@@ -12,6 +13,7 @@ export function ShopOverlay() {
   const currentPlayerIndex = useGameStore((state) => state.currentPlayerIndex);
   const buyShopItem = useGameStore((state) => state.buyShopItem);
   const closeShop = useGameStore((state) => state.closeShop);
+  const online = useSpaceBoardOnlineActions();
 
   const currentPlayer = players[currentPlayerIndex];
   const currentInventory = currentPlayer?.inventory ?? [];
@@ -19,6 +21,26 @@ export function ShopOverlay() {
   if (!pendingShop || !currentPlayer) {
     return null;
   }
+
+  const submitBuy = (itemId: ShopItemId) => {
+    if (online) {
+      if (online.canAct) {
+        online.onBuyShopItem(itemId);
+      }
+      return;
+    }
+    buyShopItem(itemId);
+  };
+
+  const submitClose = () => {
+    if (online) {
+      if (online.canAct) {
+        online.onCloseShop();
+      }
+      return;
+    }
+    closeShop();
+  };
 
   return (
     <div className="shop-overlay" role="dialog" aria-modal="true">
@@ -43,7 +65,8 @@ export function ShopOverlay() {
               pendingShop.purchased ||
               !inStock ||
               inventoryFull ||
-              currentPlayer.coins < item.cost;
+              currentPlayer.coins < item.cost ||
+              (online ? !online.canAct : false);
 
             return (
               <button
@@ -51,7 +74,7 @@ export function ShopOverlay() {
                 type="button"
                 className={inStock ? "shop-item" : "shop-item shop-item-empty"}
                 disabled={disabled}
-                onClick={() => buyShopItem(item.id)}
+                onClick={() => submitBuy(item.id)}
               >
                 <span className="shop-item-icon">
                   {inStock ? item.icon : "-"}
@@ -75,7 +98,8 @@ export function ShopOverlay() {
         <button
           type="button"
           className="primary-button shop-done-button"
-          onClick={closeShop}
+          disabled={online ? !online.canAct : false}
+          onClick={submitClose}
         >
           <span>Gata</span>
         </button>

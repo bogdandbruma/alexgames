@@ -1,17 +1,40 @@
 import { Sparkles } from "lucide-react";
 import { useGameStore } from "../../../game/store";
+import type { MysteryCardId } from "../../../game/mystery";
 import { getPendingMystery } from "../../../game/store/pendingEvent";
 import { MysteryCardDescription } from "./MysteryCardDescription";
+import { useSpaceBoardOnlineActions } from "../online/onlineActionsContext";
 
 export function MysteryOverlay() {
   const pendingEvent = useGameStore((state) => state.pendingEvent);
   const pendingMystery = getPendingMystery(pendingEvent);
   const pickMysteryCard = useGameStore((state) => state.pickMysteryCard);
   const acknowledgeMystery = useGameStore((state) => state.acknowledgeMystery);
+  const online = useSpaceBoardOnlineActions();
 
   if (!pendingMystery) {
     return null;
   }
+
+  const submitPick = (cardId: MysteryCardId) => {
+    if (online) {
+      if (online.canAct) {
+        online.onPickMystery(cardId);
+      }
+      return;
+    }
+    pickMysteryCard(cardId);
+  };
+
+  const submitAck = () => {
+    if (online) {
+      if (online.canAct) {
+        online.onAcknowledgeMystery();
+      }
+      return;
+    }
+    void acknowledgeMystery();
+  };
 
   const revealedMysteryCard =
     pendingMystery.revealedCardId != null
@@ -47,8 +70,8 @@ export function MysteryOverlay() {
                       ? "mystery-card-button mystery-card-dimmed"
                       : "mystery-card-button mystery-card-hidden"
                 }
-                disabled={locked}
-                onClick={() => pickMysteryCard(card.id)}
+                disabled={locked || (online ? !online.canAct : false)}
+                onClick={() => submitPick(card.id)}
                 aria-label={
                   revealed
                     ? `Carte dezvaluita: ${card.title}`
@@ -89,7 +112,8 @@ export function MysteryOverlay() {
               <button
                 type="button"
                 className="primary-button mystery-ok-button"
-                onClick={() => void acknowledgeMystery()}
+                disabled={online ? !online.canAct : false}
+                onClick={submitAck}
               >
                 <Sparkles aria-hidden="true" size={18} />
                 <span>Am înțeles</span>

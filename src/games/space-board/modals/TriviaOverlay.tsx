@@ -5,7 +5,9 @@ import {
   useTriviaCountdown,
 } from "../TriviaAnswerTimer";
 import { useGameStore } from "../../../game/store";
+import type { TriviaAnswer } from "../../../game/rules";
 import { getPendingTrivia } from "../../../game/store/pendingEvent";
+import { useSpaceBoardOnlineActions } from "../online/onlineActionsContext";
 
 function CoinAmount({
   amount,
@@ -34,6 +36,17 @@ export function TriviaOverlay() {
   const pendingEvent = useGameStore((state) => state.pendingEvent);
   const pendingTrivia = getPendingTrivia(pendingEvent);
   const answerTrivia = useGameStore((state) => state.answerTrivia);
+  const online = useSpaceBoardOnlineActions();
+
+  const submitAnswer = (answer: TriviaAnswer) => {
+    if (online) {
+      if (online.canAct) {
+        online.onAnswerTrivia(answer);
+      }
+      return;
+    }
+    answerTrivia(answer);
+  };
 
   const triviaAwaitingAnswer =
     pendingTrivia != null && pendingTrivia.result == null;
@@ -44,7 +57,7 @@ export function TriviaOverlay() {
     useTriviaCountdown({
       active: triviaAwaitingAnswer,
       resetKey: triviaCountdownKey,
-      onExpire: () => answerTrivia("wrong"),
+      onExpire: () => submitAnswer("wrong"),
     });
 
   if (!pendingTrivia) {
@@ -95,8 +108,8 @@ export function TriviaOverlay() {
                       ? "trivia-option-button trivia-option-dimmed"
                       : "trivia-option-button"
                 }
-                disabled={answered}
-                onClick={() => answerTrivia(option.result)}
+                disabled={answered || (online ? !online.canAct : false)}
+                onClick={() => submitAnswer(option.result)}
               >
                 {option.answer}
               </button>

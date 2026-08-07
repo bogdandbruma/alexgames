@@ -2,7 +2,9 @@ import type { ComponentType } from "react";
 import type { LucideIcon } from "lucide-react";
 import { Rocket } from "lucide-react";
 import type { AvatarId } from "../game/store";
+import type { OnlinePlaySurface } from "../online/playSurface";
 import { SpaceBoardGame } from "./space-board/SpaceBoardGame";
+import { OnlinePlay as SpaceBoardOnlinePlay } from "./space-board/online/OnlinePlay";
 
 export type GameComponentProps = {
   onExit: () => void;
@@ -20,6 +22,7 @@ export type GameDefinition = {
   creatorName: string;
   Icon: LucideIcon;
   Component: ComponentType<GameComponentProps>;
+  OnlinePlay?: OnlinePlaySurface;
 };
 
 export const games: GameDefinition[] = [
@@ -36,5 +39,6 @@ export const games: GameDefinition[] = [
     creatorName: "Alex",
     Icon: Rocket,
     Component: SpaceBoardGame,
+    OnlinePlay: SpaceBoardOnlinePlay,
   },
 ];

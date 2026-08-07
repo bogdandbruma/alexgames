@@ -1,4 +1,5 @@
 import type { StateStorage } from "zustand/middleware";
+import { gamePersistWritesEnabled } from "./persistGate";
 
 export function createDebouncedStorage(
   base: Storage,
@@ -10,9 +11,17 @@ export function createDebouncedStorage(
   return {
     getItem: (name) => base.getItem(name),
     setItem: (name, value) => {
+      if (!gamePersistWritesEnabled()) {
+        return;
+      }
       pending = { name, value };
       if (timer) clearTimeout(timer);
       timer = setTimeout(() => {
+        if (!gamePersistWritesEnabled()) {
+          pending = null;
+          timer = null;
+          return;
+        }
         if (pending) base.setItem(pending.name, pending.value);
         pending = null;
         timer = null;

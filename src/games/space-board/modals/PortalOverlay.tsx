@@ -1,6 +1,7 @@
 import { ArrowRight, Orbit, TriangleAlert } from "lucide-react";
 import { useGameStore } from "../../../game/store";
 import { getPendingPortal } from "../../../game/store/pendingEvent";
+import { useSpaceBoardOnlineActions } from "../online/onlineActionsContext";
 
 function PortalRoomBadge({
   roomId,
@@ -95,6 +96,7 @@ export function PortalOverlay() {
   const acknowledgePortalTransition = useGameStore(
     (state) => state.acknowledgePortalTransition,
   );
+  const online = useSpaceBoardOnlineActions();
 
   if (!pendingPortal) {
     return null;
@@ -154,7 +156,16 @@ export function PortalOverlay() {
         <button
           type="button"
           className="primary-button portal-ok-button"
-          onClick={acknowledgePortalTransition}
+          disabled={online ? !online.canAct : false}
+          onClick={() => {
+            if (online) {
+              if (online.canAct) {
+                online.onAcknowledgePortal();
+              }
+              return;
+            }
+            acknowledgePortalTransition();
+          }}
         >
           <Orbit aria-hidden="true" size={18} />
           <span>OK</span>

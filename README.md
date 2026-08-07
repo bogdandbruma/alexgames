@@ -11,7 +11,18 @@ npm install
 npm run dev
 ```
 
-Open the Vite URL, usually `http://127.0.0.1:5173`.
+Open the Vite URL, usually `http://127.0.0.1:5174`.
+
+### Online multiplayer (optional)
+
+Offline play needs no env keys. For Online mode, copy `.env.example` → `.env.local` (gitignored via `*.local`):
+
+```env
+VITE_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+VITE_SUPABASE_ANON_KEY=your_publishable_anon_key
+```
+
+Apply `supabase/migrations/20260806000000_online_platform.sql` in the Supabase SQL editor (generic platform tables only).
 
 ## Verify
 
