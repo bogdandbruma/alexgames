@@ -106,6 +106,7 @@ export function RoomChat({
       <button
         type="button"
         className="secondary-button online-room-chat-toggle"
+        aria-label={open ? "Inchide chat" : "Deschide chat"}
         aria-expanded={open}
         aria-controls={`room-chat-panel-${roomId}`}
         onClick={() => setOpen((value) => !value)}

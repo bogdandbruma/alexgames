@@ -42,10 +42,10 @@ export function createEmptyRemoteView(): SpaceBoardRemoteView {
 function resolveRemoteWalk(
   fromState: ActivePlayerWalk | null,
   fromView: ActivePlayerWalk | null,
-  nowMs = Date.now(),
+  nowMs = getAnimationNowMs(),
 ): ActivePlayerWalk | null {
   if (fromState) {
-    return fromState;
+    return rebaseRemoteWalk(fromState, nowMs);
   }
   if (!fromView) {
     return null;
@@ -54,6 +54,20 @@ function resolveRemoteWalk(
     return fromView;
   }
   return null;
+}
+
+function getAnimationNowMs(): number {
+  return globalThis.performance?.now() ?? Date.now();
+}
+
+function rebaseRemoteWalk(
+  walk: ActivePlayerWalk,
+  startedAt = getAnimationNowMs(),
+): ActivePlayerWalk {
+  return {
+    ...walk,
+    startedAt,
+  };
 }
 
 function applyUiEvent(
@@ -68,13 +82,20 @@ function applyUiEvent(
         diceValue: event.value,
         rolling: event.animating || view.rolling,
       };
-    case "walk":
+    case "walk": {
+      const walk = rebaseRemoteWalk(event.walk);
       return {
         ...view,
-        activePlayerWalk: event.walk,
+        players: view.players.map((player) =>
+          player.id === walk.playerId
+            ? { ...player, positionIndex: walk.toRoomId - 1 }
+            : player,
+        ),
+        activePlayerWalk: walk,
         diceAnimating: false,
         rolling: true,
       };
+    }
     case "portal":
       return {
         ...view,

@@ -104,7 +104,24 @@ describe("Space Board online play sync", () => {
       }),
     );
 
-    let remote = createEmptyRemoteView();
+    let remote = applySpaceBoardRemoteEnvelope(
+      createEmptyRemoteView(),
+      createRoomEnvelope({
+        gameSlug: "space-board",
+        kind: "state",
+        roomId: "room-1",
+        payload: {
+          ...after,
+          players: after.players.map((player) => ({
+            ...player,
+            positionIndex: 0,
+            lastDice: null,
+          })),
+          diceValue: null,
+          message: "before",
+        },
+      }),
+    );
     const kinds: string[] = [];
     for (const envelope of outbound) {
       kinds.push(envelope.kind);
@@ -113,7 +130,7 @@ describe("Space Board online play sync", () => {
         const payload = envelope.payload as { type: string };
         if (payload.type === "walk") {
           expect(remote.activePlayerWalk?.toRoomId).toBe(4);
-          expect(remote.players[0]?.positionIndex ?? 0).toBe(0);
+          expect(remote.players[0]?.positionIndex).toBe(3);
         }
         if (payload.type === "dice") {
           expect(remote.diceAnimating).toBe(true);
@@ -123,7 +140,7 @@ describe("Space Board online play sync", () => {
 
     expect(kinds).toEqual(["ui_event", "ui_event", "state", "state"]);
     expect(remote.players[0]?.positionIndex).toBe(3);
-    expect(remote.activePlayerWalk).toBeNull();
+    expect(remote.activePlayerWalk?.toRoomId).toBe(4);
   });
 
   test("trivia stays public while shop inventories stay private per viewer", async () => {

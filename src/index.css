@@ -4881,6 +4881,9 @@ button:disabled {
 }
 
 .online-play-with-chat {
+  --online-floating-chat-width: 112px;
+  --online-floating-gap: 0.5rem;
+  --online-floating-toggle-size: 50px;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -4911,9 +4914,11 @@ button:disabled {
 }
 
 .online-room-chat {
+  --online-room-chat-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+  --online-room-chat-right: max(0.75rem, env(safe-area-inset-right, 0px));
   position: fixed;
-  right: max(0.75rem, env(safe-area-inset-right, 0px));
-  bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+  right: var(--online-room-chat-right);
+  bottom: var(--online-room-chat-bottom);
   z-index: 40;
   display: grid;
   gap: 0.5rem;
@@ -4928,6 +4933,17 @@ button:disabled {
 
 .online-room-chat-toggle {
   justify-self: end;
+  width: var(--online-floating-chat-width);
+  min-width: var(--online-floating-chat-width);
+  padding-inline: 0.85rem;
+}
+
+.online-play-with-chat .app-shell-gameplay .map-fab {
+  right: calc(
+    env(safe-area-inset-right) + 0.75rem +
+      var(--online-floating-chat-width) + var(--online-floating-gap)
+  );
+  bottom: calc(env(safe-area-inset-bottom) + 12px);
 }
 
 .online-room-chat-panel {
@@ -5008,6 +5024,58 @@ button:disabled {
 .online-room-chat-panel .online-entry-status--error {
   color: #fecaca;
   background: color-mix(in srgb, #d64545 28%, transparent);
+}
+
+@media (max-width: 1024px) {
+  .online-play-with-chat {
+    --online-floating-toggle-size: 44px;
+  }
+
+  .online-room-chat {
+    right: calc(env(safe-area-inset-right) + 12px);
+    bottom: calc(env(safe-area-inset-bottom) + 8px);
+    width: auto;
+  }
+
+  .online-room-chat--open {
+    right: calc(env(safe-area-inset-right) + 12px);
+    bottom: calc(
+      env(safe-area-inset-bottom) + 8px +
+        var(--online-floating-toggle-size) + 8px
+    );
+    width: min(22rem, calc(100vw - 24px));
+  }
+
+  .online-room-chat-toggle {
+    width: var(--online-floating-toggle-size);
+    min-width: var(--online-floating-toggle-size);
+    height: var(--online-floating-toggle-size);
+    padding: 0;
+  }
+
+  .online-room-chat-toggle span,
+  .online-room-chat-toggle svg:last-child {
+    display: none;
+  }
+
+  .online-play-with-chat .app-shell-gameplay .map-fab {
+    position: fixed;
+    right: calc(
+      env(safe-area-inset-right) + 12px +
+        var(--online-floating-toggle-size) + 8px
+    );
+    bottom: calc(env(safe-area-inset-bottom) + 8px);
+    width: var(--online-floating-toggle-size);
+    min-width: var(--online-floating-toggle-size);
+    min-height: var(--online-floating-toggle-size);
+    padding: 0;
+    justify-content: center;
+    font-size: 0;
+  }
+
+  .online-play-with-chat .app-shell-gameplay .map-fab span {
+    display: none;
+  }
 }
 
 @media (max-width: 420px) {

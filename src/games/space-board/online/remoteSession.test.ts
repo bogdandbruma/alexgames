@@ -39,6 +39,98 @@ const snapshot = (): SpaceBoardStatePayload => ({
 });
 
 describe("Space Board remote session", () => {
+  test("walk ui_event moves the remote player immediately so the avatar can animate", () => {
+    const localStartedAt = performance.now();
+    let view = applySpaceBoardRemoteEnvelope(
+      createEmptyRemoteView(),
+      createRoomEnvelope({
+        gameSlug: "space-board",
+        kind: "state",
+        roomId: ROOM_ID,
+        payload: {
+          ...snapshot(),
+          players: [
+            {
+              id: "p0",
+              name: "Host",
+              avatarId: "cat",
+              controller: "player",
+              positionIndex: 0,
+              coins: 0,
+              lastDice: null,
+              trapped: false,
+            },
+            {
+              id: "p1",
+              name: "Guest",
+              avatarId: "dog",
+              controller: "player",
+              positionIndex: 0,
+              coins: 0,
+              lastDice: null,
+              trapped: false,
+            },
+          ],
+        },
+      }),
+    );
+
+    view = applySpaceBoardRemoteEnvelope(
+      view,
+      createRoomEnvelope({
+        gameSlug: "space-board",
+        kind: "ui_event",
+        roomId: ROOM_ID,
+        payload: {
+          type: "walk",
+          walk: {
+            durationMs: 400,
+            endPosition: [2, 0, 0],
+            fromRoomId: 1,
+            playerId: "p1",
+            startPosition: [0, 0, 0],
+            startedAt: 12,
+            toRoomId: 4,
+          },
+        },
+      }),
+    );
+
+    expect(view.players[1]?.positionIndex).toBe(3);
+    expect(view.activePlayerWalk?.playerId).toBe("p1");
+    expect(view.activePlayerWalk?.startedAt).toBeGreaterThanOrEqual(
+      localStartedAt,
+    );
+  });
+
+  test("keeps a locally timed walk active when the final state arrives early", () => {
+    let view = createEmptyRemoteView();
+    view = {
+      ...view,
+      activePlayerWalk: {
+        durationMs: 4_000,
+        endPosition: [2, 0, 0],
+        fromRoomId: 1,
+        playerId: "p0",
+        startPosition: [0, 0, 0],
+        startedAt: performance.now(),
+        toRoomId: 4,
+      },
+    };
+
+    const next = applySpaceBoardRemoteEnvelope(
+      view,
+      createRoomEnvelope({
+        gameSlug: "space-board",
+        kind: "state",
+        roomId: ROOM_ID,
+        payload: snapshot(),
+      }),
+    );
+
+    expect(next.activePlayerWalk?.playerId).toBe("p0");
+  });
+
   test("applies ui_event walk/dice so remotes animate before final state", () => {
     let view = createEmptyRemoteView();
 
@@ -96,7 +188,7 @@ describe("Space Board remote session", () => {
     );
     expect(view.players[0]?.positionIndex).toBe(3);
     expect(view.diceAnimating).toBe(false);
-    expect(view.activePlayerWalk).toBeNull();
+    expect(view.activePlayerWalk?.playerId).toBe("p0");
   });
 
   test("ignores action envelopes on remote (no authoritative mutation)", () => {
