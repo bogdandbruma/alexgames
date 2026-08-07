@@ -1,5 +1,5 @@
 import type { RoomEnvelope } from "../../../online/envelope";
-import type { ActivePlayerWalk } from "../../../game/store/types";
+import type { ActivePlayerWalk, GameToast } from "../../../game/store/types";
 import { createInitialShopStock } from "../../../game/shop";
 import type { ShopItemId } from "../../../game/shop";
 import {
@@ -11,6 +11,7 @@ import {
 } from "./payloads";
 
 export type SpaceBoardRemoteView = SpaceBoardStatePayload & {
+  uiToast: GameToast | null;
   lastItemUse: {
     playerId: string;
     itemId: ShopItemId;
@@ -35,6 +36,7 @@ export function createEmptyRemoteView(): SpaceBoardRemoteView {
     rolling: false,
     portalTransition: null,
     playerCoinBursts: [],
+    uiToast: null,
     lastItemUse: null,
   };
 }
@@ -106,6 +108,23 @@ function applyUiEvent(
         ...view,
         playerCoinBursts: event.bursts,
       };
+    case "toast":
+      return {
+        ...view,
+        uiToast: event.toast,
+      };
+    case "coins_update": {
+      const coinsByPlayerId = new Map(
+        event.players.map(({ playerId, coins }) => [playerId, coins]),
+      );
+      return {
+        ...view,
+        players: view.players.map((player) => {
+          const coins = coinsByPlayerId.get(player.id);
+          return coins === undefined ? player : { ...player, coins };
+        }),
+      };
+    }
     case "item_use":
       return {
         ...view,
@@ -157,6 +176,7 @@ export function applySpaceBoardRemoteEnvelope(
         ),
         portalTransition:
           payload.portalTransition ?? view.portalTransition,
+        uiToast: view.uiToast,
       };
     }
     default: {

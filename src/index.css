@@ -4880,10 +4880,14 @@ button:disabled {
   border: 0;
 }
 
-.online-play-with-chat {
+.online-play-with-chat,
+.online-room-chat {
   --online-floating-chat-width: 112px;
   --online-floating-gap: 0.5rem;
   --online-floating-toggle-size: 50px;
+}
+
+.online-play-with-chat {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -4947,6 +4951,7 @@ button:disabled {
 }
 
 .online-room-chat-panel {
+  order: -1;
   display: grid;
   gap: 0.75rem;
   padding: 0.85rem;
@@ -5027,7 +5032,8 @@ button:disabled {
 }
 
 @media (max-width: 1024px) {
-  .online-play-with-chat {
+  .online-play-with-chat,
+  .online-room-chat {
     --online-floating-toggle-size: 44px;
   }
 
@@ -5039,11 +5045,14 @@ button:disabled {
 
   .online-room-chat--open {
     right: calc(env(safe-area-inset-right) + 12px);
+    width: min(22rem, calc(100vw - 24px));
+  }
+
+  .online-play-with-chat + .online-room-chat {
     bottom: calc(
       env(safe-area-inset-bottom) + 8px +
         var(--online-floating-toggle-size) + 8px
     );
-    width: min(22rem, calc(100vw - 24px));
   }
 
   .online-room-chat-toggle {

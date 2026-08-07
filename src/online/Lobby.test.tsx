@@ -2,11 +2,13 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { Lobby } from "./Lobby";
+import { rememberActiveRoomId } from "./sessionMemory";
 
 const listRooms = vi.hoisted(() => vi.fn());
 const createRoom = vi.hoisted(() => vi.fn());
 const joinRoom = vi.hoisted(() => vi.fn());
 const listMembers = vi.hoisted(() => vi.fn());
+const fetchRoom = vi.hoisted(() => vi.fn());
 
 vi.mock("./rooms", async () => {
   const actual = await vi.importActual<typeof import("./rooms")>("./rooms");
@@ -16,6 +18,7 @@ vi.mock("./rooms", async () => {
     createRoom,
     joinRoom,
     listMembers,
+    fetchRoom,
   };
 });
 
@@ -25,6 +28,7 @@ vi.mock("./WaitingRoom", () => ({
 
 afterEach(() => {
   cleanup();
+  localStorage.clear();
   vi.clearAllMocks();
 });
 
@@ -203,6 +207,98 @@ describe("Lobby", () => {
     await waitFor(() => {
       expect(listMembers).toHaveBeenCalledWith(expect.anything(), "room-1");
       expect(joinRoom).not.toHaveBeenCalled();
+      expect(screen.getByText("waiting room")).toBeTruthy();
+    });
+  });
+
+  test("re-enters the remembered active room after refresh", async () => {
+    const room = {
+      id: "room-1",
+      gameSlug: GAME,
+      name: "Running",
+      hostDeviceId: DEVICE,
+      status: "playing",
+      maxPlayers: 4,
+      createdAt: "2026-08-06T10:00:00.000Z",
+      updatedAt: "2026-08-06T10:00:00.000Z",
+    };
+    const member = {
+      id: "m-host",
+      roomId: "room-1",
+      deviceId: DEVICE,
+      role: "host",
+      seat: 0,
+      isAi: false,
+      displayName: "Alex",
+      avatarId: null,
+      connected: true,
+    };
+    rememberActiveRoomId(GAME, room.id);
+    listRooms.mockResolvedValue([room]);
+    fetchRoom.mockResolvedValue(room);
+    listMembers.mockResolvedValue([member]);
+
+    render(
+      <Lobby
+        client={{} as never}
+        gameSlug={GAME}
+        deviceId={DEVICE}
+        username="Alex"
+        onBack={() => {}}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(fetchRoom).toHaveBeenCalledWith(expect.anything(), "room-1");
+      expect(screen.getByText("waiting room")).toBeTruthy();
+    });
+  });
+
+  test("re-enters the active room from the URL after refresh", async () => {
+    const room = {
+      id: "room-from-url",
+      gameSlug: GAME,
+      name: "URL Room",
+      hostDeviceId: DEVICE,
+      status: "playing",
+      maxPlayers: 4,
+      createdAt: "2026-08-06T10:00:00.000Z",
+      updatedAt: "2026-08-06T10:00:00.000Z",
+    };
+    const member = {
+      id: "m-host",
+      roomId: "room-from-url",
+      deviceId: DEVICE,
+      role: "host",
+      seat: 0,
+      isAi: false,
+      displayName: "Alex",
+      avatarId: null,
+      connected: true,
+    };
+    listRooms.mockResolvedValue([room]);
+    fetchRoom.mockResolvedValue(room);
+    listMembers.mockResolvedValue([member]);
+
+    render(
+      <Lobby
+        client={{} as never}
+        gameSlug={GAME}
+        deviceId={DEVICE}
+        username="Alex"
+        initialRoomId="room-from-url"
+        onBack={() => {}}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(fetchRoom).toHaveBeenCalledWith(
+        expect.anything(),
+        "room-from-url",
+      );
+      expect(window.location.hash).toBe(
+        "#space-board/online/rooms/room-from-url",
+      );
       expect(screen.getByText("waiting room")).toBeTruthy();
     });
   });

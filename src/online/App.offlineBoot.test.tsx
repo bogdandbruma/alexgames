@@ -10,6 +10,8 @@ vi.mock("./supabaseClient", () => ({
 
 afterEach(() => {
   cleanup();
+  localStorage.clear();
+  window.location.hash = "";
 });
 
 describe("App offline without keys", () => {
@@ -17,6 +19,15 @@ describe("App offline without keys", () => {
     window.location.hash = "";
     render(<App />);
     expect(screen.getByRole("heading", { name: /jocurile brumix/i })).toBeTruthy();
+    expect(createSupabaseClient).not.toHaveBeenCalled();
+  });
+
+  test("online room URL boots into online mode without manual game selection", () => {
+    window.location.hash = "#/space-board/online/rooms/room-1";
+
+    render(<App />);
+
+    expect(screen.getByRole("heading", { name: /online/i })).toBeTruthy();
     expect(createSupabaseClient).not.toHaveBeenCalled();
   });
 });

@@ -2,7 +2,13 @@ import type { ComponentType } from "react";
 import { useState } from "react";
 import { ArrowLeft, CloudOff, Wifi } from "lucide-react";
 import { OnlineEntry } from "./OnlineEntry";
+import { setGameHash } from "./onlineRoute";
 import type { OnlinePlaySurface } from "./playSurface";
+import {
+  clearRememberedPlayMode,
+  getRememberedPlayMode,
+  rememberOnlinePlayMode,
+} from "./sessionMemory";
 
 export type PlayMode = "choose" | "offline" | "online";
 
@@ -14,6 +20,7 @@ type PlaySessionProps = {
   Game: ComponentType<GameProps>;
   gameSlug: string;
   OnlinePlay?: OnlinePlaySurface;
+  initialOnlineRoomId?: string | null;
   onExit: () => void;
 };
 
@@ -21,19 +28,30 @@ export function PlaySession({
   Game,
   gameSlug,
   OnlinePlay,
+  initialOnlineRoomId = null,
   onExit,
 }: PlaySessionProps) {
-  const [mode, setMode] = useState<PlayMode>("choose");
+  const [mode, setMode] = useState<PlayMode>(() =>
+    initialOnlineRoomId ? "online" : getRememberedPlayMode(gameSlug),
+  );
+
+  const chooseMode = () => {
+    clearRememberedPlayMode(gameSlug);
+    setGameHash(gameSlug);
+    setMode("choose");
+  };
 
   switch (mode) {
     case "offline":
-      return <Game onExit={() => setMode("choose")} />;
+      return <Game onExit={chooseMode} />;
     case "online":
       return (
         <OnlineEntry
           gameSlug={gameSlug}
           OnlinePlay={OnlinePlay}
-          onBack={() => setMode("choose")}
+          autoConnect
+          initialRoomId={initialOnlineRoomId}
+          onBack={chooseMode}
         />
       );
     case "choose":
@@ -61,7 +79,10 @@ export function PlaySession({
                 <button
                   type="button"
                   className="primary-button"
-                  onClick={() => setMode("offline")}
+                  onClick={() => {
+                    clearRememberedPlayMode(gameSlug);
+                    setMode("offline");
+                  }}
                 >
                   <CloudOff aria-hidden="true" size={20} />
                   <span>Offline</span>
@@ -69,7 +90,10 @@ export function PlaySession({
                 <button
                   type="button"
                   className="primary-button online-mode-online-button"
-                  onClick={() => setMode("online")}
+                  onClick={() => {
+                    rememberOnlinePlayMode(gameSlug);
+                    setMode("online");
+                  }}
                 >
                   <Wifi aria-hidden="true" size={20} />
                   <span>Online</span>

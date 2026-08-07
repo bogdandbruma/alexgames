@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   createRoom,
+  fetchRoom,
   joinRoom,
   listMembers,
   listRooms,
@@ -11,7 +12,13 @@ import {
   type RoomMember,
 } from "./rooms";
 import { WaitingRoom } from "./WaitingRoom";
+import { setGameHash, setOnlineRoomHash } from "./onlineRoute";
 import type { OnlinePlaySurface } from "./playSurface";
+import {
+  clearRememberedActiveRoomId,
+  getRememberedActiveRoomId,
+  rememberActiveRoomId,
+} from "./sessionMemory";
 
 type LobbyProps = {
   client: SupabaseClient;
@@ -19,6 +26,7 @@ type LobbyProps = {
   deviceId: string;
   username: string;
   OnlinePlay?: OnlinePlaySurface;
+  initialRoomId?: string | null;
   onBack: () => void;
 };
 
@@ -33,11 +41,13 @@ export function Lobby({
   deviceId,
   username,
   OnlinePlay,
+  initialRoomId = null,
   onBack,
 }: LobbyProps) {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [roomName, setRoomName] = useState("");
   const [loading, setLoading] = useState(true);
+  const [restoringSession, setRestoringSession] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [session, setSession] = useState<ActiveSession | null>(null);
@@ -68,6 +78,63 @@ export function Lobby({
     };
   }, [client, gameSlug]);
 
+  useEffect(() => {
+    const roomId = initialRoomId ?? getRememberedActiveRoomId(gameSlug);
+    if (!roomId) {
+      return;
+    }
+
+    let cancelled = false;
+    setRestoringSession(true);
+    setError(null);
+
+    void (async () => {
+      try {
+        const room = await fetchRoom(client, roomId);
+        if (cancelled) {
+          return;
+        }
+        if (room.gameSlug !== gameSlug || room.status === "closed") {
+          clearRememberedActiveRoomId(gameSlug);
+          if (initialRoomId) {
+            setGameHash(gameSlug);
+          }
+          return;
+        }
+
+        const members = await listMembers(client, room.id);
+        if (cancelled) {
+          return;
+        }
+        const existing = members.find((m) => m.deviceId === deviceId);
+        if (!existing) {
+          clearRememberedActiveRoomId(gameSlug);
+          if (initialRoomId) {
+            setGameHash(gameSlug);
+          }
+          return;
+        }
+
+        rememberActiveRoomId(gameSlug, room.id);
+        setOnlineRoomHash(gameSlug, room.id);
+        setSession({ room, member: existing });
+      } catch {
+        clearRememberedActiveRoomId(gameSlug);
+        if (initialRoomId) {
+          setGameHash(gameSlug);
+        }
+      } finally {
+        if (!cancelled) {
+          setRestoringSession(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [client, gameSlug, deviceId, initialRoomId]);
+
   const refresh = async () => {
     const next = await listRooms(client, gameSlug);
     setRooms(next.filter((room) => room.status !== "closed"));
@@ -83,6 +150,8 @@ export function Lobby({
         username={username}
         OnlinePlay={OnlinePlay}
         onLeave={() => {
+          clearRememberedActiveRoomId(gameSlug);
+          setGameHash(gameSlug);
           setSession(null);
           void refresh().catch(() => {});
         }}
@@ -105,6 +174,8 @@ export function Lobby({
         hostDeviceId: deviceId,
         displayName: username,
       });
+      rememberActiveRoomId(gameSlug, result.room.id);
+      setOnlineRoomHash(gameSlug, result.room.id);
       setSession({ room: result.room, member: result.hostMember });
     } catch (err) {
       setError(
@@ -125,6 +196,8 @@ export function Lobby({
         displayName: username,
         as,
       });
+      rememberActiveRoomId(gameSlug, room.id);
+      setOnlineRoomHash(gameSlug, room.id);
       setSession({ room, member });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Intrarea a eșuat.");
@@ -142,6 +215,8 @@ export function Lobby({
       if (!existing) {
         throw new Error("Nu ești membru al acestei camere.");
       }
+      rememberActiveRoomId(gameSlug, room.id);
+      setOnlineRoomHash(gameSlug, room.id);
       setSession({ room, member: existing });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Reintrarea a eșuat.");
@@ -212,6 +287,10 @@ export function Lobby({
           {loading ? (
             <p className="online-entry-status" role="status">
               Se încarcă camerele…
+            </p>
+          ) : restoringSession ? (
+            <p className="online-entry-status" role="status">
+              Se reia camera curentă…
             </p>
           ) : (
             <ul className="online-lobby-list" aria-label="Listă camere">

@@ -25,6 +25,7 @@ function slice(
     portalTransition: null,
     playerCoinBursts: [],
     ...partial,
+    uiToast: partial.uiToast ?? null,
   };
 }
 
@@ -63,7 +64,7 @@ describe("engineBridge", () => {
     expect(state.players[0]?.coins).toBe(2);
   });
 
-  test("collectUiEventsDuring records dice, walk, portal, coin bursts, and item_use", async () => {
+  test("collectUiEventsDuring records dice, walk, portal, coin sync, bursts, and item_use", async () => {
     let current = slice({
       players: [
         {
@@ -76,6 +77,16 @@ describe("engineBridge", () => {
           lastDice: null,
           trapped: false,
           inventory: ["dice-x2"],
+        },
+        {
+          id: "p1",
+          name: "B",
+          avatarId: "dog",
+          controller: "player",
+          positionIndex: 0,
+          coins: 2,
+          lastDice: null,
+          trapped: false,
         },
       ],
       currentPlayerIndex: 0,
@@ -129,6 +140,25 @@ describe("engineBridge", () => {
       });
       api.setState({
         ...current,
+        uiToast: {
+          id: 7,
+          title: "Camera noua",
+          description: "A ajuns la camera 20.",
+          tone: "room",
+        },
+      });
+      api.setState({
+        ...current,
+        players: [
+          {
+            ...current.players[0]!,
+            coins: 1,
+          },
+          {
+            ...current.players[1]!,
+            coins: 0,
+          },
+        ],
         playerCoinBursts: [{ id: 1, playerId: "p0", amount: 1 }],
       });
       api.setState({
@@ -150,9 +180,27 @@ describe("engineBridge", () => {
       "dice",
       "walk",
       "portal",
+      "toast",
+      "coins_update",
       "coin_burst",
       "item_use",
     ]);
+    expect(events[4]).toEqual({
+      type: "toast",
+      toast: {
+        id: 7,
+        title: "Camera noua",
+        description: "A ajuns la camera 20.",
+        tone: "room",
+      },
+    });
+    expect(events[5]).toEqual({
+      type: "coins_update",
+      players: [
+        { playerId: "p0", coins: 1 },
+        { playerId: "p1", coins: 0 },
+      ],
+    });
     expect(events[events.length - 1]).toEqual({
       type: "item_use",
       playerId: "p0",

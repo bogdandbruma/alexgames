@@ -38,7 +38,7 @@ export function useAiInventory() {
   const pendingEvent = useGameStore((state) => state.pendingEvent);
   const shopStock = useGameStore((state) => state.shopStock);
 
-  const useInventoryItem = useGameStore((state) => state.useInventoryItem);
+  const activateInventoryItem = useGameStore((state) => state.useInventoryItem);
   const endTurn = useGameStore((state) => state.endTurn);
 
   const pendingShop = getPendingShop(pendingEvent);
@@ -102,12 +102,12 @@ export function useAiInventory() {
 
     const timer = window.setTimeout(() => {
       for (const itemId of preRollItems) {
-        useInventoryItem(itemId);
+        activateInventoryItem(itemId);
       }
     }, AI_PRE_ROLL_DELAY_MS);
 
     return () => window.clearTimeout(timer);
-  }, [preRollTurn, currentPlayer?.id, useInventoryItem]);
+  }, [preRollTurn, currentPlayer?.id, activateInventoryItem]);
 
   useEffect(() => {
     if (!postRollActionTurn || !currentPlayer) {
@@ -134,7 +134,7 @@ export function useAiInventory() {
         return;
       }
 
-      const used = useInventoryItem(pick.itemId, pick.targetPlayerId);
+      const used = activateInventoryItem(pick.itemId, pick.targetPlayerId);
 
       if (!used) {
         endTurn();
@@ -142,7 +142,7 @@ export function useAiInventory() {
     }, AI_ACTION_ITEM_DELAY_MS);
 
     return () => window.clearTimeout(timer);
-  }, [postRollActionTurn, currentPlayer?.id, useInventoryItem, endTurn]);
+  }, [postRollActionTurn, currentPlayer?.id, activateInventoryItem, endTurn]);
 
   useEffect(() => {
     if (!autoEndTurn || !actionItemUsedThisTurn) {

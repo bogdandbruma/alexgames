@@ -2,6 +2,7 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { OnlineEntry } from "./OnlineEntry";
+import { setUsername } from "./identity";
 
 const createSupabaseClient = vi.hoisted(() => vi.fn());
 const verifyOnlineConnection = vi.hoisted(() => vi.fn());
@@ -61,5 +62,25 @@ describe("OnlineEntry", () => {
       );
     });
     expect(upsertProfile).not.toHaveBeenCalled();
+  });
+
+  test("auto-connects with the remembered username", async () => {
+    setUsername("Sara");
+    createSupabaseClient.mockReturnValue({});
+    verifyOnlineConnection.mockResolvedValue(undefined);
+    upsertProfile.mockResolvedValue(undefined);
+    listRooms.mockResolvedValue([]);
+
+    render(
+      <OnlineEntry gameSlug="space-board" autoConnect onBack={() => {}} />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /lobby/i })).toBeTruthy();
+    });
+    expect(upsertProfile).toHaveBeenCalledWith(
+      {},
+      expect.objectContaining({ username: "Sara" }),
+    );
   });
 });

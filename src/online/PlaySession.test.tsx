@@ -2,6 +2,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { PlaySession } from "./PlaySession";
+import { rememberOnlinePlayMode } from "./sessionMemory";
 
 const createSupabaseClient = vi.hoisted(() => vi.fn());
 
@@ -11,6 +12,7 @@ vi.mock("./supabaseClient", () => ({
 
 afterEach(() => {
   cleanup();
+  localStorage.clear();
 });
 
 describe("PlaySession offline path", () => {
@@ -36,5 +38,42 @@ describe("PlaySession offline path", () => {
 
     expect(screen.getByText("stub offline game")).toBeTruthy();
     expect(createSupabaseClient).not.toHaveBeenCalled();
+  });
+
+  test("refresh boots directly into online mode when it was remembered", () => {
+    const StubGame = ({ onExit }: { onExit: () => void }) => (
+      <button type="button" onClick={onExit}>
+        exit
+      </button>
+    );
+    rememberOnlinePlayMode("space-board");
+
+    render(
+      <PlaySession Game={StubGame} gameSlug="space-board" onExit={() => {}} />,
+    );
+
+    expect(screen.getByRole("heading", { name: /online/i })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /offline/i })).toBeNull();
+    expect(createSupabaseClient).not.toHaveBeenCalled();
+  });
+
+  test("room URL boots directly into online mode", () => {
+    const StubGame = ({ onExit }: { onExit: () => void }) => (
+      <button type="button" onClick={onExit}>
+        exit
+      </button>
+    );
+
+    render(
+      <PlaySession
+        Game={StubGame}
+        gameSlug="space-board"
+        initialOnlineRoomId="room-1"
+        onExit={() => {}}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: /online/i })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /offline/i })).toBeNull();
   });
 });

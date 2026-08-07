@@ -32,6 +32,7 @@ import {
   createSpaceBoardHostSession,
   type SpaceBoardSeatMember,
 } from "./hostSession";
+import { acknowledgePortalActionImmediately } from "./hostPortalAck";
 import { hydrateGameStoreFromRemoteView } from "./hydrateStore";
 import {
   isSpaceBoardStatePayload,
@@ -288,6 +289,25 @@ export function OnlinePlay({
       setCanAct(localPlayerCanAct(deviceId, member, seatMembers));
     });
 
+  const runHostPortalAcknowledgementImmediately = (
+    envelope: RoomEnvelope,
+  ): boolean => {
+    if (!areGameActionsAllowed(roomStatusRef.current)) return false;
+    const seatMembers = toSeatMembers(members, true);
+    const handled = acknowledgePortalActionImmediately({
+      envelope,
+      roomId: room.id,
+      members: seatMembers,
+      getState: () => useGameStore.getState(),
+      acknowledgePortal: () =>
+        useGameStore.getState().acknowledgePortalTransition(),
+    });
+    if (handled) {
+      setCanAct(localPlayerCanAct(deviceId, member, seatMembers));
+    }
+    return handled;
+  };
+
   useEffect(() => {
     let cancelled = false;
     setGamePersistWritesEnabled(false);
@@ -316,6 +336,7 @@ export function OnlinePlay({
             void (async () => {
               if (isHost) {
                 if (envelope.kind !== "action") return;
+                if (runHostPortalAcknowledgementImmediately(envelope)) return;
                 await runHostAction(envelope);
                 return;
               }
@@ -488,6 +509,10 @@ export function OnlinePlay({
     });
 
     if (isHost) {
+      if (payload.type === "acknowledgePortal") {
+        runHostPortalAcknowledgementImmediately(action);
+        return;
+      }
       await runHostAction(action);
       return;
     }

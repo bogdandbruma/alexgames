@@ -9,7 +9,7 @@ export function useAiTriviaAnswer() {
   const pendingTrivia = getPendingTrivia(pendingEvent);
   const players = useGameStore((state) => state.players);
   const answerTrivia = useGameStore((state) => state.answerTrivia);
-  const useInventoryItem = useGameStore((state) => state.useInventoryItem);
+  const activateInventoryItem = useGameStore((state) => state.useInventoryItem);
 
   const triviaPlayer = pendingTrivia
     ? players.find(({ id }) => id === pendingTrivia.playerId)
@@ -30,7 +30,7 @@ export function useAiTriviaAnswer() {
 
     const aiAnswer = window.setTimeout(() => {
       if (hasTriviaCancel) {
-        useInventoryItem("trivia-cancel");
+        activateInventoryItem("trivia-cancel");
         return;
       }
 
@@ -49,6 +49,6 @@ export function useAiTriviaAnswer() {
     isAiTriviaPending,
     pendingTrivia,
     triviaPlayer,
-    useInventoryItem,
+    activateInventoryItem,
   ]);
 }

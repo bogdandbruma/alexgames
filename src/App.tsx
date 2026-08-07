@@ -2,20 +2,16 @@ import { Box, Gamepad2, Palette, Play, Sparkles, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { avatarOptionById } from "./game/avatars";
 import { games } from "./games/registry";
+import { parseAppRouteFromHash, setGameHash } from "./online/onlineRoute";
 import { PlaySession } from "./online/PlaySession";
 
-const getSelectedGameIdFromHash = () =>
-  window.location.hash.replace(/^#\/?/, "") || null;
-
 function App() {
-  const [selectedGameId, setSelectedGameId] = useState<string | null>(
-    getSelectedGameIdFromHash,
-  );
-  const selectedGame = games.find((game) => game.id === selectedGameId);
+  const [route, setRoute] = useState(parseAppRouteFromHash);
+  const selectedGame = games.find((game) => game.id === route.gameId);
 
   useEffect(() => {
     const handleHashChange = () => {
-      setSelectedGameId(getSelectedGameIdFromHash());
+      setRoute(parseAppRouteFromHash());
     };
 
     window.addEventListener("hashchange", handleHashChange);
@@ -24,8 +20,8 @@ function App() {
   }, []);
 
   const selectGame = (gameId: string) => {
-    window.location.hash = gameId;
-    setSelectedGameId(gameId);
+    setGameHash(gameId);
+    setRoute({ gameId, onlineRoomId: null });
   };
 
   const returnToDashboard = () => {
@@ -34,7 +30,7 @@ function App() {
       document.title,
       `${window.location.pathname}${window.location.search}`,
     );
-    setSelectedGameId(null);
+    setRoute({ gameId: null, onlineRoomId: null });
   };
 
   if (selectedGame) {
@@ -45,6 +41,7 @@ function App() {
         Game={SelectedGame}
         gameSlug={selectedGame.id}
         OnlinePlay={selectedGame.OnlinePlay}
+        initialOnlineRoomId={route.onlineRoomId}
         onExit={returnToDashboard}
       />
     );

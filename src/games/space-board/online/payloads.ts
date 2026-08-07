@@ -10,6 +10,7 @@ import {
 import type { TrapEscapeChoice } from "../../../game/store/pendingEvent";
 import type {
   ActivePlayerWalk,
+  GameToast,
   GamePhase,
   GamePlayer,
   GamePortalTransition,
@@ -94,6 +95,17 @@ export type SpaceBoardUiEventPayload =
   | {
       type: "coin_burst";
       bursts: PlayerCoinBurst[];
+    }
+  | {
+      type: "toast";
+      toast: GameToast | null;
+    }
+  | {
+      type: "coins_update";
+      players: Array<{
+        playerId: string;
+        coins: number;
+      }>;
     }
   | {
       type: "item_use";
@@ -224,6 +236,8 @@ export function isSpaceBoardUiEventPayload(
     type === "walk" ||
     type === "portal" ||
     type === "coin_burst" ||
+    type === "toast" ||
+    type === "coins_update" ||
     type === "item_use"
   );
 }

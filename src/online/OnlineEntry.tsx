@@ -1,5 +1,5 @@
 import { ArrowLeft, LoaderCircle, Wifi } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   getOrCreateDeviceId,
@@ -15,6 +15,8 @@ import type { OnlinePlaySurface } from "./playSurface";
 type OnlineEntryProps = {
   gameSlug: string;
   OnlinePlay?: OnlinePlaySurface;
+  autoConnect?: boolean;
+  initialRoomId?: string | null;
   onBack: () => void;
 };
 
@@ -29,14 +31,21 @@ type ConnectionStatus =
     }
   | { kind: "error"; message: string };
 
-export function OnlineEntry({ gameSlug, OnlinePlay, onBack }: OnlineEntryProps) {
+export function OnlineEntry({
+  gameSlug,
+  OnlinePlay,
+  autoConnect = false,
+  initialRoomId = null,
+  onBack,
+}: OnlineEntryProps) {
   const [usernameDraft, setUsernameDraft] = useState(
     () => getUsername() ?? "",
   );
   const [status, setStatus] = useState<ConnectionStatus>({ kind: "idle" });
+  const autoConnectStartedRef = useRef(false);
 
-  const connect = async () => {
-    const username = setUsername(usernameDraft);
+  const connect = async (nextUsername = usernameDraft) => {
+    const username = setUsername(nextUsername);
     if (!username) {
       setStatus({
         kind: "error",
@@ -62,6 +71,19 @@ export function OnlineEntry({ gameSlug, OnlinePlay, onBack }: OnlineEntryProps) 
     }
   };
 
+  useEffect(() => {
+    if (!autoConnect || autoConnectStartedRef.current) {
+      return;
+    }
+    const username = getUsername();
+    if (!username) {
+      return;
+    }
+    autoConnectStartedRef.current = true;
+    void connect(username);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoConnect]);
+
   if (status.kind === "success") {
     return (
       <Lobby
@@ -70,6 +92,7 @@ export function OnlineEntry({ gameSlug, OnlinePlay, onBack }: OnlineEntryProps) 
         deviceId={status.deviceId}
         username={status.username}
         OnlinePlay={OnlinePlay}
+        initialRoomId={initialRoomId}
         onBack={onBack}
       />
     );

@@ -26,6 +26,7 @@ export type SpaceBoardStoreSlice = Pick<
   | "diceMultiplier"
   | "rolling"
   | "portalTransition"
+  | "uiToast"
   | "playerCoinBursts"
 >;
 
@@ -116,6 +117,12 @@ function diffUiEvents(
     events.push({ type: "portal", transition: nextPortal });
   }
 
+  if (toastChanged(prev.uiToast, next.uiToast)) {
+    events.push({ type: "toast", toast: next.uiToast });
+  }
+
+  events.push(...diffCoinUpdateEvents(prev, next));
+
   const nextBursts = next.playerCoinBursts ?? [];
   const prevBursts = prev.playerCoinBursts ?? [];
   if (burstsChanged(prevBursts, nextBursts)) {
@@ -125,6 +132,23 @@ function diffUiEvents(
   events.push(...diffItemUseEvents(prev, next));
 
   return events;
+}
+
+function diffCoinUpdateEvents(
+  prev: SpaceBoardStoreSlice,
+  next: SpaceBoardStoreSlice,
+): SpaceBoardUiEventPayload[] {
+  const players = next.players
+    .filter((nextPlayer) => {
+      const prevPlayer = prev.players.find((p) => p.id === nextPlayer.id);
+      return prevPlayer !== undefined && prevPlayer.coins !== nextPlayer.coins;
+    })
+    .map((player) => ({
+      playerId: player.id,
+      coins: player.coins,
+    }));
+
+  return players.length > 0 ? [{ type: "coins_update", players }] : [];
 }
 
 function inventoryOf(
@@ -177,6 +201,14 @@ function portalChanged(
 ): boolean {
   if (!prev) return true;
   return prev.id !== next.id;
+}
+
+function toastChanged(
+  prev: SpaceBoardStoreSlice["uiToast"],
+  next: SpaceBoardStoreSlice["uiToast"],
+): boolean {
+  if (!prev && !next) return false;
+  return prev?.id !== next?.id;
 }
 
 function burstsChanged(

@@ -131,6 +131,55 @@ describe("Space Board remote session", () => {
     expect(next.activePlayerWalk?.playerId).toBe("p0");
   });
 
+  test("applies live coin updates before the final state snapshot", () => {
+    let view = applySpaceBoardRemoteEnvelope(
+      createEmptyRemoteView(),
+      createRoomEnvelope({
+        gameSlug: "space-board",
+        kind: "state",
+        roomId: ROOM_ID,
+        payload: {
+          ...snapshot(),
+          players: [
+            {
+              ...snapshot().players[0]!,
+              id: "p0",
+              coins: 1,
+            },
+            {
+              id: "p1",
+              name: "Guest",
+              avatarId: "dog",
+              controller: "player",
+              positionIndex: 0,
+              coins: 2,
+              lastDice: null,
+              trapped: false,
+            },
+          ],
+        },
+      }),
+    );
+
+    view = applySpaceBoardRemoteEnvelope(
+      view,
+      createRoomEnvelope({
+        gameSlug: "space-board",
+        kind: "ui_event",
+        roomId: ROOM_ID,
+        payload: {
+          type: "coins_update",
+          players: [
+            { playerId: "p0", coins: 7 },
+            { playerId: "p1", coins: 0 },
+          ],
+        },
+      }),
+    );
+
+    expect(view.players.map((player) => player.coins)).toEqual([7, 0]);
+  });
+
   test("applies ui_event walk/dice so remotes animate before final state", () => {
     let view = createEmptyRemoteView();
 
@@ -251,6 +300,41 @@ describe("Space Board remote session", () => {
       itemId: "dice-x2",
     });
     expect(view.players[0]?.inventory).toBeUndefined();
+  });
+
+  test("keeps live toast visible when the final state snapshot arrives", () => {
+    let view = createEmptyRemoteView();
+
+    view = applySpaceBoardRemoteEnvelope(
+      view,
+      createRoomEnvelope({
+        gameSlug: "space-board",
+        kind: "ui_event",
+        roomId: ROOM_ID,
+        payload: {
+          type: "toast",
+          toast: {
+            id: 10,
+            title: "Camera noua",
+            description: "Host a ajuns la camera 4.",
+            tone: "room",
+          },
+        },
+      }),
+    );
+    expect(view.uiToast?.id).toBe(10);
+
+    view = applySpaceBoardRemoteEnvelope(
+      view,
+      createRoomEnvelope({
+        gameSlug: "space-board",
+        kind: "state",
+        roomId: ROOM_ID,
+        payload: snapshot(),
+      }),
+    );
+
+    expect(view.uiToast?.id).toBe(10);
   });
 
   test("applies trap/portal pending overlays from public state", () => {
