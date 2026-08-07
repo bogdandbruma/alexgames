@@ -49,4 +49,4 @@ public/avatars/previews
 3D models are from Kenney's CC0 **Cube Pets** (15 animals) and **Blocky Characters** (18 skins), plus the Modular Space Kit / Space Kit for rooms. UI previews use Kenney's pack preview PNGs.
 
 
-version 1.0.2
+version 2.0.0
