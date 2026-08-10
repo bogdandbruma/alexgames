@@ -5,6 +5,7 @@ import {
   createRoom,
   joinRoom,
   kickMember,
+  listJoinedRoomIds,
   listRooms,
   pauseRoom,
   resumeRoom,
@@ -70,6 +71,28 @@ describe("listRooms", () => {
     const client = { from: vi.fn().mockReturnValue({ select }) };
 
     await expect(listRooms(client as never, GAME)).rejects.toThrow(/boom/);
+  });
+});
+
+describe("listJoinedRoomIds", () => {
+  test("returns room ids for the given device_id", async () => {
+    const eq = vi.fn().mockResolvedValue({
+      data: [
+        { room_id: ROOM_ID },
+        { room_id: "bbbbbbbb-bbbb-4ccc-8ddd-eeeeeeeeeeee" },
+      ],
+      error: null,
+    });
+    const select = vi.fn().mockReturnValue({ eq });
+    const client = { from: vi.fn().mockReturnValue({ select }) };
+
+    const ids = await listJoinedRoomIds(client as never, DEVICE);
+
+    expect(client.from).toHaveBeenCalledWith("room_members");
+    expect(eq).toHaveBeenCalledWith("device_id", DEVICE);
+    expect(ids).toEqual(
+      new Set([ROOM_ID, "bbbbbbbb-bbbb-4ccc-8ddd-eeeeeeeeeeee"]),
+    );
   });
 });
 
@@ -333,7 +356,7 @@ describe("joinRoom", () => {
         displayName: "Full",
         as: "player",
       }),
-    ).rejects.toThrow(/full|seat/i);
+    ).rejects.toThrow(/plină|full|seat/i);
     expect(client.memberInsert).not.toHaveBeenCalled();
   });
 

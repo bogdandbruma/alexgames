@@ -9,6 +9,7 @@ const createRoom = vi.hoisted(() => vi.fn());
 const joinRoom = vi.hoisted(() => vi.fn());
 const listMembers = vi.hoisted(() => vi.fn());
 const fetchRoom = vi.hoisted(() => vi.fn());
+const listJoinedRoomIds = vi.hoisted(() => vi.fn());
 
 vi.mock("./rooms", async () => {
   const actual = await vi.importActual<typeof import("./rooms")>("./rooms");
@@ -19,6 +20,7 @@ vi.mock("./rooms", async () => {
     joinRoom,
     listMembers,
     fetchRoom,
+    listJoinedRoomIds,
   };
 });
 
@@ -35,9 +37,31 @@ afterEach(() => {
 const GAME = "space-board";
 const DEVICE = "11111111-2222-4333-8444-555555555555";
 
+function roomFixture(
+  overrides: Partial<{
+    id: string;
+    name: string;
+    hostDeviceId: string;
+    status: "waiting" | "playing" | "paused" | "closed";
+  }> = {},
+) {
+  return {
+    id: "room-1",
+    gameSlug: GAME,
+    name: "Alpha",
+    hostDeviceId: "other-host",
+    status: "waiting" as const,
+    maxPlayers: 4,
+    createdAt: "2026-08-06T10:00:00.000Z",
+    updatedAt: "2026-08-06T10:00:00.000Z",
+    ...overrides,
+  };
+}
+
 describe("Lobby", () => {
   test("lists rooms filtered by game_slug and can create a room", async () => {
     const user = userEvent.setup();
+    listJoinedRoomIds.mockResolvedValue(new Set());
     listRooms.mockResolvedValue([
       {
         id: "room-1",
@@ -108,18 +132,8 @@ describe("Lobby", () => {
 
   test("joins an existing waiting room as player", async () => {
     const user = userEvent.setup();
-    listRooms.mockResolvedValue([
-      {
-        id: "room-1",
-        gameSlug: GAME,
-        name: "Alpha",
-        hostDeviceId: "other",
-        status: "waiting",
-        maxPlayers: 4,
-        createdAt: "2026-08-06T10:00:00.000Z",
-        updatedAt: "2026-08-06T10:00:00.000Z",
-      },
-    ]);
+    listJoinedRoomIds.mockResolvedValue(new Set());
+    listRooms.mockResolvedValue([roomFixture({ hostDeviceId: "other" })]);
     joinRoom.mockResolvedValue({
       id: "m2",
       roomId: "room-1",
@@ -160,19 +174,69 @@ describe("Lobby", () => {
     });
   });
 
+  test("playing room for non-member shows only Spectator (no Reintră, no player join)", async () => {
+    const user = userEvent.setup();
+    listJoinedRoomIds.mockResolvedValue(new Set());
+    listRooms.mockResolvedValue([
+      roomFixture({ name: "În curs", status: "playing" }),
+    ]);
+    joinRoom.mockResolvedValue({
+      id: "m-spec",
+      roomId: "room-1",
+      deviceId: DEVICE,
+      role: "spectator",
+      seat: null,
+      isAi: false,
+      displayName: "Alex",
+      avatarId: null,
+      connected: true,
+    });
+
+    render(
+      <Lobby
+        client={{} as never}
+        gameSlug={GAME}
+        deviceId={DEVICE}
+        username="Alex"
+        onBack={() => {}}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("În curs")).toBeTruthy();
+    });
+
+    expect(
+      screen.queryByRole("button", { name: /reintră|rejoin|reia/i }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /intră jucător|join player/i }),
+    ).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: /spectator/i }));
+
+    await waitFor(() => {
+      expect(joinRoom).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          roomId: "room-1",
+          as: "spectator",
+          displayName: "Alex",
+        }),
+      );
+      expect(screen.getByText("waiting room")).toBeTruthy();
+    });
+  });
+
   test("host can re-enter a paused room with same device_id (no host transfer)", async () => {
     const user = userEvent.setup();
+    listJoinedRoomIds.mockResolvedValue(new Set(["room-1"]));
     listRooms.mockResolvedValue([
-      {
-        id: "room-1",
-        gameSlug: GAME,
+      roomFixture({
         name: "Paused",
         hostDeviceId: DEVICE,
         status: "paused",
-        maxPlayers: 4,
-        createdAt: "2026-08-06T10:00:00.000Z",
-        updatedAt: "2026-08-06T10:00:00.000Z",
-      },
+      }),
     ]);
     listMembers.mockResolvedValue([
       {
@@ -202,6 +266,10 @@ describe("Lobby", () => {
       expect(screen.getByText("Paused")).toBeTruthy();
     });
 
+    expect(
+      screen.queryByRole("button", { name: /spectator/i }),
+    ).toBeNull();
+
     await user.click(screen.getByRole("button", { name: /reintră|rejoin|reia/i }));
 
     await waitFor(() => {
@@ -212,16 +280,11 @@ describe("Lobby", () => {
   });
 
   test("re-enters the remembered active room after refresh", async () => {
-    const room = {
-      id: "room-1",
-      gameSlug: GAME,
+    const room = roomFixture({
       name: "Running",
       hostDeviceId: DEVICE,
       status: "playing",
-      maxPlayers: 4,
-      createdAt: "2026-08-06T10:00:00.000Z",
-      updatedAt: "2026-08-06T10:00:00.000Z",
-    };
+    });
     const member = {
       id: "m-host",
       roomId: "room-1",
@@ -234,6 +297,7 @@ describe("Lobby", () => {
       connected: true,
     };
     rememberActiveRoomId(GAME, room.id);
+    listJoinedRoomIds.mockResolvedValue(new Set(["room-1"]));
     listRooms.mockResolvedValue([room]);
     fetchRoom.mockResolvedValue(room);
     listMembers.mockResolvedValue([member]);
@@ -255,16 +319,12 @@ describe("Lobby", () => {
   });
 
   test("re-enters the active room from the URL after refresh", async () => {
-    const room = {
+    const room = roomFixture({
       id: "room-from-url",
-      gameSlug: GAME,
       name: "URL Room",
       hostDeviceId: DEVICE,
       status: "playing",
-      maxPlayers: 4,
-      createdAt: "2026-08-06T10:00:00.000Z",
-      updatedAt: "2026-08-06T10:00:00.000Z",
-    };
+    });
     const member = {
       id: "m-host",
       roomId: "room-from-url",
@@ -276,6 +336,7 @@ describe("Lobby", () => {
       avatarId: null,
       connected: true,
     };
+    listJoinedRoomIds.mockResolvedValue(new Set(["room-from-url"]));
     listRooms.mockResolvedValue([room]);
     fetchRoom.mockResolvedValue(room);
     listMembers.mockResolvedValue([member]);

@@ -124,6 +124,22 @@ export async function listRooms(
   return ((data ?? []) as RoomRow[]).map(mapRoom);
 }
 
+/** Room ids where this device already has a membership row. */
+export async function listJoinedRoomIds(
+  client: SupabaseClient,
+  deviceId: string,
+): Promise<Set<string>> {
+  const { data, error } = await client
+    .from("room_members")
+    .select("room_id")
+    .eq("device_id", deviceId);
+
+  throwIfError(error);
+  return new Set(
+    ((data ?? []) as Array<{ room_id: string }>).map((row) => row.room_id),
+  );
+}
+
 export async function createRoom(
   client: SupabaseClient,
   input: CreateRoomInput,
@@ -257,12 +273,12 @@ export async function joinRoom(
     case "player": {
       if (room.status !== "waiting") {
         throw new Error(
-          "Player join is closed after Start; join as spectator instead.",
+          "Jocul a început. Poți intra doar ca spectator.",
         );
       }
       const free = nextFreeSeat(members, room.maxPlayers);
       if (free === null) {
-        throw new Error("Room is full; no free player seats.");
+        throw new Error("Camera e plină; nu mai sunt locuri libere.");
       }
       role = "player";
       seat = free;

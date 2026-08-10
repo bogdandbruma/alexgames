@@ -5,6 +5,7 @@ import {
   createRoom,
   fetchRoom,
   joinRoom,
+  listJoinedRoomIds,
   listMembers,
   listRooms,
   roomStatusLabel,
@@ -35,6 +36,65 @@ type ActiveSession = {
   member: RoomMember;
 };
 
+function RoomLobbyActions({
+  room,
+  isMember,
+  busy,
+  onJoinPlayer,
+  onJoinSpectator,
+  onReenter,
+}: {
+  room: Room;
+  isMember: boolean;
+  busy: boolean;
+  onJoinPlayer: () => void;
+  onJoinSpectator: () => void;
+  onReenter: () => void;
+}) {
+  const canReenter =
+    isMember &&
+    (room.status === "paused" ||
+      room.status === "playing" ||
+      room.status === "waiting");
+  const canJoinPlayer = !isMember && room.status === "waiting";
+  const canJoinSpectator = !isMember;
+
+  return (
+    <div className="online-lobby-item-actions">
+      {canJoinPlayer ? (
+        <button
+          type="button"
+          className="primary-button"
+          disabled={busy}
+          onClick={onJoinPlayer}
+        >
+          Intră jucător
+        </button>
+      ) : null}
+      {canReenter ? (
+        <button
+          type="button"
+          className="primary-button"
+          disabled={busy}
+          onClick={onReenter}
+        >
+          Reintră
+        </button>
+      ) : null}
+      {canJoinSpectator ? (
+        <button
+          type="button"
+          className="secondary-button"
+          disabled={busy}
+          onClick={onJoinSpectator}
+        >
+          Spectator
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 export function Lobby({
   client,
   gameSlug,
@@ -45,6 +105,9 @@ export function Lobby({
   onBack,
 }: LobbyProps) {
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [joinedRoomIds, setJoinedRoomIds] = useState<Set<string>>(
+    () => new Set(),
+  );
   const [roomName, setRoomName] = useState("");
   const [loading, setLoading] = useState(true);
   const [restoringSession, setRestoringSession] = useState(false);
@@ -55,10 +118,14 @@ export function Lobby({
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    void listRooms(client, gameSlug)
-      .then((next) => {
+    void Promise.all([
+      listRooms(client, gameSlug),
+      listJoinedRoomIds(client, deviceId),
+    ])
+      .then(([nextRooms, nextJoined]) => {
         if (!cancelled) {
-          setRooms(next.filter((room) => room.status !== "closed"));
+          setRooms(nextRooms.filter((room) => room.status !== "closed"));
+          setJoinedRoomIds(nextJoined);
         }
       })
       .catch((err: unknown) => {
@@ -76,7 +143,7 @@ export function Lobby({
     return () => {
       cancelled = true;
     };
-  }, [client, gameSlug]);
+  }, [client, gameSlug, deviceId]);
 
   useEffect(() => {
     const roomId = initialRoomId ?? getRememberedActiveRoomId(gameSlug);
@@ -136,8 +203,12 @@ export function Lobby({
   }, [client, gameSlug, deviceId, initialRoomId]);
 
   const refresh = async () => {
-    const next = await listRooms(client, gameSlug);
-    setRooms(next.filter((room) => room.status !== "closed"));
+    const [nextRooms, nextJoined] = await Promise.all([
+      listRooms(client, gameSlug),
+      listJoinedRoomIds(client, deviceId),
+    ]);
+    setRooms(nextRooms.filter((room) => room.status !== "closed"));
+    setJoinedRoomIds(nextJoined);
   };
 
   if (session) {
@@ -306,36 +377,16 @@ export function Lobby({
                         {roomStatusLabel(room.status)}
                       </span>
                     </div>
-                    <div className="online-lobby-item-actions">
-                      {room.status === "waiting" ? (
-                        <button
-                          type="button"
-                          className="primary-button"
-                          disabled={busy}
-                          onClick={() => void handleJoin(room, "player")}
-                        >
-                          Intră jucător
-                        </button>
-                      ) : null}
-                      {room.status === "paused" || room.status === "playing" ? (
-                        <button
-                          type="button"
-                          className="primary-button"
-                          disabled={busy}
-                          onClick={() => void handleReenter(room)}
-                        >
-                          Reintră
-                        </button>
-                      ) : null}
-                      <button
-                        type="button"
-                        className="secondary-button"
-                        disabled={busy}
-                        onClick={() => void handleJoin(room, "spectator")}
-                      >
-                        Spectator
-                      </button>
-                    </div>
+                    <RoomLobbyActions
+                      room={room}
+                      isMember={joinedRoomIds.has(room.id)}
+                      busy={busy}
+                      onJoinPlayer={() => void handleJoin(room, "player")}
+                      onJoinSpectator={() =>
+                        void handleJoin(room, "spectator")
+                      }
+                      onReenter={() => void handleReenter(room)}
+                    />
                   </li>
                 ))
               )}

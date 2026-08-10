@@ -1,5 +1,6 @@
 import {
   Bot,
+  Check,
   Dices,
   Minus,
   Package,
@@ -587,7 +588,7 @@ export function SpaceBoardPanel({
               {canEndTurn ? (
                 <button
                   type="button"
-                  className="secondary-button"
+                  className="secondary-button end-turn-button"
                   disabled={onlineControls ? !onlineControls.canAct : false}
                   onClick={() => {
                     if (onlineControls) {
@@ -597,6 +598,7 @@ export function SpaceBoardPanel({
                     endTurn();
                   }}
                 >
+                  <Check aria-hidden="true" size={18} />
                   <span>Termină turul</span>
                 </button>
               ) : null}
