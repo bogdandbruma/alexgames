@@ -269,4 +269,97 @@ describe("engineBridge", () => {
     expect(sawLiveDuringRun).toBe(true);
     expect(live).toEqual(["dice", "dice"]);
   });
+
+  test("collectUiEventsDuring onState fires on every store change during the action", async () => {
+    let current = slice({
+      players: [
+        {
+          id: "p0",
+          name: "A",
+          avatarId: "cat",
+          controller: "player",
+          positionIndex: 0,
+          coins: 0,
+          lastDice: null,
+          trapped: false,
+        },
+        {
+          id: "p1",
+          name: "B",
+          avatarId: "dog",
+          controller: "player",
+          positionIndex: 1,
+          coins: 0,
+          lastDice: null,
+          trapped: false,
+        },
+      ],
+      currentPlayerIndex: 0,
+      pendingEvent: {
+        type: "trivia",
+        playerId: "p0",
+        roomId: 12,
+        question: {
+          id: 1,
+          question: "Q?",
+          options: [
+            { answer: "Yes", result: "correct" },
+            { answer: "No", result: "wrong" },
+          ],
+        },
+        result: null,
+      },
+    });
+    const listeners = new Set<(s: SpaceBoardStoreSlice) => void>();
+    const api = {
+      getState: () => current,
+      subscribe: (fn: (s: SpaceBoardStoreSlice) => void) => {
+        listeners.add(fn);
+        return () => listeners.delete(fn);
+      },
+      setState: (next: SpaceBoardStoreSlice) => {
+        current = next;
+        for (const fn of listeners) fn(current);
+      },
+    };
+
+    const livePending: Array<string | null> = [];
+
+    await collectUiEventsDuring(
+      api,
+      async () => {
+        api.setState({
+          ...current,
+          pendingEvent: {
+            type: "trivia",
+            playerId: "p0",
+            roomId: 12,
+            question: {
+              id: 1,
+              question: "Q?",
+              options: [
+                { answer: "Yes", result: "correct" },
+                { answer: "No", result: "wrong" },
+              ],
+            },
+            result: { answer: "correct", coinsDelta: 1 },
+          },
+        });
+        api.setState({
+          ...current,
+          pendingEvent: null,
+          currentPlayerIndex: 1,
+        });
+      },
+      {
+        onState: (state) => {
+          livePending.push(
+            state.pendingEvent === null ? null : state.pendingEvent.type,
+          );
+        },
+      },
+    );
+
+    expect(livePending).toEqual(["trivia", null]);
+  });
 });

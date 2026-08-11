@@ -90,7 +90,7 @@ export const useGameStore = create<GameState>()(
         set((state) => resolveOrphanedPortalLanding(state) ?? {});
       },
 
-      answerTrivia: (answer) => {
+      answerTrivia: async (answer) => {
         const state = get();
         const pendingTrivia = getPendingTrivia(state.pendingEvent);
 
@@ -121,6 +121,7 @@ export const useGameStore = create<GameState>()(
         };
         const resultMessage =
           answer === "correct" ? "Raspuns corect." : "Raspuns gresit.";
+        const answeredAtPlayerIndex = state.currentPlayerIndex;
 
         set({
           pendingEvent: {
@@ -146,49 +147,49 @@ export const useGameStore = create<GameState>()(
           uiToast: null,
         });
 
-        window.setTimeout(() => {
-          set((latestState) => {
-            const latestTrivia = getPendingTrivia(latestState.pendingEvent);
+        await sleep(TRIVIA_MODAL_RESULT_MS);
 
-            if (
-              latestState.phase !== "playing" ||
-              latestTrivia?.playerId !== pendingTrivia.playerId ||
-              latestTrivia.question.id !== pendingTrivia.question.id ||
-              !latestTrivia.result
-            ) {
-              return {};
-            }
+        set((latestState) => {
+          const latestTrivia = getPendingTrivia(latestState.pendingEvent);
 
-            return {
-              pendingEvent: null,
-              uiToast: createTriviaToast(answeredPlayer, triviaFeedback),
-              playerCoinBursts: pushPlayerCoinBursts(
-                latestState.playerCoinBursts,
-                pendingTrivia.playerId,
-                triviaFeedback.coinsDelta,
-              ),
-            };
-          });
-        }, TRIVIA_MODAL_RESULT_MS);
+          if (
+            latestState.phase !== "playing" ||
+            latestTrivia?.playerId !== pendingTrivia.playerId ||
+            latestTrivia.question.id !== pendingTrivia.question.id ||
+            !latestTrivia.result
+          ) {
+            return {};
+          }
 
-        window.setTimeout(() => {
-          set((latestState) => {
-            const latestTrivia = getPendingTrivia(latestState.pendingEvent);
+          return {
+            pendingEvent: null,
+            uiToast: createTriviaToast(answeredPlayer, triviaFeedback),
+            playerCoinBursts: pushPlayerCoinBursts(
+              latestState.playerCoinBursts,
+              pendingTrivia.playerId,
+              triviaFeedback.coinsDelta,
+            ),
+          };
+        });
 
-            if (
-              latestState.phase !== "playing" ||
-              latestTrivia !== null ||
-              latestState.currentPlayerIndex !== state.currentPlayerIndex
-            ) {
-              return {};
-            }
+        await sleep(TRIVIA_TOAST_MS);
 
-            return createEndTurnState(
-              latestState,
-              `${resultMessage} ${getPlayerName(answeredPlayer)} continua aventura.`,
-            );
-          });
-        }, TRIVIA_MODAL_RESULT_MS + TRIVIA_TOAST_MS);
+        set((latestState) => {
+          const latestTrivia = getPendingTrivia(latestState.pendingEvent);
+
+          if (
+            latestState.phase !== "playing" ||
+            latestTrivia !== null ||
+            latestState.currentPlayerIndex !== answeredAtPlayerIndex
+          ) {
+            return {};
+          }
+
+          return createEndTurnState(
+            latestState,
+            `${resultMessage} ${getPlayerName(answeredPlayer)} continua aventura.`,
+          );
+        });
       },
 
       buyShopItem: (itemId) => {
@@ -330,7 +331,7 @@ export const useGameStore = create<GameState>()(
       resolveTrap: (choice: TrapEscapeChoice) =>
         executeResolveTrap({ set, choice }),
 
-      useInventoryItem: (itemId, targetPlayerId) => {
+      useInventoryItem: async (itemId, targetPlayerId) => {
         let used = false;
         let endTurnAfterTriviaCancel = false;
         const deferredUpdate: {
@@ -717,48 +718,46 @@ export const useGameStore = create<GameState>()(
         });
 
         if (used && focusedPlayerId) {
-          void (async () => {
-            await syncFocusedPlayerWalkIfMoved(
-              get,
-              set,
-              playersBefore,
-              focusedPlayerId,
-            );
+          await syncFocusedPlayerWalkIfMoved(
+            get,
+            set,
+            playersBefore,
+            focusedPlayerId,
+          );
 
-            if (endTurnAfterTriviaCancel) {
-              await sleep(1_200);
-              set((state) => {
-                if (state.phase !== "playing") {
-                  return {};
-                }
-
-                const player = state.players[state.currentPlayerIndex];
-
-                return createEndTurnState(
-                  state,
-                  `${getPlayerName(player)} a sarit trivia.`,
-                );
-              });
-              return;
-            }
-
-            if (deferredUpdate.state) {
-              if (deferredUpdate.triviaPlayerId) {
-                await waitForPortalTransitionBeforeTrivia(
-                  get,
-                  deferredUpdate.triviaPlayerId,
-                );
+          if (endTurnAfterTriviaCancel) {
+            await sleep(1_200);
+            set((state) => {
+              if (state.phase !== "playing") {
+                return {};
               }
 
-              set((state) => {
-                if (state.phase !== "playing") {
-                  return {};
-                }
+              const player = state.players[state.currentPlayerIndex];
 
-                return deferredUpdate.state ?? {};
-              });
+              return createEndTurnState(
+                state,
+                `${getPlayerName(player)} a sarit trivia.`,
+              );
+            });
+            return used;
+          }
+
+          if (deferredUpdate.state) {
+            if (deferredUpdate.triviaPlayerId) {
+              await waitForPortalTransitionBeforeTrivia(
+                get,
+                deferredUpdate.triviaPlayerId,
+              );
             }
-          })();
+
+            set((state) => {
+              if (state.phase !== "playing") {
+                return {};
+              }
+
+              return deferredUpdate.state ?? {};
+            });
+          }
         }
 
         return used;

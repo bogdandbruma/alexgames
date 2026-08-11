@@ -60,9 +60,9 @@ describe("shop inventory items one-by-one", () => {
       pendingEvent: null,
     });
 
-    expect(
-      useGameStore.getState().useInventoryItem("pistol", "player-2"),
-    ).toBe(true);
+    const __inventoryItemResult1 = useGameStore.getState().useInventoryItem("pistol", "player-2");
+    await vi.advanceTimersByTimeAsync(20_000);
+    await expect(__inventoryItemResult1).resolves.toBe(true);
 
     const state = useGameStore.getState();
     expect(state.players[1].positionIndex + 1).toBe(6);
@@ -84,7 +84,9 @@ describe("shop inventory items one-by-one", () => {
       pendingEvent: null,
     });
 
-    expect(useGameStore.getState().useInventoryItem("dice-x2")).toBe(true);
+    const __inventoryItemResult2 = useGameStore.getState().useInventoryItem("dice-x2");
+    await vi.advanceTimersByTimeAsync(20_000);
+    await expect(__inventoryItemResult2).resolves.toBe(true);
     expect(useGameStore.getState().players[0]).toMatchObject({
       inventory: [],
       armedDiceX2: true,
@@ -114,7 +116,9 @@ describe("shop inventory items one-by-one", () => {
       pendingEvent: null,
     });
 
-    expect(useGameStore.getState().useInventoryItem("coins-x3")).toBe(true);
+    const __inventoryItemResult3 = useGameStore.getState().useInventoryItem("coins-x3");
+    await vi.advanceTimersByTimeAsync(20_000);
+    await expect(__inventoryItemResult3).resolves.toBe(true);
 
     const roll = useGameStore.getState().rollDice();
     await vi.advanceTimersByTimeAsync(14_000);
@@ -184,7 +188,9 @@ describe("shop inventory items one-by-one", () => {
       },
     });
 
-    const used = useGameStore.getState().useInventoryItem("trivia-cancel");
+    const __inventoryItemResult4 = useGameStore.getState().useInventoryItem("trivia-cancel");
+    await vi.advanceTimersByTimeAsync(20_000);
+    const used = await __inventoryItemResult4;
     const state = useGameStore.getState();
 
     expect(used).toBe(true);
@@ -213,7 +219,9 @@ describe("shop inventory items one-by-one", () => {
       pendingEvent: null,
     });
 
-    expect(useGameStore.getState().useInventoryItem("star")).toBe(true);
+    const __inventoryItemResult5 = useGameStore.getState().useInventoryItem("star");
+    await vi.advanceTimersByTimeAsync(20_000);
+    await expect(__inventoryItemResult5).resolves.toBe(true);
     await vi.advanceTimersByTimeAsync(15_000);
 
     const state = useGameStore.getState();
@@ -239,9 +247,9 @@ describe("shop inventory items one-by-one", () => {
       pendingEvent: null,
     });
 
-    expect(
-      useGameStore.getState().useInventoryItem("claw", "player-2"),
-    ).toBe(true);
+    const __inventoryItemResult6 = useGameStore.getState().useInventoryItem("claw", "player-2");
+    await vi.advanceTimersByTimeAsync(20_000);
+    await expect(__inventoryItemResult6).resolves.toBe(true);
     expect(useGameStore.getState().players[1].positionIndex + 1).toBe(7);
     expect(useGameStore.getState().players[0].inventory).toEqual([]);
   });
@@ -270,7 +278,9 @@ describe("shop inventory items one-by-one", () => {
       pendingEvent: null,
     });
 
-    expect(useGameStore.getState().useInventoryItem("bomb")).toBe(true);
+    const __inventoryItemResult7 = useGameStore.getState().useInventoryItem("bomb");
+    await vi.advanceTimersByTimeAsync(20_000);
+    await expect(__inventoryItemResult7).resolves.toBe(true);
 
     const state = useGameStore.getState();
     expect(state.players[0].positionIndex + 1).toBe(21);
@@ -293,7 +303,9 @@ describe("shop inventory items one-by-one", () => {
       pendingEvent: null,
     });
 
-    expect(useGameStore.getState().useInventoryItem("star")).toBe(true);
+    const __inventoryItemResult8 = useGameStore.getState().useInventoryItem("star");
+    await vi.advanceTimersByTimeAsync(20_000);
+    await expect(__inventoryItemResult8).resolves.toBe(true);
     await vi.advanceTimersByTimeAsync(15_000);
 
     const state = useGameStore.getState();
@@ -325,7 +337,9 @@ describe("shop inventory items one-by-one", () => {
       pendingEvent: null,
     });
 
-    expect(useGameStore.getState().useInventoryItem("cosmic-key")).toBe(true);
+    const __inventoryItemResult9 = useGameStore.getState().useInventoryItem("cosmic-key");
+    await vi.advanceTimersByTimeAsync(20_000);
+    await expect(__inventoryItemResult9).resolves.toBe(true);
     expect(useGameStore.getState().players[0]).toMatchObject({
       trapped: false,
       inventory: [],
@@ -391,9 +405,9 @@ describe("shop inventory items one-by-one", () => {
       pendingEvent: null,
     });
 
-    expect(
-      useGameStore.getState().useInventoryItem("swap-arrow", "player-2"),
-    ).toBe(true);
+    const __inventoryItemResult10 = useGameStore.getState().useInventoryItem("swap-arrow", "player-2");
+    await vi.advanceTimersByTimeAsync(20_000);
+    await expect(__inventoryItemResult10).resolves.toBe(true);
 
     const state = useGameStore.getState();
     // target was on 22 → portal to 28 for active player

@@ -112,7 +112,9 @@ describe("space board store", () => {
     await vi.advanceTimersByTimeAsync(14_000);
     await rollAfterFinish;
 
-    expect(useGameStore.getState().useInventoryItem("star")).toBe(false);
+    const __inventoryItemResult1 = useGameStore.getState().useInventoryItem("star");
+    await vi.advanceTimersByTimeAsync(20_000);
+    await expect(__inventoryItemResult1).resolves.toBe(false);
     expect(useGameStore.getState().buyShopItem("pistol")).toBe(false);
     expect(useGameStore.getState().pickMysteryCard(mysteryCards[0].id)).toBe(false);
     useGameStore.getState().answerTrivia("correct");
@@ -530,7 +532,9 @@ describe("space board store", () => {
     await vi.advanceTimersByTimeAsync(14_000);
     await roll;
 
-    expect(useGameStore.getState().useInventoryItem("cosmic-key")).toBe(false);
+    const __inventoryItemResult2 = useGameStore.getState().useInventoryItem("cosmic-key");
+    await vi.advanceTimersByTimeAsync(20_000);
+    await expect(__inventoryItemResult2).resolves.toBe(false);
     expect(useGameStore.getState().players[0]).toMatchObject({
       coins: 12,
       trapped: true,
@@ -678,8 +682,12 @@ describe("space board store", () => {
       actionItemUsedThisTurn: false,
     });
 
-    expect(useGameStore.getState().useInventoryItem("star")).toBe(true);
-    expect(useGameStore.getState().useInventoryItem("bomb")).toBe(false);
+    const __inventoryItemResult3 = useGameStore.getState().useInventoryItem("star");
+    await vi.advanceTimersByTimeAsync(20_000);
+    await expect(__inventoryItemResult3).resolves.toBe(true);
+    const __inventoryItemResult4 = useGameStore.getState().useInventoryItem("bomb");
+    await vi.advanceTimersByTimeAsync(20_000);
+    await expect(__inventoryItemResult4).resolves.toBe(false);
 
     const state = useGameStore.getState();
 
@@ -740,9 +748,9 @@ describe("space board store", () => {
     expect(afterRoll.diceValue).toBe(1);
     expect(afterRoll.message).toMatch(/inventar/i);
 
-    expect(
-      useGameStore.getState().useInventoryItem("claw", "player-2"),
-    ).toBe(true);
+    const __inventoryItemResult5 = useGameStore.getState().useInventoryItem("claw", "player-2");
+    await vi.advanceTimersByTimeAsync(20_000);
+    await expect(__inventoryItemResult5).resolves.toBe(true);
 
     useGameStore.getState().endTurn();
 
@@ -778,7 +786,9 @@ describe("space board store", () => {
       pendingEvent: null,
     });
 
-    expect(useGameStore.getState().useInventoryItem("star")).toBe(true);
+    const __inventoryItemResult6 = useGameStore.getState().useInventoryItem("star");
+    await vi.advanceTimersByTimeAsync(20_000);
+    await expect(__inventoryItemResult6).resolves.toBe(true);
 
     await vi.advanceTimersByTimeAsync(15_000);
 
@@ -835,9 +845,9 @@ describe("space board store", () => {
       actionItemUsedThisTurn: false,
     });
 
-    expect(useGameStore.getState().useInventoryItem("swap-arrow", "player-2")).toBe(
-      true,
-    );
+    const __inventoryItemResult7 = useGameStore.getState().useInventoryItem("swap-arrow", "player-2");
+    await vi.advanceTimersByTimeAsync(20_000);
+    await expect(__inventoryItemResult7).resolves.toBe(true);
 
     const state = useGameStore.getState();
 
@@ -871,8 +881,12 @@ describe("space board store", () => {
       uiToast: null,
     });
 
-    expect(useGameStore.getState().useInventoryItem("dice-x2")).toBe(false);
-    expect(useGameStore.getState().useInventoryItem("star")).toBe(false);
+    const __inventoryItemResult8 = useGameStore.getState().useInventoryItem("dice-x2");
+    await vi.advanceTimersByTimeAsync(20_000);
+    await expect(__inventoryItemResult8).resolves.toBe(false);
+    const __inventoryItemResult9 = useGameStore.getState().useInventoryItem("star");
+    await vi.advanceTimersByTimeAsync(20_000);
+    await expect(__inventoryItemResult9).resolves.toBe(false);
 
     const player = useGameStore.getState().players[0];
 
@@ -909,8 +923,12 @@ describe("space board store", () => {
       uiToast: null,
     });
 
-    expect(useGameStore.getState().useInventoryItem("dice-x2")).toBe(true);
-    expect(useGameStore.getState().useInventoryItem("coins-x3")).toBe(true);
+    const __inventoryItemResult10 = useGameStore.getState().useInventoryItem("dice-x2");
+    await vi.advanceTimersByTimeAsync(20_000);
+    await expect(__inventoryItemResult10).resolves.toBe(true);
+    const __inventoryItemResult11 = useGameStore.getState().useInventoryItem("coins-x3");
+    await vi.advanceTimersByTimeAsync(20_000);
+    await expect(__inventoryItemResult11).resolves.toBe(true);
 
     const roll = useGameStore.getState().rollDice();
 
@@ -954,7 +972,9 @@ describe("space board store", () => {
       uiToast: null,
     });
 
-    expect(useGameStore.getState().useInventoryItem("coins-x3")).toBe(true);
+    const __inventoryItemResult12 = useGameStore.getState().useInventoryItem("coins-x3");
+    await vi.advanceTimersByTimeAsync(20_000);
+    await expect(__inventoryItemResult12).resolves.toBe(true);
 
     const shopRoll = useGameStore.getState().rollDice();
 
@@ -1022,9 +1042,9 @@ describe("space board store", () => {
       uiToast: null,
     });
 
-    expect(useGameStore.getState().useInventoryItem("pistol", "player-2")).toBe(
-      true,
-    );
+    const __inventoryItemResult13 = useGameStore.getState().useInventoryItem("pistol", "player-2");
+    await vi.advanceTimersByTimeAsync(20_000);
+    await expect(__inventoryItemResult13).resolves.toBe(true);
 
     const roll = useGameStore.getState().rollDice();
 

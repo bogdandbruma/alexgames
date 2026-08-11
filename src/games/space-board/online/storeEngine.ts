@@ -15,6 +15,7 @@ import type {
 } from "./hostSession";
 import {
   SPACE_BOARD_GAME_SLUG,
+  type SpaceBoardStatePayload,
   type SpaceBoardUiEventPayload,
 } from "./payloads";
 import { filterSpaceBoardStateForViewer } from "./visibility";
@@ -27,16 +28,22 @@ export type GameStoreLike = {
 async function runStoreAction(
   store: GameStoreLike,
   action: () => void | Promise<void>,
-  onUiEventLive?: (
-    event: SpaceBoardUiEventPayload,
-  ) => void | Promise<void>,
+  options?: {
+    onUiEventLive?: (
+      event: SpaceBoardUiEventPayload,
+    ) => void | Promise<void>;
+    onStateLive?: (state: SpaceBoardStatePayload) => void | Promise<void>;
+  },
 ): Promise<SpaceBoardEngineResult> {
   const uiEvents = await collectUiEventsDuring(
     store,
     async () => {
       await action();
     },
-    onUiEventLive ? { onUiEvent: onUiEventLive } : undefined,
+    {
+      ...(options?.onUiEventLive ? { onUiEvent: options.onUiEventLive } : {}),
+      ...(options?.onStateLive ? { onState: options.onStateLive } : {}),
+    },
   );
   return {
     uiEvents,
@@ -55,12 +62,19 @@ export function createStoreHostEngine(
     onUiEventLive?: (
       event: SpaceBoardUiEventPayload,
     ) => void | Promise<void>;
+    /** Stream state snapshots so remotes follow modal open/close mid-action. */
+    onStateLive?: (state: SpaceBoardStatePayload) => void | Promise<void>;
   },
 ): SpaceBoardHostEngine {
   const aiRollDelayMs = options.aiRollDelayMs ?? 1_700;
   const viewerPlayerIds = options.viewerPlayerIds ?? [null];
   const onUiEventLive = options.onUiEventLive;
+  const onStateLive = options.onStateLive;
   const liveStreaming = Boolean(onUiEventLive);
+  const actionOptions = {
+    ...(onUiEventLive ? { onUiEventLive } : {}),
+    ...(onStateLive ? { onStateLive } : {}),
+  };
 
   const pushResult = (
     outbound: RoomEnvelope[],
@@ -79,6 +93,7 @@ export function createStoreHostEngine(
         );
       }
     }
+    // Always include final state for AI follow-ups; live mid-action snapshots are additive.
     for (const viewerPlayerId of viewerPlayerIds) {
       outbound.push(
         createRoomEnvelope({
@@ -95,7 +110,7 @@ export function createStoreHostEngine(
   const engine: SpaceBoardHostEngine = {
     getState: () => snapshotSpaceBoardState(store.getState()),
     roll: () =>
-      runStoreAction(store, () => store.getState().rollDice(), onUiEventLive),
+      runStoreAction(store, () => store.getState().rollDice(), actionOptions),
     move: async () => ({
       uiEvents: [],
       state: snapshotSpaceBoardState(store.getState()),
@@ -106,15 +121,13 @@ export function createStoreHostEngine(
         () => {
           store.getState().endTurn();
         },
-        onUiEventLive,
+        actionOptions,
       ),
     answerTrivia: (answer: TriviaAnswer) =>
       runStoreAction(
         store,
-        () => {
-          store.getState().answerTrivia(answer);
-        },
-        onUiEventLive,
+        () => store.getState().answerTrivia(answer),
+        actionOptions,
       ),
     pickMystery: (cardId: MysteryCardId) =>
       runStoreAction(
@@ -122,13 +135,13 @@ export function createStoreHostEngine(
         () => {
           store.getState().pickMysteryCard(cardId);
         },
-        onUiEventLive,
+        actionOptions,
       ),
     acknowledgeMystery: () =>
       runStoreAction(
         store,
         () => store.getState().acknowledgeMystery(),
-        onUiEventLive,
+        actionOptions,
       ),
     buyShopItem: (itemId: ShopItemId) =>
       runStoreAction(
@@ -136,7 +149,7 @@ export function createStoreHostEngine(
         () => {
           store.getState().buyShopItem(itemId);
         },
-        onUiEventLive,
+        actionOptions,
       ),
     closeShop: () =>
       runStoreAction(
@@ -144,15 +157,13 @@ export function createStoreHostEngine(
         () => {
           store.getState().closeShop();
         },
-        onUiEventLive,
+        actionOptions,
       ),
     useInventoryItem: (itemId, targetPlayerId) =>
       runStoreAction(
         store,
-        () => {
-          store.getState().useInventoryItem(itemId, targetPlayerId);
-        },
-        onUiEventLive,
+        () => store.getState().useInventoryItem(itemId, targetPlayerId),
+        actionOptions,
       ),
     resolveTrap: (choice: TrapEscapeChoice) =>
       runStoreAction(
@@ -160,7 +171,7 @@ export function createStoreHostEngine(
         () => {
           store.getState().resolveTrap(choice);
         },
-        onUiEventLive,
+        actionOptions,
       ),
     acknowledgePortal: () =>
       runStoreAction(
@@ -168,7 +179,7 @@ export function createStoreHostEngine(
         () => {
           store.getState().acknowledgePortalTransition();
         },
-        onUiEventLive,
+        actionOptions,
       ),
     runAiTurnIfNeeded: async () => {
       const outbound: RoomEnvelope[] = [];

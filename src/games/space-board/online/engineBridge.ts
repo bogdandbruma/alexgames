@@ -228,6 +228,8 @@ export async function collectUiEventsDuring(
     onUiEvent?: (
       event: SpaceBoardUiEventPayload,
     ) => void | Promise<void>;
+    /** Fired on every store change so remotes can follow modal/turn transitions. */
+    onState?: (state: SpaceBoardStatePayload) => void | Promise<void>;
   },
 ): Promise<SpaceBoardUiEventPayload[]> {
   const events: SpaceBoardUiEventPayload[] = [];
@@ -241,6 +243,11 @@ export async function collectUiEventsDuring(
       if (options?.onUiEvent) {
         pending.push(Promise.resolve(options.onUiEvent(event)));
       }
+    }
+    if (options?.onState) {
+      pending.push(
+        Promise.resolve(options.onState(snapshotSpaceBoardState(next))),
+      );
     }
   });
   try {

@@ -87,7 +87,7 @@ export type GameState = PersistedState & {
   playerCoinBursts: PlayerCoinBurst[];
   dismissPlayerCoinBurst: (burstId: number) => void;
   acknowledgePortalTransition: () => void;
-  answerTrivia: (answer: TriviaAnswer) => void;
+  answerTrivia: (answer: TriviaAnswer) => Promise<void>;
   buyShopItem: (itemId: ShopItemId) => boolean;
   closeShop: () => void;
   pickMysteryCard: (cardId: MysteryCardId) => boolean;
@@ -97,7 +97,10 @@ export type GameState = PersistedState & {
   rollDice: () => Promise<void>;
   endTurn: () => void;
   resetGame: () => void;
-  useInventoryItem: (itemId: ShopItemId, targetPlayerId?: string) => boolean;
+  useInventoryItem: (
+    itemId: ShopItemId,
+    targetPlayerId?: string,
+  ) => Promise<boolean>;
 };
 
 export type AiGameSnapshot = Pick<

@@ -38,6 +38,7 @@ import {
   isSpaceBoardStatePayload,
   SPACE_BOARD_GAME_SLUG,
   type SpaceBoardActionPayload,
+  type SpaceBoardStatePayload,
   type SpaceBoardUiEventPayload,
 } from "./payloads";
 import {
@@ -49,6 +50,7 @@ import {
   createEmptyRemoteView,
 } from "./remoteSession";
 import { createStoreHostEngine } from "./storeEngine";
+import { filterSpaceBoardStateForViewer } from "./visibility";
 import { SpaceBoardOnlineView } from "../SpaceBoardOnlineView";
 
 type OnlinePlayProps = {
@@ -250,6 +252,7 @@ export function OnlinePlay({
 
   const createHostSession = () => {
     const seatMembers = toSeatMembers(members, true);
+    const viewerPlayerIds = viewerPlayerIdsFromMembers(members);
     const streamUiEvent = async (payload: SpaceBoardUiEventPayload) => {
       const handle = channelRef.current;
       if (!handle) return;
@@ -264,6 +267,31 @@ export function OnlinePlay({
         }),
       );
     };
+    const streamState = async (state: SpaceBoardStatePayload) => {
+      const handle = channelRef.current;
+      if (!handle) return;
+      let persisted = false;
+      for (const viewerPlayerId of viewerPlayerIds) {
+        await broadcastRoomEnvelope(
+          handle.channel,
+          createRoomEnvelope({
+            gameSlug: SPACE_BOARD_GAME_SLUG,
+            kind: "state",
+            roomId: room.id,
+            senderDeviceId: deviceId,
+            payload: filterSpaceBoardStateForViewer(state, viewerPlayerId),
+          }),
+        );
+        if (!persisted) {
+          persisted = true;
+          try {
+            await persistAuthoritativeLastState();
+          } catch {
+            /* reconnect aid; non-fatal */
+          }
+        }
+      }
+    };
     return createSpaceBoardHostSession({
       roomId: room.id,
       hostDeviceId: deviceId,
@@ -271,9 +299,10 @@ export function OnlinePlay({
       engine: createStoreHostEngine(useGameStore, {
         roomId: room.id,
         hostDeviceId: deviceId,
-        viewerPlayerIds: viewerPlayerIdsFromMembers(members),
+        viewerPlayerIds,
         aiRollDelayMs: 400,
         onUiEventLive: streamUiEvent,
+        onStateLive: streamState,
       }),
     });
   };
@@ -284,7 +313,7 @@ export function OnlinePlay({
       const seatMembers = toSeatMembers(members, true);
       const session = createHostSession();
       const outbound = await session.handleEnvelope(envelope);
-      // ui_events already streamed live during the engine action.
+      // ui_events already streamed live; keep final state as authoritative snapshot.
       await publish(outbound.filter((item) => item.kind !== "ui_event"));
       setCanAct(localPlayerCanAct(deviceId, member, seatMembers));
     });
