@@ -763,15 +763,28 @@ describe("closeRoom", () => {
     expect(written).not.toHaveProperty("host_device_id");
   });
 
-  test("rejects close when room is waiting", async () => {
+  test("any client may close a waiting room after host absence timeout", async () => {
     const client = mockHostClient({
       room: roomRow({ status: "waiting" }),
       members: [memberRow()],
     });
 
+    await closeRoom(client as never, { roomId: ROOM_ID });
+
+    expect(client.roomUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "closed" }),
+    );
+  });
+
+  test("rejects close when room is already closed", async () => {
+    const client = mockHostClient({
+      room: roomRow({ status: "closed" }),
+      members: [memberRow()],
+    });
+
     await expect(
       closeRoom(client as never, { roomId: ROOM_ID }),
-    ).rejects.toThrow(/paused|playing/i);
+    ).rejects.toThrow(/closed|waiting|paused|playing/i);
     expect(client.roomUpdate).not.toHaveBeenCalled();
   });
 });

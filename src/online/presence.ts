@@ -98,3 +98,47 @@ export async function subscribeRoomPresence(
     },
   };
 }
+
+export type ObserveRoomPresenceInput = {
+  roomId: string;
+  onSync: (members: PresenceMember[]) => void;
+};
+
+/**
+ * Read-only presence watch for lobby listing. Does not `track`, so the
+ * observer never appears in "Conectați acum". Avoids `openFreshChannel`
+ * so it does not tear down another client's tracked presence on this tab.
+ */
+export async function observeRoomPresence(
+  client: SupabaseClient,
+  input: ObserveRoomPresenceInput,
+): Promise<RoomPresenceHandle> {
+  const channelName = roomPresenceChannelName(input.roomId);
+  const channel = client.channel(channelName);
+
+  const emit = () => {
+    const state = channel.presenceState() as Record<string, PresencePayload[]>;
+    input.onSync(mapPresenceState(state));
+  };
+
+  channel.on("presence", { event: "sync" }, emit);
+
+  await new Promise<void>((resolve, reject) => {
+    channel.subscribe((status) => {
+      if (status === "SUBSCRIBED") {
+        emit();
+        resolve();
+        return;
+      }
+      if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+        reject(new Error(`Presence observe failed: ${status}`));
+      }
+    });
+  });
+
+  return {
+    unsubscribe: async () => {
+      await client.removeChannel(channel);
+    },
+  };
+}

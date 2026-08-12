@@ -15,6 +15,11 @@ export type DecideHostLifecycleInput = {
   hostPresent: boolean;
   /** Client-local ms when pause was observed; null if not paused. */
   pausedAtMs: number | null;
+  /**
+   * Client-local ms when host absence was first observed while waiting;
+   * null if host is present or timer not started.
+   */
+  hostAbsentSinceMs: number | null;
   nowMs: number;
 };
 
@@ -23,6 +28,18 @@ export function isHostInPresence(
   presence: ReadonlyArray<{ deviceId: string }>,
 ): boolean {
   return presence.some((m) => m.deviceId === hostDeviceId);
+}
+
+/** Track when host first disappeared; clear when they return. */
+export function nextHostAbsentSinceMs(
+  hostPresent: boolean,
+  previous: number | null,
+  nowMs: number,
+): number | null {
+  if (hostPresent) {
+    return null;
+  }
+  return previous ?? nowMs;
 }
 
 export function areGameActionsAllowed(status: RoomStatus): boolean {
@@ -36,10 +53,17 @@ export function areGameActionsAllowed(status: RoomStatus): boolean {
 export function decideHostLifecycle(
   input: DecideHostLifecycleInput,
 ): HostLifecycleDecision {
-  const { roomStatus, hostPresent, pausedAtMs, nowMs } = input;
+  const { roomStatus, hostPresent, pausedAtMs, hostAbsentSinceMs, nowMs } =
+    input;
 
   switch (roomStatus) {
-    case "waiting":
+    case "waiting": {
+      if (hostPresent || hostAbsentSinceMs === null) {
+        return { type: "none" };
+      }
+      const expired = nowMs - hostAbsentSinceMs >= HOST_RECLAIM_TIMEOUT_MS;
+      return expired ? { type: "close" } : { type: "none" };
+    }
     case "closed":
       return { type: "none" };
     case "playing":

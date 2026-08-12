@@ -5,6 +5,7 @@ import {
   areGameActionsAllowed,
   decideHostLifecycle,
   isHostInPresence,
+  nextHostAbsentSinceMs,
 } from "./hostLifecycle";
 
 const HOST = "host-device";
@@ -48,6 +49,7 @@ describe("decideHostLifecycle", () => {
         hostDeviceId: HOST,
         hostPresent: false,
         pausedAtMs: null,
+        hostAbsentSinceMs: null,
         nowMs: 1_000,
       }),
     ).toEqual({ type: "pause" });
@@ -60,6 +62,7 @@ describe("decideHostLifecycle", () => {
         hostDeviceId: HOST,
         hostPresent: true,
         pausedAtMs: null,
+        hostAbsentSinceMs: null,
         nowMs: 1_000,
       }),
     ).toEqual({ type: "none" });
@@ -72,6 +75,7 @@ describe("decideHostLifecycle", () => {
         hostDeviceId: HOST,
         hostPresent: true,
         pausedAtMs: 10_000,
+        hostAbsentSinceMs: null,
         nowMs: 10_000 + HOST_RECLAIM_TIMEOUT_MS - 1,
       }),
     ).toEqual({ type: "resume" });
@@ -84,6 +88,7 @@ describe("decideHostLifecycle", () => {
         hostDeviceId: HOST,
         hostPresent: false,
         pausedAtMs: 10_000,
+        hostAbsentSinceMs: null,
         nowMs: 10_000 + 30_000,
       }),
     ).toEqual({ type: "none" });
@@ -96,6 +101,7 @@ describe("decideHostLifecycle", () => {
         hostDeviceId: HOST,
         hostPresent: false,
         pausedAtMs: 10_000,
+        hostAbsentSinceMs: null,
         nowMs: 10_000 + HOST_RECLAIM_TIMEOUT_MS,
       }),
     ).toEqual({ type: "close" });
@@ -108,31 +114,89 @@ describe("decideHostLifecycle", () => {
         hostDeviceId: HOST,
         hostPresent: true,
         pausedAtMs: 10_000,
+        hostAbsentSinceMs: null,
         nowMs: 10_000 + HOST_RECLAIM_TIMEOUT_MS + 1,
       }),
     ).toEqual({ type: "close" });
   });
 
-  test("waiting and closed never pause or transfer host", () => {
+  test("waiting + host present → none", () => {
+    expect(
+      decideHostLifecycle({
+        roomStatus: "waiting",
+        hostDeviceId: HOST,
+        hostPresent: true,
+        pausedAtMs: null,
+        hostAbsentSinceMs: null,
+        nowMs: 1_000,
+      }),
+    ).toEqual({ type: "none" });
+  });
+
+  test("waiting + host absent within timeout → none", () => {
     expect(
       decideHostLifecycle({
         roomStatus: "waiting",
         hostDeviceId: HOST,
         hostPresent: false,
         pausedAtMs: null,
+        hostAbsentSinceMs: 10_000,
+        nowMs: 10_000 + 30_000,
+      }),
+    ).toEqual({ type: "none" });
+  });
+
+  test("waiting + host absent past timeout → close", () => {
+    expect(
+      decideHostLifecycle({
+        roomStatus: "waiting",
+        hostDeviceId: HOST,
+        hostPresent: false,
+        pausedAtMs: null,
+        hostAbsentSinceMs: 10_000,
+        nowMs: 10_000 + HOST_RECLAIM_TIMEOUT_MS,
+      }),
+    ).toEqual({ type: "close" });
+  });
+
+  test("waiting + host absent but timer not started → none", () => {
+    expect(
+      decideHostLifecycle({
+        roomStatus: "waiting",
+        hostDeviceId: HOST,
+        hostPresent: false,
+        pausedAtMs: null,
+        hostAbsentSinceMs: null,
         nowMs: 1_000,
       }),
     ).toEqual({ type: "none" });
+  });
 
+  test("closed never pauses or closes from lifecycle", () => {
     expect(
       decideHostLifecycle({
         roomStatus: "closed",
         hostDeviceId: HOST,
         hostPresent: false,
         pausedAtMs: null,
+        hostAbsentSinceMs: null,
         nowMs: 1_000,
       }),
     ).toEqual({ type: "none" });
+  });
+});
+
+describe("nextHostAbsentSinceMs", () => {
+  test("clears when host present", () => {
+    expect(nextHostAbsentSinceMs(true, 5_000, 9_000)).toBeNull();
+  });
+
+  test("keeps existing absent timestamp", () => {
+    expect(nextHostAbsentSinceMs(false, 5_000, 9_000)).toBe(5_000);
+  });
+
+  test("starts timer on first absence", () => {
+    expect(nextHostAbsentSinceMs(false, null, 9_000)).toBe(9_000);
   });
 });
 

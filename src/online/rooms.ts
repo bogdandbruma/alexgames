@@ -473,16 +473,20 @@ export type CloseRoomInput = {
 };
 
 /**
- * Any connected client may close after host reclaim timeout (or while paused).
- * First writer wins; does not transfer host.
+ * Any connected client may close after host reclaim timeout (playing/paused),
+ * or after waiting-host absence timeout. First writer wins; does not transfer host.
  */
 export async function closeRoom(
   client: SupabaseClient,
   input: CloseRoomInput,
 ): Promise<void> {
   const room = await fetchRoom(client, input.roomId);
-  if (room.status !== "paused" && room.status !== "playing") {
-    throw new Error("Only a paused or playing room can be closed.");
+  if (
+    room.status !== "paused" &&
+    room.status !== "playing" &&
+    room.status !== "waiting"
+  ) {
+    throw new Error("Only a waiting, paused, or playing room can be closed.");
   }
 
   const { error } = await client

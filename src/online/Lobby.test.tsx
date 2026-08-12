@@ -10,6 +10,8 @@ const joinRoom = vi.hoisted(() => vi.fn());
 const listMembers = vi.hoisted(() => vi.fn());
 const fetchRoom = vi.hoisted(() => vi.fn());
 const listJoinedRoomIds = vi.hoisted(() => vi.fn());
+const closeRoom = vi.hoisted(() => vi.fn());
+const observeRoomPresence = vi.hoisted(() => vi.fn());
 
 vi.mock("./rooms", async () => {
   const actual = await vi.importActual<typeof import("./rooms")>("./rooms");
@@ -21,8 +23,13 @@ vi.mock("./rooms", async () => {
     listMembers,
     fetchRoom,
     listJoinedRoomIds,
+    closeRoom,
   };
 });
+
+vi.mock("./presence", () => ({
+  observeRoomPresence,
+}));
 
 vi.mock("./WaitingRoom", () => ({
   WaitingRoom: () => <div>waiting room</div>,
@@ -58,22 +65,80 @@ function roomFixture(
   };
 }
 
+/** Default: every observed room reports its host as present. */
+function mockHostsPresent(
+  rooms: Array<{ id: string; hostDeviceId: string }>,
+) {
+  observeRoomPresence.mockImplementation(
+    async (
+      _client: unknown,
+      input: {
+        roomId: string;
+        onSync: (
+          members: Array<{
+            deviceId: string;
+            displayName: string;
+            role: "host";
+          }>,
+        ) => void;
+      },
+    ) => {
+      const room = rooms.find((r) => r.id === input.roomId);
+      input.onSync(
+        room
+          ? [
+              {
+                deviceId: room.hostDeviceId,
+                displayName: "Host",
+                role: "host",
+              },
+            ]
+          : [],
+      );
+      return { unsubscribe: vi.fn().mockResolvedValue(undefined) };
+    },
+  );
+}
+
+function mockHostsAbsent() {
+  observeRoomPresence.mockImplementation(
+    async (
+      _client: unknown,
+      input: {
+        roomId: string;
+        onSync: (
+          members: Array<{
+            deviceId: string;
+            displayName: string;
+            role: "host";
+          }>,
+        ) => void;
+      },
+    ) => {
+      input.onSync([]);
+      return { unsubscribe: vi.fn().mockResolvedValue(undefined) };
+    },
+  );
+}
+
 describe("Lobby", () => {
   test("lists rooms filtered by game_slug and can create a room", async () => {
     const user = userEvent.setup();
     listJoinedRoomIds.mockResolvedValue(new Set());
-    listRooms.mockResolvedValue([
+    const listed = [
       {
         id: "room-1",
         gameSlug: GAME,
         name: "Alpha",
         hostDeviceId: DEVICE,
-        status: "waiting",
+        status: "waiting" as const,
         maxPlayers: 4,
         createdAt: "2026-08-06T10:00:00.000Z",
         updatedAt: "2026-08-06T10:00:00.000Z",
       },
-    ]);
+    ];
+    listRooms.mockResolvedValue(listed);
+    mockHostsPresent(listed);
     createRoom.mockResolvedValue({
       room: {
         id: "room-new",
@@ -130,10 +195,37 @@ describe("Lobby", () => {
     });
   });
 
+  test("hides rooms whose host is not in live presence", async () => {
+    listJoinedRoomIds.mockResolvedValue(new Set());
+    const listed = [roomFixture({ name: "Orphan", hostDeviceId: "gone" })];
+    listRooms.mockResolvedValue(listed);
+    mockHostsAbsent();
+
+    render(
+      <Lobby
+        client={{} as never}
+        gameSlug={GAME}
+        deviceId={DEVICE}
+        username="Alex"
+        onBack={() => {}}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(listRooms).toHaveBeenCalled();
+    });
+    await waitFor(() => {
+      expect(screen.queryByText("Orphan")).toBeNull();
+      expect(screen.getByText(/nicio cameră încă/i)).toBeTruthy();
+    });
+  });
+
   test("joins an existing waiting room as player", async () => {
     const user = userEvent.setup();
     listJoinedRoomIds.mockResolvedValue(new Set());
-    listRooms.mockResolvedValue([roomFixture({ hostDeviceId: "other" })]);
+    const listed = [roomFixture({ hostDeviceId: "other" })];
+    listRooms.mockResolvedValue(listed);
+    mockHostsPresent(listed);
     joinRoom.mockResolvedValue({
       id: "m2",
       roomId: "room-1",
@@ -177,9 +269,9 @@ describe("Lobby", () => {
   test("playing room for non-member shows only Spectator (no Reintră, no player join)", async () => {
     const user = userEvent.setup();
     listJoinedRoomIds.mockResolvedValue(new Set());
-    listRooms.mockResolvedValue([
-      roomFixture({ name: "În curs", status: "playing" }),
-    ]);
+    const listed = [roomFixture({ name: "În curs", status: "playing" })];
+    listRooms.mockResolvedValue(listed);
+    mockHostsPresent(listed);
     joinRoom.mockResolvedValue({
       id: "m-spec",
       roomId: "room-1",
@@ -231,13 +323,15 @@ describe("Lobby", () => {
   test("host can re-enter a paused room with same device_id (no host transfer)", async () => {
     const user = userEvent.setup();
     listJoinedRoomIds.mockResolvedValue(new Set(["room-1"]));
-    listRooms.mockResolvedValue([
+    const listed = [
       roomFixture({
         name: "Paused",
         hostDeviceId: DEVICE,
         status: "paused",
       }),
-    ]);
+    ];
+    listRooms.mockResolvedValue(listed);
+    mockHostsPresent(listed);
     listMembers.mockResolvedValue([
       {
         id: "m-host",
@@ -299,6 +393,7 @@ describe("Lobby", () => {
     rememberActiveRoomId(GAME, room.id);
     listJoinedRoomIds.mockResolvedValue(new Set(["room-1"]));
     listRooms.mockResolvedValue([room]);
+    mockHostsPresent([room]);
     fetchRoom.mockResolvedValue(room);
     listMembers.mockResolvedValue([member]);
 
@@ -338,6 +433,7 @@ describe("Lobby", () => {
     };
     listJoinedRoomIds.mockResolvedValue(new Set(["room-from-url"]));
     listRooms.mockResolvedValue([room]);
+    mockHostsPresent([room]);
     fetchRoom.mockResolvedValue(room);
     listMembers.mockResolvedValue([member]);
 

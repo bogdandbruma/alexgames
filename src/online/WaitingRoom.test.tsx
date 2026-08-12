@@ -387,8 +387,10 @@ describe("WaitingRoom", () => {
   test("host reclaim with same device_id resumes play", async () => {
     listMembers.mockResolvedValue([HOST_MEMBER]);
     subscribeRoomMessages.mockResolvedValue({ unsubscribe: vi.fn() });
-    resumeRoom.mockResolvedValue(undefined);
-    fetchRoom.mockResolvedValue({ ...ROOM, status: "playing" });
+    fetchRoom.mockResolvedValue({ ...ROOM, status: "paused" });
+    resumeRoom.mockImplementation(async () => {
+      fetchRoom.mockResolvedValue({ ...ROOM, status: "playing" });
+    });
 
     const presenceSync = {
       onSync: null as null | ((

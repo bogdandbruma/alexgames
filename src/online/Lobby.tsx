@@ -1,7 +1,20 @@
 import { ArrowLeft, LoaderCircle, Plus, Users } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
+  HOST_RECLAIM_TIMEOUT_MS,
+  applyHostLifecycleDecision,
+  decideHostLifecycle,
+  isHostInPresence,
+  nextHostAbsentSinceMs,
+} from "./hostLifecycle";
+import {
+  filterRoomsWithLiveHost,
+  type RoomHostPresence,
+} from "./lobbyHostPresence";
+import { observeRoomPresence } from "./presence";
+import {
+  closeRoom,
   createRoom,
   fetchRoom,
   joinRoom,
@@ -108,12 +121,16 @@ export function Lobby({
   const [joinedRoomIds, setJoinedRoomIds] = useState<Set<string>>(
     () => new Set(),
   );
+  const [hostPresentByRoomId, setHostPresentByRoomId] =
+    useState<RoomHostPresence>({});
   const [roomName, setRoomName] = useState("");
   const [loading, setLoading] = useState(true);
   const [restoringSession, setRestoringSession] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [session, setSession] = useState<ActiveSession | null>(null);
+  const hostAbsentSinceRef = useRef<Record<string, number | null>>({});
+  const orphanCloseBusyRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     let cancelled = false;
@@ -126,6 +143,8 @@ export function Lobby({
         if (!cancelled) {
           setRooms(nextRooms.filter((room) => room.status !== "closed"));
           setJoinedRoomIds(nextJoined);
+          setHostPresentByRoomId({});
+          hostAbsentSinceRef.current = {};
         }
       })
       .catch((err: unknown) => {
@@ -202,6 +221,128 @@ export function Lobby({
     };
   }, [client, gameSlug, deviceId, initialRoomId]);
 
+  // Observe live host presence for lobby list + orphan waiting close.
+  useEffect(() => {
+    if (session) {
+      return;
+    }
+
+    let cancelled = false;
+    const handles: Array<{ roomId: string; unsubscribe: () => Promise<void> }> =
+      [];
+    const timers = new Map<string, number>();
+
+    const clearTimer = (roomId: string) => {
+      const id = timers.get(roomId);
+      if (id !== undefined) {
+        window.clearTimeout(id);
+        timers.delete(roomId);
+      }
+    };
+
+    const maybeCloseOrphan = async (room: Room, hostPresent: boolean) => {
+      if (room.status !== "waiting") {
+        return;
+      }
+      const nextAbsent = nextHostAbsentSinceMs(
+        hostPresent,
+        hostAbsentSinceRef.current[room.id] ?? null,
+        Date.now(),
+      );
+      hostAbsentSinceRef.current[room.id] = nextAbsent;
+      clearTimer(room.id);
+      if (hostPresent || nextAbsent === null) {
+        return;
+      }
+
+      const remaining = HOST_RECLAIM_TIMEOUT_MS - (Date.now() - nextAbsent);
+      const fire = async () => {
+        if (cancelled || orphanCloseBusyRef.current.has(room.id)) {
+          return;
+        }
+        const decision = decideHostLifecycle({
+          roomStatus: "waiting",
+          hostDeviceId: room.hostDeviceId,
+          hostPresent: false,
+          pausedAtMs: null,
+          hostAbsentSinceMs: hostAbsentSinceRef.current[room.id] ?? null,
+          nowMs: Date.now(),
+        });
+        if (decision.type !== "close") {
+          return;
+        }
+        orphanCloseBusyRef.current.add(room.id);
+        try {
+          await applyHostLifecycleDecision(
+            decision,
+            {
+              pause: async () => undefined,
+              resume: async () => undefined,
+              close: async () => {
+                await closeRoom(client, { roomId: room.id });
+              },
+            },
+            { isHost: false },
+          );
+          if (!cancelled) {
+            setRooms((prev) => prev.filter((r) => r.id !== room.id));
+            setHostPresentByRoomId((prev) => {
+              const next = { ...prev };
+              delete next[room.id];
+              return next;
+            });
+          }
+        } catch {
+          /* peer may have closed first */
+        } finally {
+          orphanCloseBusyRef.current.delete(room.id);
+        }
+      };
+
+      if (remaining <= 0) {
+        void fire();
+        return;
+      }
+      timers.set(room.id, window.setTimeout(() => void fire(), remaining));
+    };
+
+    for (const room of rooms) {
+      void observeRoomPresence(client, {
+        roomId: room.id,
+        onSync: (members) => {
+          if (cancelled) {
+            return;
+          }
+          const hostPresent = isHostInPresence(room.hostDeviceId, members);
+          setHostPresentByRoomId((prev) => {
+            if (prev[room.id] === hostPresent) {
+              return prev;
+            }
+            return { ...prev, [room.id]: hostPresent };
+          });
+          void maybeCloseOrphan(room, hostPresent);
+        },
+      }).then((handle) => {
+        if (cancelled) {
+          void handle.unsubscribe();
+          return;
+        }
+        handles.push({ roomId: room.id, unsubscribe: handle.unsubscribe });
+      });
+    }
+
+    return () => {
+      cancelled = true;
+      for (const id of timers.values()) {
+        window.clearTimeout(id);
+      }
+      timers.clear();
+      for (const handle of handles) {
+        void handle.unsubscribe();
+      }
+    };
+  }, [client, rooms, session]);
+
   const refresh = async () => {
     const [nextRooms, nextJoined] = await Promise.all([
       listRooms(client, gameSlug),
@@ -209,6 +350,8 @@ export function Lobby({
     ]);
     setRooms(nextRooms.filter((room) => room.status !== "closed"));
     setJoinedRoomIds(nextJoined);
+    setHostPresentByRoomId({});
+    hostAbsentSinceRef.current = {};
   };
 
   if (session) {
@@ -229,6 +372,10 @@ export function Lobby({
       />
     );
   }
+
+  const visibleRooms = filterRoomsWithLiveHost(rooms, hostPresentByRoomId, {
+    alwaysIncludeIds: joinedRoomIds,
+  });
 
   const handleCreate = async () => {
     const name = roomName.trim();
@@ -365,10 +512,10 @@ export function Lobby({
             </p>
           ) : (
             <ul className="online-lobby-list" aria-label="Listă camere">
-              {rooms.length === 0 ? (
+              {visibleRooms.length === 0 ? (
                 <li className="online-lobby-empty">Nicio cameră încă.</li>
               ) : (
-                rooms.map((room) => (
+                visibleRooms.map((room) => (
                   <li key={room.id} className="online-lobby-item">
                     <div className="online-lobby-item-main">
                       <Users aria-hidden="true" size={18} />

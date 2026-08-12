@@ -7,6 +7,7 @@ import {
   applyHostLifecycleDecision,
   decideHostLifecycle,
   isHostInPresence,
+  nextHostAbsentSinceMs,
 } from "./hostLifecycle";
 import {
   subscribeRoomPresence,
@@ -61,6 +62,9 @@ export function WaitingRoom({
   const [pausedAtMs, setPausedAtMs] = useState<number | null>(
     room.status === "paused" ? Date.now() : null,
   );
+  const [hostAbsentSinceMs, setHostAbsentSinceMs] = useState<number | null>(
+    null,
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const isHost = room.hostDeviceId === deviceId;
@@ -70,6 +74,8 @@ export function WaitingRoom({
   roomStatusRef.current = roomStatus;
   const pausedAtRef = useRef(pausedAtMs);
   pausedAtRef.current = pausedAtMs;
+  const hostAbsentSinceRef = useRef(hostAbsentSinceMs);
+  hostAbsentSinceRef.current = hostAbsentSinceMs;
   const lifecycleBusyRef = useRef(false);
 
   useEffect(() => {
@@ -164,6 +170,7 @@ export function WaitingRoom({
       hostDeviceId: room.hostDeviceId,
       hostPresent,
       pausedAtMs: pausedAtRef.current,
+      hostAbsentSinceMs: hostAbsentSinceRef.current,
       nowMs,
     });
     if (decision.type === "none") return;
@@ -201,10 +208,18 @@ export function WaitingRoom({
   };
 
   useEffect(() => {
-    if (!isActivePlayStatus(roomStatus) || !presenceSynced) {
+    if (!presenceSynced || roomStatus === "closed") {
       return;
     }
-    void runLifecycle(isHostInPresence(room.hostDeviceId, presence));
+    const hostPresent = isHostInPresence(room.hostDeviceId, presence);
+    const nextAbsent = nextHostAbsentSinceMs(
+      hostPresent,
+      hostAbsentSinceRef.current,
+      Date.now(),
+    );
+    hostAbsentSinceRef.current = nextAbsent;
+    setHostAbsentSinceMs(nextAbsent);
+    void runLifecycle(hostPresent);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- run on presence/status changes
   }, [
     presence,
@@ -218,21 +233,34 @@ export function WaitingRoom({
   ]);
 
   useEffect(() => {
-    if (roomStatus !== "paused" || pausedAtMs === null) {
-      return;
+    if (roomStatus === "paused" && pausedAtMs !== null) {
+      const remaining = HOST_RECLAIM_TIMEOUT_MS - (Date.now() - pausedAtMs);
+      const id = window.setTimeout(() => {
+        void runLifecycle(
+          isHostInPresence(room.hostDeviceId, presenceRef.current),
+          Date.now(),
+        );
+      }, Math.max(0, remaining));
+      return () => {
+        window.clearTimeout(id);
+      };
     }
-    const remaining = HOST_RECLAIM_TIMEOUT_MS - (Date.now() - pausedAtMs);
-    const id = window.setTimeout(() => {
-      void runLifecycle(
-        isHostInPresence(room.hostDeviceId, presenceRef.current),
-        Date.now(),
-      );
-    }, Math.max(0, remaining));
-    return () => {
-      window.clearTimeout(id);
-    };
+    if (roomStatus === "waiting" && hostAbsentSinceMs !== null) {
+      const remaining =
+        HOST_RECLAIM_TIMEOUT_MS - (Date.now() - hostAbsentSinceMs);
+      const id = window.setTimeout(() => {
+        void runLifecycle(
+          isHostInPresence(room.hostDeviceId, presenceRef.current),
+          Date.now(),
+        );
+      }, Math.max(0, remaining));
+      return () => {
+        window.clearTimeout(id);
+      };
+    }
+    return undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roomStatus, pausedAtMs, room.hostDeviceId]);
+  }, [roomStatus, pausedAtMs, hostAbsentSinceMs, room.hostDeviceId]);
 
   const refreshMembers = async () => {
     const next = await listMembers(client, room.id);
